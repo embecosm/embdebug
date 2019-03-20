@@ -8,8 +8,8 @@ set(embdebug_VERSION
 
 project(embdebug VERSION ${embdebug_VERSION} LANGUAGES C CXX)
 
-set(CMAKE_CXX_FLAGS
-  "-std=c++11 -Wall -Werror -Wextra -pedantic ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 enable_testing()
 
