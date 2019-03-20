@@ -6,6 +6,11 @@ set(TESTS TestAbstractConnection
           TestRspPacket
           TestUtils)
 
+# Supress a warning tripped in gtest
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  add_if_supported("-Wno-gnu-zero-variadic-macro-arguments" "WNO_ZERO_MACRO_VARGS")
+endif()
+
 foreach(_TEST ${TESTS})
   set (_SOURCES ${_TEST}.cpp)
   add_executable(${_TEST} ${_SOURCES})
