@@ -8,8 +8,38 @@ set(embdebug_VERSION
 
 project(embdebug VERSION ${embdebug_VERSION} LANGUAGES C CXX)
 
+# Macro for testing whether a flag is supported, and adding it to CFLAGS/CXXFLAGS
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+macro (add_if_supported flag testname)
+  check_c_compiler_flag(${flag} "C_SUPPORTS_${testname}")
+  if(C_SUPPORTS_${testname})
+    set(CMAKE_C_FLAGS "${flag} ${CMAKE_C_FLAGS}")
+  endif()
+  check_cxx_compiler_flag(${flag} "CXX_SUPPORTS_${testname}")
+  if(CXX_SUPPORTS_${testname})
+    set(CMAKE_CXX_FLAGS "${flag} ${CMAKE_CXX_FLAGS}")
+  endif()
+endmacro()
+
+# Set C++ standard required and set warning flags
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Set warning/error flags
+option(EMBDEBUG_ENABLE_WERROR "Enable build failure if warnings triggered." OFF)
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  add_if_supported("/W4" "WARNINGS")
+else()
+  add_if_supported("-Wall -Wextra -pedantic" "WARNINGS")
+endif()
+if (EMBDEBUG_ENABLE_WERROR)
+  if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    add_if_supported("/WX" "WERROR")
+  else()
+    add_if_supported("-Werror" "WERROR")
+  endif()
+endif()
 
 enable_testing()
 
