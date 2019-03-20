@@ -27,6 +27,8 @@
 #include "StreamConnection.h"
 #include "embdebug/ITarget.h"
 
+using namespace EmbDebug;
+
 static ITarget *globalTargetHandle = nullptr;
 
 int main2(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,

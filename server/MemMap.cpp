@@ -23,6 +23,8 @@
 
 #include "embdebug/MemMap.h"
 
+using namespace EmbDebug;
+
 //! Constructor
 
 //! Placeholder for now.

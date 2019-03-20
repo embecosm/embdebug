@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+using namespace EmbDebug;
+
 /* Explicit instantiations of static members.  */
 const int Ptid::PTID_ALL;
 const int Ptid::PTID_INV;

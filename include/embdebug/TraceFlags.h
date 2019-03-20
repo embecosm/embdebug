@@ -26,6 +26,8 @@
 #include <map>
 #include <string>
 
+namespace EmbDebug {
+
 //! Class for trace flags
 
 //! The interface only uses names of flags. Flags have a state (TRUE or
@@ -84,5 +86,7 @@ private:
   static std::map<const std::string, FlagInfo> sFlagInfo;
 
 }; // TraceFlags ()
+
+} // namespace EmbDebug
 
 #endif // TRACE_FLAGS_H

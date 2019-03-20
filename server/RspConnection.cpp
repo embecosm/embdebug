@@ -48,6 +48,8 @@ using std::hex;
 using std::setfill;
 using std::setw;
 
+using namespace EmbDebug;
+
 //! Constructor when using a port number
 
 //! Sets up various parameters

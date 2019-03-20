@@ -24,6 +24,8 @@
 
 #include <vector>
 
+namespace EmbDebug {
+
 class VContActions {
 public:
   // Decode vCont packet in STR.
@@ -59,5 +61,7 @@ private:
   // crude storage format, which we should probably improve on.
   std::vector<std::pair<std::string, Ptid>> mActions;
 };
+
+} // namespace EmbDebug
 
 #endif // VCONTACTIONS_H

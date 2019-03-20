@@ -50,6 +50,8 @@ using std::stringstream;
 using std::vector;
 using std::chrono::system_clock;
 
+using namespace EmbDebug;
+
 //! Constructor for the GDB RSP server.
 
 //! Allocate a packet data structure and a new RSP connection. By default no
@@ -1962,6 +1964,8 @@ void GdbServer::rspInsertMatchpoint() {
   }
 } // rspInsertMatchpoint ()
 
+namespace EmbDebug {
+
 //! Output operator for TargetSignal enumeration
 
 //! @param[in] s  The stream to output to.
@@ -2023,6 +2027,8 @@ std::ostream &operator<<(std::ostream &s, GdbServer::StopMode p) {
   return s << name;
 
 } // operator<< ()
+
+} // namespace EmbDebug
 
 //! Constructor for CoreManager class
 //

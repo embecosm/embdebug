@@ -26,6 +26,8 @@
 
 #include <stdint.h>
 
+namespace EmbDebug {
+
 //! Default size of the matchpoint hash table. Largest prime < 2^10
 #define DEFAULT_MP_HASH_SIZE 1021
 
@@ -79,5 +81,7 @@ private:
   //! Size of the hash table
   int size;
 };
+
+} // namespace EmbDebug
 
 #endif // MP_HASH_H

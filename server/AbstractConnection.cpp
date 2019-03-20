@@ -41,6 +41,8 @@ using std::hex;
 using std::setfill;
 using std::setw;
 
+using namespace EmbDebug;
+
 //! Get the next packet from the RSP connection
 
 //! Modeled on the stub version supplied with GDB. This allows the user to

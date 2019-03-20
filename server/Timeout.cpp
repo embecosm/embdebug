@@ -23,6 +23,8 @@
 
 using std::chrono::duration;
 
+using namespace EmbDebug;
+
 //! Constructor for no timeout.
 
 Timeout::Timeout()

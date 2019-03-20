@@ -33,6 +33,8 @@ using std::hex;
 using std::string;
 using std::vector;
 
+using namespace EmbDebug;
+
 //! Is this a valid hex string
 
 //! The string must be 1 or more chars and all chars must be valid hex digit.

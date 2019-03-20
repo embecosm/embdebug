@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+namespace EmbDebug {
+
 //! Module representing a PTID.
 
 class Ptid {
@@ -72,5 +74,7 @@ private:
   std::size_t encodeField(char *buf, int ptid);
 
 }; // Ptid ()
+
+} // namespace EmbDebug
 
 #endif // PTID_H

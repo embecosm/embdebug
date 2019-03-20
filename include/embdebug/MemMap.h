@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <vector>
 
+namespace EmbDebug {
+
 //! A memory map class
 
 //! A convenience class for describing memory maps
@@ -70,5 +72,7 @@ private:
   MemMap(const MemMap &){};
 
 }; // class MemMap
+
+} // namespace EmbDebug
 
 #endif // MEMMAP_H

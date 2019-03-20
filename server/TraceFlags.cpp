@@ -30,6 +30,8 @@ using std::endl;
 using std::ostringstream;
 using std::string;
 
+using namespace EmbDebug;
+
 //! Allocate the static map of flags.
 
 std::map<const string, TraceFlags::FlagInfo> TraceFlags::sFlagInfo;

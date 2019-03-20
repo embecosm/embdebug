@@ -11,6 +11,8 @@ using std::endl;
 using std::string;
 using std::vector;
 
+using namespace EmbDebug;
+
 // Parse vCont packet in STR, setup the state of this object.  Return true
 // if everything parsed correctly, otherwise return false.  If we return
 // false then the state of this object is undefined.

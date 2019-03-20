@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+using namespace EmbDebug;
+
 class RspPacketTest : public ::testing::Test {
 protected:
   void SetUp() override {

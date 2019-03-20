@@ -37,6 +37,8 @@ using std::ostream;
 using std::setfill;
 using std::setw;
 
+using namespace EmbDebug;
+
 //! Constructor
 
 //! Allocate the new data buffer
@@ -167,6 +169,8 @@ int RspPacket::getLen() { return len; } // getLen ()
 //! @param[in] _len  The number of chars to be set
 void RspPacket::setLen(int _len) { len = _len; } // setLen ()
 
+namespace EmbDebug {
+
 //! Output stream operator
 
 //! @param[out] s  Stream to output to
@@ -176,3 +180,5 @@ ostream &operator<<(ostream &s, RspPacket &p) {
            << std::setw(0) << " chars, \"" << p.data << "\"";
 
 } // operator<< ()
+
+} // namespace EmbDebug

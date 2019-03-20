@@ -23,6 +23,8 @@
 #include "AbstractConnection.h"
 #include "embdebug/TraceFlags.h"
 
+namespace EmbDebug {
+
 //! Class implementing the RSP connection listener
 
 //! This class is entirely passive. It is up to the caller to determine
@@ -50,5 +52,7 @@ private:
   // Track whether we are connected or not.
   bool mIsConnected;
 }; // StreamConnection ()
+
+} // namespace EmbDebug
 
 #endif // STREAM_CONNECTION_H

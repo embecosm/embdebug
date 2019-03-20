@@ -45,6 +45,8 @@
 #include "embdebug/RegisterSizes.h"
 #include "embdebug/Timeout.h"
 
+namespace EmbDebug {
+
 //! Module implementing a GDB RSP server.
 
 //! How should we behave when GDB sends a kill (k) packet?
@@ -88,9 +90,9 @@ private:
 
   // stream operators have to be friends to access private members
 
-  friend std::ostream &operator<<(std::ostream &s, GdbServer::TargetSignal p);
+  friend std::ostream &operator<<(std::ostream &s, TargetSignal p);
 
-  friend std::ostream &operator<<(std::ostream &s, GdbServer::StopMode p);
+  friend std::ostream &operator<<(std::ostream &s, StopMode p);
 
   // For now these are hard-coded constants, but they need to be made
   // configurable.
@@ -322,5 +324,7 @@ private:
   bool processStopEvents(void);
 
 }; // GdbServer ()
+
+} // namespace EmbDebug
 
 #endif // GDB_SERVER_H

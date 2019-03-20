@@ -24,6 +24,8 @@
 
 #include "MpHash.h"
 
+using namespace EmbDebug;
+
 //! Constructor
 
 //! Allocate the hash table

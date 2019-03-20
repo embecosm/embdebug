@@ -5,6 +5,8 @@
 
 #include "gtest/gtest.h"
 
+using namespace EmbDebug;
+
 // AbstractConnection has some pure virtual methods that we need to override to
 // test it.
 //

@@ -24,6 +24,8 @@
 
 #include "AbstractConnection.h"
 
+namespace EmbDebug {
+
 class TraceFlags;
 
 //! Class implementing the RSP connection listener
@@ -63,5 +65,7 @@ private:
   virtual int getRspCharRaw(bool blocking);
 
 }; // RspConnection ()
+
+} // namespace EmbDebug
 
 #endif // RSP_CONNECTION_H

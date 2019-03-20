@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+namespace EmbDebug {
+
 //! A class offering a number of convenience utilities for the GDB Server.
 
 //! All static functions. This class is not intended to be instantiated.
@@ -56,5 +58,7 @@ private:
   Utils(){};
 
 }; // class Utils
+
+} // namespace EmbDebug
 
 #endif // UTILS_H

@@ -1,4 +1,6 @@
 // GDB Timeout: declaration
+//
+// } // namespace EmbDebug
 
 // Copyright (C) 2009, 2013, 2017  Embecosm Limited <info@embecosm.com>
 
@@ -26,6 +28,8 @@
 #include <cstdint>
 
 #include "ITarget.h"
+
+namespace EmbDebug {
 
 //! Class representing a timeout in the GDB server.
 
@@ -96,5 +100,7 @@ private:
   uint64_t mCycleStamp;
 
 }; // Timeout ()
+
+} // namespace EmbDebug
 
 #endif // TIMEOUT_H

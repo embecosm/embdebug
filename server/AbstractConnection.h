@@ -23,6 +23,8 @@
 #include "RspPacket.h"
 #include "embdebug/TraceFlags.h"
 
+namespace EmbDebug {
+
 //! Class implementing the RSP connection listener
 
 //! This class is entirely passive. It is up to the caller to determine that a
@@ -91,5 +93,7 @@ inline AbstractConnection::AbstractConnection(TraceFlags *_traceFlags)
     : traceFlags(_traceFlags), mHavePendingBreak(false), mNumGetBufChars(0) {
   // Nothing.
 }
+
+} // namespace EmbDebug
 
 #endif // ABSTRACT_CONNECTION_H

@@ -30,6 +30,8 @@
 
 #include "RegisterSizes.h"
 
+namespace EmbDebug {
+
 // Classes to which we refer.
 
 class TraceFlags;
@@ -180,5 +182,7 @@ private:
 std::ostream &operator<<(std::ostream &s, ITarget::ResumeType p);
 std::ostream &operator<<(std::ostream &s, ITarget::ResumeRes p);
 std::ostream &operator<<(std::ostream &s, ITarget::MatchType p);
+
+} // namespace EmbDebug
 
 #endif // ITARGET_H

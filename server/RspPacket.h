@@ -25,6 +25,8 @@
 
 #include <iostream>
 
+namespace EmbDebug {
+
 //! Class for RSP packets
 
 //! Can't be null terminated, since it may include zero bytes
@@ -60,5 +62,7 @@ private:
 
 //! Stream output
 std::ostream &operator<<(std::ostream &s, RspPacket &p);
+
+} // namespace EmbDebug
 
 #endif // RSP_PACKET_SC_H

@@ -23,7 +23,11 @@
 #include "ITarget.h"
 #include "TraceFlags.h"
 
+namespace EmbDebug {
+
 int main2(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
           int rspPort, bool writePort);
+
+} // namespace EmbDebug
 
 #endif

@@ -28,6 +28,8 @@
 using std::cerr;
 using std::endl;
 
+using namespace EmbDebug;
+
 //! Constructor for the PTID.
 
 //! @param[in]  pid  The process ID
@@ -324,7 +326,11 @@ std::size_t Ptid::encodeField(char *buf, int ptid) {
 //! @param[in] p  The Ptid value to output.
 //! @return  The stream with the item appended.
 
+namespace EmbDebug {
+
 std::ostream &operator<<(std::ostream &s, Ptid p) {
   return s << "{" << p.mPid << "," << p.mTid << "}";
 
 } // operator<< ()
+
+} // namespace EmbDebug

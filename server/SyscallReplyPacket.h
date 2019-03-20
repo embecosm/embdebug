@@ -20,6 +20,8 @@
 #ifndef SYSCALLREPLYPACKET_H
 #define SYSCALLREPLYPACKET_H
 
+namespace EmbDebug {
+
 class SyscallReplyPacket {
 public:
   //! Constructor.
@@ -147,5 +149,7 @@ private:
   //! will be set to false.
   bool mValid;
 };
+
+} // namespace EmbDebug
 
 #endif /* SYSCALLREPLYPACKET_H */

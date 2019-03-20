@@ -24,6 +24,10 @@
 
 #include "embdebug/ITarget.h"
 
+using namespace EmbDebug;
+
+namespace EmbDebug {
+
 //! Output operator for ResumeType enumeration
 
 //! @param[in] s  The stream to output to.
@@ -91,6 +95,8 @@ std::ostream &operator<<(std::ostream &s, ITarget::ResumeRes p) {
   return s << name;
 
 } // operator<< ()
+
+} // namespace EmbDebug
 
 //! Output operator for MatchType enumeration
 

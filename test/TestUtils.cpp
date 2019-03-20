@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+using namespace EmbDebug;
+
 class isHexStrTrue : public ::testing::TestWithParam<const char *> {};
 class isHexStrFalse : public ::testing::TestWithParam<const char *> {};
 
