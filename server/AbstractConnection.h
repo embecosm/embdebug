@@ -20,52 +20,47 @@
 #ifndef ABSTRACT_CONNECTION_H
 #define ABSTRACT_CONNECTION_H
 
-#include "embdebug/TraceFlags.h"
 #include "RspPacket.h"
-
+#include "embdebug/TraceFlags.h"
 
 //! Class implementing the RSP connection listener
 
 //! This class is entirely passive. It is up to the caller to determine that a
 //! packet will become available before calling ::getPkt ().
 
-class AbstractConnection
-{
+class AbstractConnection {
 public:
-
   // Constructor and Destructor
 
-  AbstractConnection (TraceFlags *_traceFlags);
-  virtual ~AbstractConnection () = 0;
+  AbstractConnection(TraceFlags *_traceFlags);
+  virtual ~AbstractConnection() = 0;
 
   // Public interface: manage client connections
 
-  virtual bool  rspConnect () = 0;
-  virtual void  rspClose () = 0;
-  virtual bool  isConnected () = 0;
+  virtual bool rspConnect() = 0;
+  virtual void rspClose() = 0;
+  virtual bool isConnected() = 0;
 
   // Public interface: get packets from the stream and put them out
 
-  virtual bool  getPkt (RspPacket& pkt);
-  virtual bool  putPkt (RspPacket& pkt);
+  virtual bool getPkt(RspPacket &pkt);
+  virtual bool putPkt(RspPacket &pkt);
 
   // Check for a break (ctrl-C)
 
-  virtual bool  haveBreak ();
+  virtual bool haveBreak();
 
 protected:
-
   //! Trace flags
 
   TraceFlags *traceFlags;
 
   // Internal OS specific routines to handle individual chars.
 
-  virtual bool  putRspCharRaw (char  c) = 0;
-  virtual int   getRspCharRaw (bool blocking) = 0;
+  virtual bool putRspCharRaw(char c) = 0;
+  virtual int getRspCharRaw(bool blocking) = 0;
 
 private:
-
   //! The BREAK character
 
   static const int BREAK_CHAR = 3;
@@ -75,38 +70,26 @@ private:
   bool mHavePendingBreak;
 
   //! The buffered char for get RspChar
-  int  mGetCharBuf;
+  int mGetCharBuf;
 
   //! Count of how many buffered chars we have
-  int  mNumGetBufChars;
+  int mNumGetBufChars;
 
   // Internal routines to handle individual chars
 
-  bool  putRspChar (char  c);
-  int   getRspChar ();
-};	// AbstractConnection ()
+  bool putRspChar(char c);
+  int getRspChar();
+}; // AbstractConnection ()
 
 // Default implementation of the destructor.
 
-inline
-AbstractConnection::~AbstractConnection ()
-{
+inline AbstractConnection::~AbstractConnection() {
   // Nothing.
 }
 
-inline
-AbstractConnection::AbstractConnection (TraceFlags *_traceFlags) :
-  traceFlags (_traceFlags),
-  mHavePendingBreak (false),
-  mNumGetBufChars (0)
-{
+inline AbstractConnection::AbstractConnection(TraceFlags *_traceFlags)
+    : traceFlags(_traceFlags), mHavePendingBreak(false), mNumGetBufChars(0) {
   // Nothing.
 }
 
-#endif	// ABSTRACT_CONNECTION_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+#endif // ABSTRACT_CONNECTION_H

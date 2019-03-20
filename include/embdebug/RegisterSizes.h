@@ -20,8 +20,8 @@
 #ifndef REGISTERSIZES_H
 #define REGISTERSIZES_H
 
-#include <cstdint>
 #include <cinttypes>
+#include <cstdint>
 
 #if 1
 typedef uint64_t uint_reg_t;

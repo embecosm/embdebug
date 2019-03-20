@@ -2,55 +2,49 @@
 #include "embdebug/Utils.h"
 
 #include <cassert>
-#include <vector>
-#include <string>
 #include <cstring>
+#include <string>
+#include <vector>
 
-using std::vector;
 using std::cerr;
 using std::endl;
 using std::string;
+using std::vector;
 
 // Parse vCont packet in STR, setup the state of this object.  Return true
 // if everything parsed correctly, otherwise return false.  If we return
 // false then the state of this object is undefined.
 
-bool
-VContActions::parse (const char *str)
-{
+bool VContActions::parse(const char *str) {
   vector<string> tokens;
 
   // Skip the leading 'vCont;' header.
-  str += strlen ("vCont;");
-  Utils::split (str, ";", tokens);
+  str += strlen("vCont;");
+  Utils::split(str, ";", tokens);
 
-  for (auto it = tokens.begin (); it != tokens.end (); ++it)
-    {
-      const char *tmp;
-      std::size_t pos;
-      Ptid ptid (Ptid::PTID_ALL, Ptid::PTID_ALL);
+  for (auto it = tokens.begin(); it != tokens.end(); ++it) {
+    const char *tmp;
+    std::size_t pos;
+    Ptid ptid(Ptid::PTID_ALL, Ptid::PTID_ALL);
 
-      // Find the ':', the start of the pid/tid descriptor.
-      pos = it->find (':');
-      if (pos != std::string::npos)
-        {
-          // Convert the pid/tid into a decoded object.
-          tmp = it->c_str () + pos + 1;
-          if (!ptid.decode (tmp))
-            return false;
+    // Find the ':', the start of the pid/tid descriptor.
+    pos = it->find(':');
+    if (pos != std::string::npos) {
+      // Convert the pid/tid into a decoded object.
+      tmp = it->c_str() + pos + 1;
+      if (!ptid.decode(tmp))
+        return false;
 
-          if (ptid.pid () == 0)
-            {
-              cerr << "Warning: found pid == 0 in vCont '"
-                   << str << "'" << endl;
-              return false;
-            }
-        }
-
-      // Store the details into the actions vector.
-      std::string action = *it;
-      mActions.push_back (std::make_pair (action, ptid));
+      if (ptid.pid() == 0) {
+        cerr << "Warning: found pid == 0 in vCont '" << str << "'" << endl;
+        return false;
+      }
     }
+
+    // Store the details into the actions vector.
+    std::string action = *it;
+    mActions.push_back(std::make_pair(action, ptid));
+  }
 
   return true;
 }
@@ -60,30 +54,27 @@ VContActions::parse (const char *str)
 // running many cores at once, in which case we'll no longer care how many
 // cores a vCont packet refers to.
 
-bool
-VContActions::effectsMultipleCores (void) const
-{
+bool VContActions::effectsMultipleCores(void) const {
   unsigned int num = 0;
 
-  assert (valid ());
+  assert(valid());
 
-  for (auto it = mActions.begin (); it != mActions.end (); ++it)
-    {
-      unsigned int pid = it->second.pid ();
+  for (auto it = mActions.begin(); it != mActions.end(); ++it) {
+    unsigned int pid = it->second.pid();
 
-      assert (pid != 0);
-      // The '-1' pid counts as all cores.  We call this "many" even though
-      // we may only have one core alive at this point.
-      if (pid == ((unsigned int) -1))
-        return true;
-      // No cached core yet, so cache the one from this action.
-      else if (num == 0)
-        num = pid;
-      // If we don't match the cached core, then we are asking many cores
-      // to perform an action.
-      else if (pid != num)
-        return true;
-    }
+    assert(pid != 0);
+    // The '-1' pid counts as all cores.  We call this "many" even though
+    // we may only have one core alive at this point.
+    if (pid == ((unsigned int)-1))
+      return true;
+    // No cached core yet, so cache the one from this action.
+    else if (num == 0)
+      num = pid;
+    // If we don't match the cached core, then we are asking many cores
+    // to perform an action.
+    else if (pid != num)
+      return true;
+  }
 
   return false;
 }
@@ -92,18 +83,14 @@ VContActions::effectsMultipleCores (void) const
 // might also have been sent in the vCont as (for now) we do nothing with
 // these anyway.  This might change in the future.
 
-char
-VContActions::getCoreAction (unsigned int num) const
-{
-  for (auto it = mActions.begin (); it != mActions.end (); ++it)
-    {
-      unsigned int pid = it->second.pid ();
+char VContActions::getCoreAction(unsigned int num) const {
+  for (auto it = mActions.begin(); it != mActions.end(); ++it) {
+    unsigned int pid = it->second.pid();
 
-      assert (pid != 0);
-      if ((pid == ((unsigned int) -1))
-          || pid == num)
-        return (it->first.c_str ()) [0];
-    }
+    assert(pid != 0);
+    if ((pid == ((unsigned int)-1)) || pid == num)
+      return (it->first.c_str())[0];
+  }
 
   return '\0';
 }

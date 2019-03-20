@@ -20,22 +20,18 @@
 #ifndef SYSCALLREPLYPACKET_H
 #define SYSCALLREPLYPACKET_H
 
-class SyscallReplyPacket
-{
+class SyscallReplyPacket {
 public:
   //! Constructor.
 
-  SyscallReplyPacket ()
-    : mValid (false)
-  {
+  SyscallReplyPacket() : mValid(false) {
     // Nothing.
   }
 
   //! Parse syscall reply packet in DATA, updating class member variables
   //! as appropriate.
 
-  void parse (const char *data)
-  {
+  void parse(const char *data) {
     int retcode, error;
 
     // Reset to invalid.
@@ -46,44 +42,41 @@ public:
     ++data;
 
     /* Parse the return code.  */
-    if (!parseValue (&data, &retcode))
+    if (!parseValue(&data, &retcode))
       return;
 
-    if (*data == '\0')
-      {
-        mValid = true;
-        mRetCode = retcode;
-        mCtrlC = false;
-        return;
-      }
+    if (*data == '\0') {
+      mValid = true;
+      mRetCode = retcode;
+      mCtrlC = false;
+      return;
+    }
 
     if (*data != ',')
       return;
     ++data;
 
     // Parse the error code.
-    if (!parseValue (&data, &error))
+    if (!parseValue(&data, &error))
       return;
     if (error < 0)
       return;
-    if (error > 0)
-      {
-        // We have a non-zero error code, indicating an error occurred, in
-        // this case the result should be -1.
-        if (retcode != -1)
-          return;
-
-        // We place the negative errno in the result register.
-        retcode = -error;
-      }
-
-    if (*data == '\0')
-      {
-        mValid = true;
-        mRetCode = retcode;
-        mCtrlC = false;
+    if (error > 0) {
+      // We have a non-zero error code, indicating an error occurred, in
+      // this case the result should be -1.
+      if (retcode != -1)
         return;
-      }
+
+      // We place the negative errno in the result register.
+      retcode = -error;
+    }
+
+    if (*data == '\0') {
+      mValid = true;
+      mRetCode = retcode;
+      mCtrlC = false;
+      return;
+    }
 
     if (*data != ',')
       return;
@@ -101,29 +94,19 @@ public:
   //! Return the parsed syscall return code.  This is only correct if VALID
   //! is true.
 
-  int retcode () const
-  {
-    return mRetCode;
-  }
+  int retcode() const { return mRetCode; }
 
   //! Return true if the syscall reply contains a Ctrl-C marker.  This is
   //! only correct if VALID is true.
 
-  bool hasCtrlC () const
-  {
-    return mCtrlC;
-  }
+  bool hasCtrlC() const { return mCtrlC; }
 
   // Return true if the syscall reply packet parsed correctly, otherwise,
   // return false.
 
-  bool valid () const
-  {
-    return mValid;
-  }
+  bool valid() const { return mValid; }
 
 private:
-
   //! Parse one of the value sub-fields within the syscall reply packet.
   //! The parsed value is placed in the int pointed to by VALUEP, and the
   //! string pointed to by STRP is updated to point to the character just
@@ -131,14 +114,12 @@ private:
   //! will have been updated), otherwise return false (VALUEP will be
   //! unchanged).
 
-  static bool
-  parseValue (const char **strp, int *valuep)
-  {
+  static bool parseValue(const char **strp, int *valuep) {
     long int val;
     char *end;
     char **endptr = &end;
 
-    val = strtol (*strp, endptr, 16);
+    val = strtol(*strp, endptr, 16);
 
     // Nothing was parsed.
     if (*endptr == *strp)
@@ -151,7 +132,7 @@ private:
     // Update where the end of the string is.
     *strp = *endptr;
 
-    *valuep = (int) val;
+    *valuep = (int)val;
     return true;
   }
 
@@ -168,8 +149,3 @@ private:
 };
 
 #endif /* SYSCALLREPLYPACKET_H */
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:

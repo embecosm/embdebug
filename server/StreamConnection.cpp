@@ -18,8 +18,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #include <cerrno>
 #include <csignal>
@@ -40,29 +40,23 @@ using std::hex;
 using std::setfill;
 using std::setw;
 
-
 //! Constructor when using a port number
 
 //! Sets up various parameters
 
 //! @param[in] _portNum     the port number to connect to
 //! @param[in] _traceFlags  flags controlling tracing
-StreamConnection::StreamConnection (TraceFlags *_traceFlags) :
-  AbstractConnection (_traceFlags),
-  mIsConnected (true)
-{
+StreamConnection::StreamConnection(TraceFlags *_traceFlags)
+    : AbstractConnection(_traceFlags), mIsConnected(true) {
   // Nothing.
-}	// StreamConnection ()
-
+} // StreamConnection ()
 
 //! Destructor
 
 //! Close the connection if it is still open
-StreamConnection::~StreamConnection ()
-{
-  this->rspClose ();		// Don't confuse with any other close ()
-}	// ~StreamConnection ()
-
+StreamConnection::~StreamConnection() {
+  this->rspClose(); // Don't confuse with any other close ()
+} // ~StreamConnection ()
 
 //! Get a new client connection.
 
@@ -85,33 +79,21 @@ StreamConnection::~StreamConnection ()
 
 //! @return  TRUE if the connection was established or can be retried. FALSE
 //!          if the error was so serious the program must be aborted.
-bool
-StreamConnection::rspConnect ()
-{
+bool StreamConnection::rspConnect() {
   // There's no way to connect, we rely on stdin / stdout being passe into
   // the process, we're connected from the start.  As we currently always
   // report that we're connected this should never be called.
   return false;
-}	// rspConnect ()
-
+} // rspConnect ()
 
 //! Close a client connection if it is open.  This is called once we detect
 //! that stdin might have closed.  Remember we're now in a closed state.
-void
-StreamConnection::rspClose ()
-{
-  mIsConnected = false;
-}	// rspClose ()
-
+void StreamConnection::rspClose() { mIsConnected = false; } // rspClose ()
 
 //! Report if we are connected to a client.
 
 //! @return  TRUE if we are connected, FALSE otherwise
-bool
-StreamConnection::isConnected ()
-{
-  return mIsConnected;
-}	// isConnected ()
+bool StreamConnection::isConnected() { return mIsConnected; } // isConnected ()
 
 //! Put a single character out on the RSP connection
 
@@ -122,36 +104,29 @@ StreamConnection::isConnected ()
 
 //! @return  TRUE if char sent OK, FALSE if not (communications failure)
 
-bool
-StreamConnection::putRspCharRaw (char  c)
-{
+bool StreamConnection::putRspCharRaw(char c) {
   // Write until successful (we retry after interrupts) or catastrophic
   // failure.
-  while (true)
-    {
-      switch (write (STDOUT_FILENO, &c, sizeof (c)))
-	{
-	case -1:
-	  // Error: only allow interrupts or would block
-	  if ((EAGAIN != errno) && (EINTR != errno))
-	    {
-	      cerr << "Warning: Failed to write to RSP client: "
-			<< "Closing client connection: "
-			<<  strerror (errno) << endl;
-	      return  false;
-	    }
+  while (true) {
+    switch (write(STDOUT_FILENO, &c, sizeof(c))) {
+    case -1:
+      // Error: only allow interrupts or would block
+      if ((EAGAIN != errno) && (EINTR != errno)) {
+        cerr << "Warning: Failed to write to RSP client: "
+             << "Closing client connection: " << strerror(errno) << endl;
+        return false;
+      }
 
-	  break;
+      break;
 
-	case 0:
-	  break;		// Nothing written! Try again
+    case 0:
+      break; // Nothing written! Try again
 
-	default:
-	  return  true;		// Success, we can return
-	}
+    default:
+      return true; // Success, we can return
     }
-}	// putRspCharRaw ()
-
+  }
+} // putRspCharRaw ()
 
 //! Get a single character from the RSP connection
 
@@ -162,65 +137,51 @@ StreamConnection::putRspCharRaw (char  c)
 //! @return  The character received or -1 on failure, or if the read would
 //!          block, and blocking is true.
 
-int
-StreamConnection::getRspCharRaw (bool blocking)
-{
+int StreamConnection::getRspCharRaw(bool blocking) {
   // Blocking read until successful (we retry after interrupts) or
   // catastrophic failure.
 
-  for (;;)
-    {
-      unsigned char  c;
-      int res;
-      struct timeval timeout;
-      fd_set readfds;
+  for (;;) {
+    unsigned char c;
+    int res;
+    struct timeval timeout;
+    fd_set readfds;
 
-      timeout.tv_sec = 0;
-      timeout.tv_usec = 0;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
 
-      FD_ZERO (&readfds);
-      FD_SET (STDIN_FILENO, &readfds);
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
 
-      res = select (STDIN_FILENO + 1,
-                    &readfds, NULL, NULL,
-                    (blocking ? NULL : &timeout));
+    res = select(STDIN_FILENO + 1, &readfds, NULL, NULL,
+                 (blocking ? NULL : &timeout));
 
-      switch (res)
-  	{
-  	case -1:
-  	  // Error: only allow interrupts
+    switch (res) {
+    case -1:
+      // Error: only allow interrupts
 
-  	  if (EINTR != errno)
-  	    {
-  	      cerr << "Warning: Failed to read from RSP client: "
-  		   << "Closing client connection: "
-  		   <<  strerror (errno) << endl;
-  	      return  -1;
-  	    }
-  	  break;
+      if (EINTR != errno) {
+        cerr << "Warning: Failed to read from RSP client: "
+             << "Closing client connection: " << strerror(errno) << endl;
+        return -1;
+      }
+      break;
 
-  	case 0:
-          // Timeout, only happens in the blocking case.
-  	  return  -1;
+    case 0:
+      // Timeout, only happens in the blocking case.
+      return -1;
 
-  	default:
-	  {
-	    ssize_t count;
+    default: {
+      ssize_t count;
 
-	    if ((count = read (STDIN_FILENO, &c, sizeof (c))) == -1)
-	      return -1;
+      if ((count = read(STDIN_FILENO, &c, sizeof(c))) == -1)
+        return -1;
 
-	    if (count == 0)
-	      return -1;
+      if (count == 0)
+        return -1;
 
-	    return  c & 0xff;	// Success, we can return (no sign extend!)
-	  }
-  	}
+      return c & 0xff; // Success, we can return (no sign extend!)
     }
-}	// getRspCharRaw ()
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+    }
+  }
+} // getRspCharRaw ()

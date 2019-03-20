@@ -22,7 +22,7 @@ TEST(PtidTest, Constructor) {
 }
 
 TEST(PtidTest, TestSetters) {
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   ptid.pid(4);
   EXPECT_EQ(4, ptid.pid());
   ptid.tid(5);
@@ -31,7 +31,7 @@ TEST(PtidTest, TestSetters) {
 
 TEST(PtidTest, TestDecodeTid) {
   /* Note: hex strings.  */
-  Ptid ptid(6,7);
+  Ptid ptid(6, 7);
   EXPECT_TRUE(ptid.decode("8"));
   EXPECT_EQ(6, ptid.pid());
   EXPECT_EQ(8, ptid.tid());
@@ -45,7 +45,7 @@ TEST(PtidTest, TestDecodeTid) {
 
 TEST(PtidTest, TestDecodePid) {
   /* Note: hex strings.  */
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_TRUE(ptid.decode("p8"));
   EXPECT_EQ(8, ptid.pid());
   EXPECT_EQ(Ptid::PTID_ALL, ptid.tid());
@@ -59,7 +59,7 @@ TEST(PtidTest, TestDecodePid) {
 
 TEST(PtidTest, TestDecodePtid) {
   /* Note: hex strings.  */
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_TRUE(ptid.decode("p8.3"));
   EXPECT_EQ(8, ptid.pid());
   EXPECT_EQ(3, ptid.tid());
@@ -72,7 +72,7 @@ TEST(PtidTest, TestDecodePtid) {
 }
 
 TEST(PtidTest, TestInvalidDecode) {
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_FALSE(ptid.decode("error"));
   EXPECT_EQ(1, ptid.pid());
   EXPECT_EQ(1, ptid.tid());
@@ -89,14 +89,14 @@ TEST(PtidTest, TestInvalidDecode) {
 
 TEST(PtidTest, TestDecodeTidAll) {
   /* PTID_ALL seems to be considered a valid TID.  */
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_TRUE(ptid.decode("-1"));
   EXPECT_EQ(Ptid::PTID_ALL, ptid.tid());
 }
 
 TEST(PtidTest, TestDecodePidTidAll) {
   /* PTID_ALL seems to be considered a valid TID.  */
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_TRUE(ptid.decode("p3.-1"));
   EXPECT_EQ(3, ptid.pid());
   EXPECT_EQ(Ptid::PTID_ALL, ptid.tid());
@@ -104,14 +104,14 @@ TEST(PtidTest, TestDecodePidTidAll) {
 
 TEST(PtidTest, TestDecodePidAllBad) {
   /* PTID_ALL is not a valid PID with no TID.  */
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_FALSE(ptid.decode("p-1"));
   EXPECT_EQ(1, ptid.pid());
 }
 
 TEST(PtidTest, TestDecodePtidAllBad) {
   /* PTID_ALL is not valid for PID and TID.  */
-  Ptid ptid(1,1);
+  Ptid ptid(1, 1);
   EXPECT_FALSE(ptid.decode("p-1.-1"));
   EXPECT_EQ(1, ptid.pid());
   EXPECT_EQ(1, ptid.tid());
@@ -123,7 +123,7 @@ TEST(PtidTest, TestValidate) {
      an exception when state would become invalid? This tests validate in its
      current form, anyway. Also, what exactly are the validation criteria?
      Needs clarifying / changing, perhaps.  */
-  Ptid ptid1(-3,1);
+  Ptid ptid1(-3, 1);
   EXPECT_FALSE(ptid1.validate());
   Ptid ptid2(1, -3);
   EXPECT_FALSE(ptid2.validate());
@@ -132,7 +132,7 @@ TEST(PtidTest, TestValidate) {
 TEST(PtidTest, Crystalize) {
   // A ptid with no abstract PID/TID components crystalizes to its existing
   // state.
-  Ptid ptid1(1,1);
+  Ptid ptid1(1, 1);
   EXPECT_TRUE(ptid1.crystalize(2, 3));
   EXPECT_EQ(1, ptid1.pid());
   EXPECT_EQ(1, ptid1.tid());

@@ -27,7 +27,6 @@
 
 #include "ITarget.h"
 
-
 //! Class representing a timeout in the GDB server.
 
 //! We may wish to represent timeouts as a cycle count or as a wall clock
@@ -40,50 +39,47 @@
 
 //! We also may have no timeout set.
 
-class Timeout
-{
+class Timeout {
 public:
-
   // Constructors and destructor.
 
-  Timeout ();
-  Timeout (const std::chrono::duration <double> realTimeout);
-  Timeout (const uint64_t cycleTimeout);
-  ~Timeout ();
+  Timeout();
+  Timeout(const std::chrono::duration<double> realTimeout);
+  Timeout(const uint64_t cycleTimeout);
+  ~Timeout();
 
   // Accessors
 
-  void clearTimeout ();
-  std::chrono::duration <double> realTimeout () const;
-  void realTimeout (const std::chrono::duration <double> realTimeout);
-  uint64_t cycleTimeout () const;
-  void cycleTimeout (const uint64_t cycleTimeout);
-  bool haveTimeout () const;
-  bool isRealTimeout () const;
-  bool isCycleTimeout () const;
+  void clearTimeout();
+  std::chrono::duration<double> realTimeout() const;
+  void realTimeout(const std::chrono::duration<double> realTimeout);
+  uint64_t cycleTimeout() const;
+  void cycleTimeout(const uint64_t cycleTimeout);
+  bool haveTimeout() const;
+  bool isRealTimeout() const;
+  bool isCycleTimeout() const;
 
   // Handle time stamps
 
-  void  timeStamp (ITarget * cpu);
-  bool  timedOut (ITarget * cpu) const;
+  void timeStamp(ITarget *cpu);
+  bool timedOut(ITarget *cpu) const;
 
 private:
-
   //! An enumeration for the timeout type.
 
   enum class Type {
-    NONE,				//!< No timeout.
-    REAL,				//!< Wall clock timeout.
-    CYCLE,				//!< Cycle count timeout.
+    NONE,  //!< No timeout.
+    REAL,  //!< Wall clock timeout.
+    CYCLE, //!< Cycle count timeout.
   };
 
   //! Enum to indicate which timeout, if any
 
-  Type  mTimeoutType;
+  Type mTimeoutType;
 
   //! Real timeout
 
-  std::chrono::duration <double> mRealTimeout;
+  std::chrono::duration<double> mRealTimeout;
 
   //! Cycle count timeout
 
@@ -91,19 +87,14 @@ private:
 
   //! Real time stamp
 
-  std::chrono::time_point <std::chrono::system_clock,
-			   std::chrono::duration <double> > mRealStamp;
+  std::chrono::time_point<std::chrono::system_clock,
+                          std::chrono::duration<double>>
+      mRealStamp;
 
   //! Cycle count time stamp
 
-  uint64_t  mCycleStamp;
+  uint64_t mCycleStamp;
 
-};	// Timeout ()
+}; // Timeout ()
 
-#endif	// TIMEOUT_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+#endif // TIMEOUT_H

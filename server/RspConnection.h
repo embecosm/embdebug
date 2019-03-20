@@ -31,32 +31,27 @@ class TraceFlags;
 //! This class is entirely passive. It is up to the caller to determine that a
 //! packet will become available before calling ::getPkt ().
 
-class RspConnection : public AbstractConnection
-{
+class RspConnection : public AbstractConnection {
 public:
-
   // Constructors and destructor
 
-  RspConnection (int         _portNum,
-		 TraceFlags *_traceFlags,
-                 bool        _writePort);
-  ~RspConnection ();
+  RspConnection(int _portNum, TraceFlags *_traceFlags, bool _writePort);
+  ~RspConnection();
 
   // Public interface: manage client connections
 
-  bool  rspConnect ();
-  void  rspClose ();
-  bool  isConnected ();
+  bool rspConnect();
+  void rspClose();
+  bool isConnected();
 
 private:
-
   //! The port number to listen on
 
-  int  portNum;
+  int portNum;
 
   //! The client file descriptor
 
-  int  clientFd;
+  int clientFd;
 
   //! Whether to write the port number to a text file on startup
 
@@ -64,15 +59,9 @@ private:
 
   // Implementation specific routines to handle individual chars.
 
-  virtual bool  putRspCharRaw (char  c);
-  virtual int   getRspCharRaw (bool blocking);
+  virtual bool putRspCharRaw(char c);
+  virtual int getRspCharRaw(bool blocking);
 
-};	// RspConnection ()
+}; // RspConnection ()
 
-#endif	// RSP_CONNECTION_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+#endif // RSP_CONNECTION_H

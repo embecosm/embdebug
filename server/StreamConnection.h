@@ -28,36 +28,27 @@
 //! This class is entirely passive. It is up to the caller to determine
 //! that a packet will become available before calling ::getPkt ().
 
-class StreamConnection : public AbstractConnection
-{
+class StreamConnection : public AbstractConnection {
 public:
-
   // Constructors and destructor
 
-  StreamConnection (TraceFlags *_traceFlags);
-  ~StreamConnection ();
+  StreamConnection(TraceFlags *_traceFlags);
+  ~StreamConnection();
 
   // Public interface: manage client connections
 
-  virtual bool  rspConnect ();
-  virtual void  rspClose ();
-  virtual bool  isConnected ();
+  virtual bool rspConnect();
+  virtual void rspClose();
+  virtual bool isConnected();
 
 private:
-
   // Implementation specific routines to handle individual chars.
 
-  virtual bool  putRspCharRaw (char  c);
-  virtual int   getRspCharRaw (bool blocking);
+  virtual bool putRspCharRaw(char c);
+  virtual int getRspCharRaw(bool blocking);
 
   // Track whether we are connected or not.
   bool mIsConnected;
-};	// StreamConnection ()
+}; // StreamConnection ()
 
-#endif	// STREAM_CONNECTION_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+#endif // STREAM_CONNECTION_H

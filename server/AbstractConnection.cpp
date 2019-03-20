@@ -18,13 +18,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
+#include <cassert>
 #include <cerrno>
 #include <csignal>
 #include <cstring>
-#include <cassert>
 
 #include <sys/select.h>
 #include <unistd.h>
@@ -41,7 +41,6 @@ using std::hex;
 using std::setfill;
 using std::setw;
 
-
 //! Get the next packet from the RSP connection
 
 //! Modeled on the stub version supplied with GDB. This allows the user to
@@ -57,130 +56,105 @@ using std::setw;
 
 //! @return  TRUE to indicate success, FALSE otherwise (means a communications
 //!          failure)
-bool
-AbstractConnection::getPkt (RspPacket& pkt)
-{
+bool AbstractConnection::getPkt(RspPacket &pkt) {
   // Keep getting packets, until one is found with a valid checksum
-  while (true)
-    {
-      int            bufSize = pkt.getBufSize ();
-      unsigned char  checksum;		// The checksum we have computed
-      int            count;		// Index into the buffer
-      int 	     ch;		// Current character
+  while (true) {
+    int bufSize = pkt.getBufSize();
+    unsigned char checksum; // The checksum we have computed
+    int count;              // Index into the buffer
+    int ch;                 // Current character
 
-
-      // Wait around for the start character ('$'). Ignore all other
-      // characters
-      ch = getRspChar ();
-      while (ch != '$')
-	{
-	  if (-1 == ch)
-	    {
-	      return  false;		// Connection failed
-	    }
-	  else
-	    {
- 	      ch = getRspChar ();
-	    }
-	}
-
-      // Read until a '#' or end of buffer is found
-      checksum =  0;
-      count    =  0;
-      while (count < bufSize - 1)
-	{
-	  ch = getRspChar ();
-
-	  if (-1 == ch)
-	    {
-	      return  false;		// Connection failed
-	    }
-
-	  // If we hit a start of line char begin all over again
-	  if ('$' == ch)
-	    {
-	      checksum =  0;
-	      count    =  0;
-
-	      continue;
-	    }
-
-	  // Break out if we get the end of line char
-	  if ('#' == ch)
-	    {
-	      break;
-	    }
-
-	  // Update the checksum and add the char to the buffer
-	  checksum         = checksum + (unsigned char)ch;
-	  pkt.data[count] = (char)ch;
-	  count++;
-	}
-
-      // Mark the end of the buffer with EOS - it's convenient for non-binary
-      // data to be valid strings.
-      pkt.data[count] = 0;
-      pkt.setLen (count);
-
-      // If we have a valid end of packet char, validate the checksum. If we
-      // don't it's because we ran out of buffer in the previous loop.
-      if ('#' == ch)
-	{
-	  unsigned char  xmitcsum;	// The checksum in the packet
-
-	  ch = getRspChar ();
-	  if (-1 == ch)
-	    {
-	      return  false;		// Connection failed
-	    }
-	  xmitcsum = Utils::char2Hex (ch) << 4;
-
-	  ch = getRspChar ();
-	  if (-1 == ch)
-	    {
-	      return  false;			// Connection failed
-	    }
-
-	  xmitcsum += Utils::char2Hex (ch);
-
-	  // If the checksums don't match print a warning, and put the
-	  // negative ack back to the client. Otherwise put a positive ack.
-	  if (checksum != xmitcsum)
-	    {
-	      cerr << "Warning: Bad RSP checksum: Computed 0x"
-			<< setw (2) << setfill ('0') << hex
-			<< checksum << ", received 0x" << xmitcsum
-			<< setfill (' ') << dec << endl;
-	      if (!putRspChar ('-'))		// Failed checksum
-		{
-		  return  false;		// Comms failure
-		}
-	    }
-	  else
-	    {
-	      if (!putRspChar ('+'))		// successful transfer
-		{
-		  return  false;		// Comms failure
-		}
-	      else
-		{
-		  if (traceFlags->traceRsp())
-		    {
-		      cout << "RSP trace: getPkt: " << pkt << endl;
-		    }
-
-		  return  true;			// Success
-		}
-	    }
-	}
-      else
-	{
-	  cerr << "Warning: RSP packet overran buffer" << endl;
-	}
+    // Wait around for the start character ('$'). Ignore all other
+    // characters
+    ch = getRspChar();
+    while (ch != '$') {
+      if (-1 == ch) {
+        return false; // Connection failed
+      } else {
+        ch = getRspChar();
+      }
     }
 
-}	// getPkt ()
+    // Read until a '#' or end of buffer is found
+    checksum = 0;
+    count = 0;
+    while (count < bufSize - 1) {
+      ch = getRspChar();
 
+      if (-1 == ch) {
+        return false; // Connection failed
+      }
+
+      // If we hit a start of line char begin all over again
+      if ('$' == ch) {
+        checksum = 0;
+        count = 0;
+
+        continue;
+      }
+
+      // Break out if we get the end of line char
+      if ('#' == ch) {
+        break;
+      }
+
+      // Update the checksum and add the char to the buffer
+      checksum = checksum + (unsigned char)ch;
+      pkt.data[count] = (char)ch;
+      count++;
+    }
+
+    // Mark the end of the buffer with EOS - it's convenient for non-binary
+    // data to be valid strings.
+    pkt.data[count] = 0;
+    pkt.setLen(count);
+
+    // If we have a valid end of packet char, validate the checksum. If we
+    // don't it's because we ran out of buffer in the previous loop.
+    if ('#' == ch) {
+      unsigned char xmitcsum; // The checksum in the packet
+
+      ch = getRspChar();
+      if (-1 == ch) {
+        return false; // Connection failed
+      }
+      xmitcsum = Utils::char2Hex(ch) << 4;
+
+      ch = getRspChar();
+      if (-1 == ch) {
+        return false; // Connection failed
+      }
+
+      xmitcsum += Utils::char2Hex(ch);
+
+      // If the checksums don't match print a warning, and put the
+      // negative ack back to the client. Otherwise put a positive ack.
+      if (checksum != xmitcsum) {
+        cerr << "Warning: Bad RSP checksum: Computed 0x" << setw(2)
+             << setfill('0') << hex << checksum << ", received 0x" << xmitcsum
+             << setfill(' ') << dec << endl;
+        if (!putRspChar('-')) // Failed checksum
+        {
+          return false; // Comms failure
+        }
+      } else {
+        if (!putRspChar('+')) // successful transfer
+        {
+          return false; // Comms failure
+        } else {
+          if (traceFlags->traceRsp()) {
+            cout << "RSP trace: getPkt: " << pkt << endl;
+          }
+
+          return true; // Success
+        }
+      }
+    } else {
+      cerr << "Warning: RSP packet overran buffer" << endl;
+    }
+  }
+
+} // getPkt ()
 
 //! Put the packet out on the RSP connection
 
@@ -193,91 +167,74 @@ AbstractConnection::getPkt (RspPacket& pkt)
 
 //! @return  TRUE to indicate success, FALSE otherwise (means a communications
 //!          failure).
-bool
-AbstractConnection::putPkt (RspPacket& pkt)
-{
-  int  len = pkt.getLen ();
-  int  ch;				// Ack char
+bool AbstractConnection::putPkt(RspPacket &pkt) {
+  int len = pkt.getLen();
+  int ch; // Ack char
 
   // Construct $<packet info>#<checksum>. Repeat until the GDB client
   // acknowledges satisfactory receipt.
-  do
+  do {
+    unsigned char checksum = 0; // Computed checksum
+    int count = 0;              // Index into the buffer
+
+    if (!putRspChar('$')) // Start char
     {
-      unsigned char checksum = 0;	// Computed checksum
-      int           count    = 0;	// Index into the buffer
+      return false; // Comms failure
+    }
 
-      if (!putRspChar ('$'))		// Start char
-	{
-	  return  false;		// Comms failure
-	}
+    // Body of the packet
+    for (count = 0; count < len; count++) {
+      unsigned char ch = pkt.data[count];
 
-
-      // Body of the packet
-      for (count = 0; count < len; count++)
-	{
-	  unsigned char  ch = pkt.data[count];
-
-	  // Check for escaped chars
-	  if (('$' == ch) || ('#' == ch) || ('*' == ch) || ('}' == ch))
-	    {
-	      ch       ^= 0x20;
-	      checksum += (unsigned char)'}';
-	      if (!putRspChar ('}'))
-		{
-		  return  false;	// Comms failure
-		}
-
-	    }
-
-	  checksum += ch;
-	  if (!putRspChar (ch))
-	    {
-	      return  false;		// Comms failure
-	    }
-	}
-
-      if (!putRspChar ('#'))		// End char
-	{
-	  return  false;		// Comms failure
-	}
-
-      // Computed checksum
-      if (!putRspChar (Utils::hex2Char (checksum >> 4)))
-	{
-	  return  false;		// Comms failure
-	}
-      if (!putRspChar (Utils::hex2Char (checksum % 16)))
-	{
-	  return  false;		// Comms failure
-	}
-
-      // Check for ack of connection failure
-      ch = getRspChar ();
-      if (-1 == ch)
-	{
-	  return  false;		// Comms failure
-	}
-      else if (BREAK_CHAR == ch)
-        {
-          // Handle a break arriving while we're waiting for a packet ACK.
-          // We only support the arrival of a single break, which I think
-          // is acceptable.
-          mHavePendingBreak = true;
-          ch = getRspChar ();
-          assert (ch != BREAK_CHAR);
+      // Check for escaped chars
+      if (('$' == ch) || ('#' == ch) || ('*' == ch) || ('}' == ch)) {
+        ch ^= 0x20;
+        checksum += (unsigned char)'}';
+        if (!putRspChar('}')) {
+          return false; // Comms failure
         }
-    }
-  while ('+' != ch);
+      }
 
-  if (traceFlags->traceRsp())
+      checksum += ch;
+      if (!putRspChar(ch)) {
+        return false; // Comms failure
+      }
+    }
+
+    if (!putRspChar('#')) // End char
     {
-      cout << "RSP trace: putPkt: " << pkt << endl;
+      return false; // Comms failure
     }
 
-  return  true;
+    // Computed checksum
+    if (!putRspChar(Utils::hex2Char(checksum >> 4))) {
+      return false; // Comms failure
+    }
+    if (!putRspChar(Utils::hex2Char(checksum % 16))) {
+      return false; // Comms failure
+    }
 
-}	// putPkt ()
+    // Check for ack of connection failure
+    ch = getRspChar();
+    if (-1 == ch) {
+      return false; // Comms failure
+    } else if (BREAK_CHAR == ch) {
+      // Handle a break arriving while we're waiting for a packet ACK.
+      // We only support the arrival of a single break, which I think
+      // is acceptable.
+      mHavePendingBreak = true;
+      ch = getRspChar();
+      assert(ch != BREAK_CHAR);
+    }
+  } while ('+' != ch);
 
+  if (traceFlags->traceRsp()) {
+    cout << "RSP trace: putPkt: " << pkt << endl;
+  }
+
+  return true;
+
+} // putPkt ()
 
 //! Put a single character out on the RSP connection
 
@@ -287,14 +244,10 @@ AbstractConnection::putPkt (RspPacket& pkt)
 //! @param[in] c  The character to put out
 //! @return  TRUE if char sent OK, FALSE if not (communications failure)
 
-bool
-AbstractConnection::putRspChar (char  c)
-{
-  return  putRspCharRaw (c);
+bool AbstractConnection::putRspChar(char c) {
+  return putRspCharRaw(c);
 
-}	// putRspChar ()
-
-
+} // putRspChar ()
 
 //! Get a single character from the RSP connection with buffering
 
@@ -306,30 +259,25 @@ AbstractConnection::putRspChar (char  c)
 
 //! @return  The character received or -1 on failure
 
-int
-AbstractConnection::getRspChar ()
-{
+int AbstractConnection::getRspChar() {
   int ch;
 
   if (mNumGetBufChars > 1)
-    cerr << "Warning: Too many cached characters ("
-	 << dec << mNumGetBufChars << ")" << endl;
+    cerr << "Warning: Too many cached characters (" << dec << mNumGetBufChars
+         << ")" << endl;
 
-  if (mNumGetBufChars > 0)
-    {
-      ch = mGetCharBuf;
-      mNumGetBufChars = 0;
-    }
-  else
+  if (mNumGetBufChars > 0) {
+    ch = mGetCharBuf;
+    mNumGetBufChars = 0;
+  } else
     // It's tempting to think we can check for BREAK_CHAR here.  DON'T!
     // This method is used when reading in whole packets, and the
     // BREAK_CHAR is only special when it arrives outside of a packet.
-    ch = getRspCharRaw (true);
+    ch = getRspCharRaw(true);
 
-  return  ch;
+  return ch;
 
-}	// getRspChar ()
-
+} // getRspChar ()
 
 //! Have we received a break character.
 
@@ -340,34 +288,26 @@ AbstractConnection::getRspChar ()
 
 //! @return  TRUE if we have received a break character, FALSE otherwise.
 
-bool
-AbstractConnection::haveBreak ()
-{
-  if (!mHavePendingBreak
-      && mNumGetBufChars == 0)
-    {
-      // Non-blocking read to possibly get a character.
+bool AbstractConnection::haveBreak() {
+  if (!mHavePendingBreak && mNumGetBufChars == 0) {
+    // Non-blocking read to possibly get a character.
 
-      int nextChar = getRspCharRaw (false);
+    int nextChar = getRspCharRaw(false);
 
-      if (nextChar != -1)
-	{
-	  if (nextChar == BREAK_CHAR)
-	    mHavePendingBreak = true;
-	  else
-	    {
-	      mGetCharBuf = nextChar;
-	      mNumGetBufChars = 1;
-	    }
-	}
+    if (nextChar != -1) {
+      if (nextChar == BREAK_CHAR)
+        mHavePendingBreak = true;
+      else {
+        mGetCharBuf = nextChar;
+        mNumGetBufChars = 1;
+      }
     }
+  }
 
-  if (mHavePendingBreak)
-    {
-      mHavePendingBreak = false;
-      return true;
-    }
-  else
+  if (mHavePendingBreak) {
+    mHavePendingBreak = false;
+    return true;
+  } else
     return false;
 
-}	// haveBreak ()
+} // haveBreak ()

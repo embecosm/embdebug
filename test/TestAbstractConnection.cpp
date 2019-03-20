@@ -13,13 +13,13 @@
 
 class TestConnection : public AbstractConnection {
 public:
-  TestConnection(TraceFlags *traceFlags) :
-    AbstractConnection(traceFlags), _pos(0), _buf(nullptr) { }
-  virtual ~TestConnection () override { }
+  TestConnection(TraceFlags *traceFlags)
+      : AbstractConnection(traceFlags), _pos(0), _buf(nullptr) {}
+  virtual ~TestConnection() override {}
 
-  virtual bool rspConnect () override { return true; }
-  virtual void rspClose () override { }
-  virtual bool isConnected () override { return true; }
+  virtual bool rspConnect() override { return true; }
+  virtual void rspClose() override {}
+  virtual bool isConnected() override { return true; }
 
   void setBuf(const char *buf) {
     _buf = buf;
@@ -27,20 +27,23 @@ public:
   }
 
 protected:
-  virtual bool putRspCharRaw (char  __attribute__((unused)) c) override
-    { /* TBC */ return true; }
-  virtual int  getRspCharRaw (bool __attribute__((unused)) blocking) {
+  virtual bool putRspCharRaw(char __attribute__((unused))
+                             c) override { /* TBC */
+    return true;
+  }
+  virtual int getRspCharRaw(bool __attribute__((unused)) blocking) {
     if (_buf)
       return _buf[_pos++];
     else
-      throw std::runtime_error("Buffer accessed before being set"); }
+      throw std::runtime_error("Buffer accessed before being set");
+  }
 
 private:
   size_t _pos;
   const char *_buf;
 };
 
-class AbstractConnectionTest: public ::testing::TestWithParam<std::string> {
+class AbstractConnectionTest : public ::testing::TestWithParam<std::string> {
 protected:
   void SetUp() override {
     flags = new TraceFlags();
@@ -59,7 +62,7 @@ protected:
 };
 
 std::string packetData(std::string buf) {
-  return buf.substr(1, buf.size()-4);
+  return buf.substr(1, buf.size() - 4);
 }
 
 TEST_P(AbstractConnectionTest, GetPkt) {
@@ -98,13 +101,8 @@ TEST_P(AbstractConnectionTest, PutPkt) {
   free(outbuf);
 }*/
 
-INSTANTIATE_TEST_CASE_P(SimplePackets, AbstractConnectionTest, ::testing::Values(
-  "$Hc-1#09",
-  "$qOffsets#4b",
-  "$p20#d2",
-  "$qsThreadInfo#c8",
-  "$P20=7601100100000000#ff",
-  "$vCont;c:p1.-1#0f"
-));
-
-
+INSTANTIATE_TEST_CASE_P(SimplePackets, AbstractConnectionTest,
+                        ::testing::Values("$Hc-1#09", "$qOffsets#4b", "$p20#d2",
+                                          "$qsThreadInfo#c8",
+                                          "$P20=7601100100000000#ff",
+                                          "$vCont;c:p1.-1#0f"));

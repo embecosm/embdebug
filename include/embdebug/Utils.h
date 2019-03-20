@@ -27,53 +27,34 @@
 #include <string>
 #include <vector>
 
-
 //! A class offering a number of convenience utilities for the GDB Server.
 
 //! All static functions. This class is not intended to be instantiated.
-class  Utils
-{
+class Utils {
 public:
+  static bool isHexStr(const char *buf, const std::size_t len);
+  static uint8_t char2Hex(int c);
+  static char hex2Char(uint8_t d);
+  static void regVal2Hex(uint64_t val, char *buf, int numBytes,
+                         bool isLittleEndianP);
+  static uint64_t hex2RegVal(const char *buf, int numBytes,
+                             bool isLittleEndianP);
+  static std::size_t val2Hex(uint64_t val, char *buf);
+  static uint64_t hex2Val(const char *buf, std::size_t len);
+  static void ascii2Hex(char *dest, char *src);
+  static void hex2Ascii(char *dest, char *src);
+  static int rspUnescape(char *buf, int len);
+  static std::vector<std::string> &split(const std::string &s,
+                                         const std::string &delim,
+                                         std::vector<std::string> &elems);
 
-  static bool        isHexStr (const char *       buf,
-			       const std::size_t  len);
-  static uint8_t     char2Hex (int  c);
-  static char        hex2Char (uint8_t  d);
-  static void        regVal2Hex (uint64_t  val,
-				 char     *buf,
-				 int       numBytes,
-				 bool      isLittleEndianP);
-  static uint64_t    hex2RegVal (const char * buf,
-				 int          numBytes,
-				 bool         isLittleEndianP);
-  static std::size_t val2Hex (uint64_t  val,
-			      char     *buf);
-  static uint64_t    hex2Val (const char * buf,
-			      std::size_t  len);
-  static void        ascii2Hex (char *dest,
-				char *src);
-  static void        hex2Ascii (char *dest,
-				char *src);
-  static int         rspUnescape (char *buf,
-				  int   len);
-  static std::vector<std::string> & split (const std::string & s,
-  					   const std::string & delim,
-  					   std::vector<std::string> & elems);
-
-  static bool str2int (int &i, const std::string &str, int base = 0);
+  static bool str2int(int &i, const std::string &str, int base = 0);
 
 private:
-
   // Private constructor cannot be instantiated
 
-  Utils () {};
+  Utils(){};
 
-};	// class Utils
+}; // class Utils
 
-#endif	// UTILS_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+#endif // UTILS_H

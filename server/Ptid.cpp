@@ -20,12 +20,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #include <cstring>
 
 #include "Ptid.h"
 #include "embdebug/Utils.h"
-
 
 using std::cerr;
 using std::endl;
@@ -35,73 +33,41 @@ using std::endl;
 //! @param[in]  pid  The process ID
 //! @param[in]  tid  The tread ID
 
-Ptid::Ptid (const int  pid,
-	    const int  tid) :
-  mPid (pid),
-  mTid (tid)
-{
-  if (!validate ())
+Ptid::Ptid(const int pid, const int tid) : mPid(pid), mTid(tid) {
+  if (!validate())
     cerr << "Invalid PTID created: " << *this << endl;
 
-}	// Ptid ()
-
+} // Ptid ()
 
 //! Destructor.
 
 //! For now nothing to do
 
-Ptid::~Ptid ()
-{
-}	// ~Ptid
-
+Ptid::~Ptid() {} // ~Ptid
 
 //! Accessor to set the PID.
 
 //! @param[in] The PID value to use
 
-void
-Ptid::pid (const int _pid)
-{
-  mPid = _pid;
-
-}	// pid ()
-
+void Ptid::pid(const int _pid) { mPid = _pid; } // pid ()
 
 //! Accessor to get the PID.
 
 //! @results  The value of the PID
 
-int
-Ptid::pid () const
-{
-  return mPid;
-
-}	// pid ()
-
+int Ptid::pid() const { return mPid; } // pid ()
 
 //! Accessor to set the TID.
 
 //! @param[in] The TID value to use
 
-void
-Ptid::tid (const int _tid)
-{
-  mTid = _tid;
-
-}	// tid ()
-
+void Ptid::tid(const int _tid) { mTid = _tid; } // tid ()
 
 //! Accessor to get the TID.
 
 //! @results  The value of the TID
 
-int
-Ptid::tid () const
-{
-  return mTid;
-
-}	// tid ()
-
+int Ptid::tid() const { return mTid; } // tid ()
 
 //! Select a specific PTID
 
@@ -116,56 +82,51 @@ Ptid::tid () const
 //! @return TRUE if we did crystalize, FALSE otherwise. If we return FALSE,
 //!         the values of mPid and mTid are not changed.
 
-bool
-Ptid::crystalize (int  defaultPid,
-		  int  defaultTid)
-{
+bool Ptid::crystalize(int defaultPid, int defaultTid) {
   int pid;
   int tid;
 
-  if (!validate ())		// CHeck we don't have nonsense
-    {
-      cerr << "Warning: Attempt to crystalize invalid PTID: " << *this << endl;
-      return  false;
-    }
+  if (!validate()) // CHeck we don't have nonsense
+  {
+    cerr << "Warning: Attempt to crystalize invalid PTID: " << *this << endl;
+    return false;
+  }
 
-  switch (mPid)
-    {
-    case PTID_INV:
-    case PTID_ALL:
+  switch (mPid) {
+  case PTID_INV:
+  case PTID_ALL:
 
-      cerr << "Warning: Can't crystalize PID: " << *this << endl;
-      return false;
+    cerr << "Warning: Can't crystalize PID: " << *this << endl;
+    return false;
 
-    case PTID_ANY:
+  case PTID_ANY:
 
-      pid = defaultPid;
-      break;
+    pid = defaultPid;
+    break;
 
-    default:
+  default:
 
-      pid = mPid;
-      break;
-    }
+    pid = mPid;
+    break;
+  }
 
-  switch (mTid)
-    {
-    case PTID_INV:
-    case PTID_ALL:
+  switch (mTid) {
+  case PTID_INV:
+  case PTID_ALL:
 
-      cerr << "Warning: Can't crystalize TID: " << *this << endl;
-      return false;
+    cerr << "Warning: Can't crystalize TID: " << *this << endl;
+    return false;
 
-    case PTID_ANY:
+  case PTID_ANY:
 
-      tid = defaultTid;
-      break;
+    tid = defaultTid;
+    break;
 
-    default:
+  default:
 
-      tid = mTid;
-      break;
-    }
+    tid = mTid;
+    break;
+  }
 
   // All OK, set up crystalized PTID.
 
@@ -174,8 +135,7 @@ Ptid::crystalize (int  defaultPid,
 
   return true;
 
-}	// crystalize ()
-
+} // crystalize ()
 
 //! Is this a valid PTID
 
@@ -184,20 +144,17 @@ Ptid::crystalize (int  defaultPid,
 
 //! @return  TRUE if this is a valid PTID, FALSE otherwise.
 
-bool
-Ptid::validate ()
-{
-  if (!((mPid > 0) || (PTID_ANY == mPid)
-	|| (PTID_ALL == mPid) || (PTID_INV == mPid)))
+bool Ptid::validate() {
+  if (!((mPid > 0) || (PTID_ANY == mPid) || (PTID_ALL == mPid) ||
+        (PTID_INV == mPid)))
     return false;
-  else if (!((mTid > 0) || (PTID_ANY == mTid)
-	     || (PTID_ALL == mTid) || (PTID_INV == mTid)))
+  else if (!((mTid > 0) || (PTID_ANY == mTid) || (PTID_ALL == mTid) ||
+             (PTID_INV == mTid)))
     return false;
   else
     return true;
 
-}	// validate ()
-
+} // validate ()
 
 //! Break out a PTID
 
@@ -222,69 +179,57 @@ Ptid::validate ()
 //! @return TRUE if successfully parsed, FALSE otherwise (in which case the
 //!         values in mPid and mTid are unchanged).
 
-bool
-Ptid::decode (const char *buf)
-{
-  int          pid;
-  int          tid;
-  const char * ptr;		// Pointer into the buffer
+bool Ptid::decode(const char *buf) {
+  int pid;
+  int tid;
+  const char *ptr; // Pointer into the buffer
 
   // break out formats
 
-  if (buf[0] != 'p')
-    {
-      // Simplest format. Just a TID. We leave PID unchanged.
+  if (buf[0] != 'p') {
+    // Simplest format. Just a TID. We leave PID unchanged.
 
-      pid = mPid;
-      tid = decodeField (buf, strlen (buf));
+    pid = mPid;
+    tid = decodeField(buf, strlen(buf));
 
-      if (PTID_INV == tid)
-	{
-	  cerr << "Warning: Invalid TID, " << buf << ": ignored." << endl;
-	  return false;
-	}
+    if (PTID_INV == tid) {
+      cerr << "Warning: Invalid TID, " << buf << ": ignored." << endl;
+      return false;
     }
-  else if (nullptr == (ptr = index (buf, '.')))
-    {
-      // Just a PID
+  } else if (nullptr == (ptr = index(buf, '.'))) {
+    // Just a PID
 
-      pid = decodeField (&(buf[1]), strlen (&(buf[1])));
-      tid = PTID_ALL;
+    pid = decodeField(&(buf[1]), strlen(&(buf[1])));
+    tid = PTID_ALL;
 
-      if (PTID_INV == pid)
-	{
-	  cerr << "Warning: Invalid PID, " << buf << ": ignored." << endl;
-	  return false;
-	}
+    if (PTID_INV == pid) {
+      cerr << "Warning: Invalid PID, " << buf << ": ignored." << endl;
+      return false;
     }
-  else
-    {
-      // A PTID
+  } else {
+    // A PTID
 
-      pid = decodeField (&(buf[1]), ptr - buf - 1);
-      tid = decodeField (&(ptr[1]), strlen (&(ptr[1])));
+    pid = decodeField(&(buf[1]), ptr - buf - 1);
+    tid = decodeField(&(ptr[1]), strlen(&(ptr[1])));
 
-      if ((PTID_INV == pid) || (PTID_INV == tid))
-	{
-	  cerr << "Warning: Invalid PTID, " << buf << ": ignored." << endl;
-	  return false;
-	}
-    }
-
-  // Rule out an invalid combination.
-
-  if ((PTID_ALL == pid) & ((PTID_ALL == tid) || (PTID_ANY == tid)))
-    {
+    if ((PTID_INV == pid) || (PTID_INV == tid)) {
       cerr << "Warning: Invalid PTID, " << buf << ": ignored." << endl;
       return false;
     }
+  }
+
+  // Rule out an invalid combination.
+
+  if ((PTID_ALL == pid) & ((PTID_ALL == tid) || (PTID_ANY == tid))) {
+    cerr << "Warning: Invalid PTID, " << buf << ": ignored." << endl;
+    return false;
+  }
 
   mPid = pid;
   mTid = tid;
   return true;
 
-}	// rspBreakoutPid ()
-
+} // rspBreakoutPid ()
 
 //! Break out a single PTID field
 
@@ -301,21 +246,17 @@ Ptid::decode (const char *buf)
 //! @param[in] len  Length of the string to parse
 //! @return The field value
 
-int
-Ptid::decodeField (const char *       buf,
-		   const std::size_t  len) const
-{
+int Ptid::decodeField(const char *buf, const std::size_t len) const {
   if ((1 == len) && ('0' == buf[0]))
     return PTID_ANY;
   else if ((2 == len) && ('-' == buf[0]) && ('1' == buf[1]))
     return PTID_ALL;
-  else if (Utils::isHexStr (buf, len))
-    return  Utils::hex2Val (buf, len);
+  else if (Utils::isHexStr(buf, len))
+    return Utils::hex2Val(buf, len);
   else
     return PTID_INV;
 
-}	// decodeField ()
-
+} // decodeField ()
 
 //! Encode a PTID
 
@@ -324,28 +265,25 @@ Ptid::decodeField (const char *       buf,
 //! @param[out] buf  Buffer for the encoding (assumed large enough)
 //! @return TRUE if we succeeded, FALSE otherwise.
 
-bool
-Ptid::encode (char * buf)
-{
+bool Ptid::encode(char *buf) {
   buf[0] = 'p';
 
-  int         off = 1;
-  std::size_t len = encodeField (&(buf[off]), mPid);
+  int off = 1;
+  std::size_t len = encodeField(&(buf[off]), mPid);
 
   if (0 == len)
-    return  false;
+    return false;
 
   off += len;
   buf[off] = '.';
   off++;
 
-  len = encodeField (&(buf[off]), mTid);
+  len = encodeField(&(buf[off]), mTid);
   buf[off + len] = '\0';
 
   return (0 != len);
 
-}	// encode ()
-
+} // encode ()
 
 //! Encode a PTID field
 
@@ -358,32 +296,27 @@ Ptid::encode (char * buf)
 //! @param[in]  ptid  Process ID
 //! @return length of the string if we succeed, 0 otherwise.
 
-std::size_t
-Ptid::encodeField (char * buf,
-		   int    ptid)
-{
+std::size_t Ptid::encodeField(char *buf, int ptid) {
   if (ptid < PTID_ALL)
-    return  0;
+    return 0;
 
-  switch (ptid)
-    {
-    case PTID_ALL:
+  switch (ptid) {
+  case PTID_ALL:
 
-      buf[0] = '-';
-      buf[1] = '1';
-      return  2;
+    buf[0] = '-';
+    buf[1] = '1';
+    return 2;
 
-    case PTID_ANY:
+  case PTID_ANY:
 
-      buf[0] = '0';
-      return  1;
+    buf[0] = '0';
+    return 1;
 
-    default:
+  default:
 
-      return Utils::val2Hex (ptid, buf);
-    }
-}	// encodeField ()
-
+    return Utils::val2Hex(ptid, buf);
+  }
+} // encodeField ()
 
 //! Output operator for Ptid class
 
@@ -391,16 +324,7 @@ Ptid::encodeField (char * buf,
 //! @param[in] p  The Ptid value to output.
 //! @return  The stream with the item appended.
 
-std::ostream &
-operator<< (std::ostream & s,
-	    Ptid  p)
-{
+std::ostream &operator<<(std::ostream &s, Ptid p) {
   return s << "{" << p.mPid << "," << p.mTid << "}";
 
-}	// operator<< ()
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+} // operator<< ()

@@ -26,11 +26,11 @@
 #include <chrono>
 #include <cstdio>
 #define __STDC_FORMAT_MACROS
+#include <cassert>
 #include <inttypes.h>
+#include <map>
 #include <string>
 #include <vector>
-#include <cassert>
-#include <map>
 
 // General interface to targets
 
@@ -48,61 +48,49 @@
 //! Module implementing a GDB RSP server.
 
 //! How should we behave when GDB sends a kill (k) packet?
-enum KillBehaviour
-  {
-    //! Reset the target, but remain alive.
-    RESET_ON_KILL,
-    //! Stop the target, close the connection and return.
-    EXIT_ON_KILL
-  };
-
+enum KillBehaviour {
+  //! Reset the target, but remain alive.
+  RESET_ON_KILL,
+  //! Stop the target, close the connection and return.
+  EXIT_ON_KILL
+};
 
 //! A loop listens for RSP requests, which are converted to requests to read
 //! and write registers, read and write memory, or control the CPU
 
-class GdbServer
-{
+class GdbServer {
 public:
-
   // Constructor and destructor
 
-  GdbServer (AbstractConnection * _conn,
-		 ITarget * _cpu,
-                 TraceFlags *traceFlags,
-		 KillBehaviour _killBehaviour);
-  ~GdbServer ();
+  GdbServer(AbstractConnection *_conn, ITarget *_cpu, TraceFlags *traceFlags,
+            KillBehaviour _killBehaviour);
+  ~GdbServer();
 
   // Main loop to listen for and service RSP requests.
 
-  int  rspServer ();
+  int rspServer();
 
 private:
-
   //! Definition of GDB target signals.
 
   enum class TargetSignal : int {
-    NONE    =   0,
-    INT     =   2,
-    TRAP    =   5,
-    XCPU    =  24,
-    USR1    =  30,
+    NONE = 0,
+    INT = 2,
+    TRAP = 5,
+    XCPU = 24,
+    USR1 = 30,
     UNKNOWN = 143
   };
 
   //! What stop mode we are in
 
-  enum class StopMode : char {
-    NON_STOP,
-    ALL_STOP
-  };
+  enum class StopMode : char { NON_STOP, ALL_STOP };
 
   // stream operators have to be friends to access private members
 
-  friend std::ostream & operator<< (std::ostream & s,
-				    GdbServer::TargetSignal  p);
+  friend std::ostream &operator<<(std::ostream &s, GdbServer::TargetSignal p);
 
-  friend std::ostream & operator<< (std::ostream & s,
-				    GdbServer::StopMode  p);
+  friend std::ostream &operator<<(std::ostream &s, GdbServer::StopMode p);
 
   // For now these are hard-coded constants, but they need to be made
   // configurable.
@@ -113,23 +101,23 @@ private:
 
   //! Total bytes taken by regs. 4 bytes for each
 
-  static const int RISCV_NUM_REG_BYTES = RISCV_NUM_REGS * sizeof (uint_reg_t);
+  static const int RISCV_NUM_REG_BYTES = RISCV_NUM_REGS * sizeof(uint_reg_t);
 
   //! Minimum packet size for RSP. Must be large enough for any initial
   //! dialogue. Should at least allow all the registers ASCII encloded + end of
   //! string marker.
 
-  static const int RSP_PKT_SIZE = (RISCV_NUM_REG_BYTES * 2 + 1) < 256
-				    ? 256 : RISCV_NUM_REG_BYTES * 2 + 1;
+  static const int RSP_PKT_SIZE =
+      (RISCV_NUM_REG_BYTES * 2 + 1) < 256 ? 256 : RISCV_NUM_REG_BYTES * 2 + 1;
 
   // Default values for PTIDs.
 
-  static const int  PID_DEFAULT = 1;	//!< Default PID is core 0
-  static const int  TID_DEFAULT = 1;	//!< Only ever have one thread
+  static const int PID_DEFAULT = 1; //!< Default PID is core 0
+  static const int TID_DEFAULT = 1; //!< Only ever have one thread
 
   //! Constant for a breakpoint (EBREAK). Remember we are little-endian.
 
-  static const uint32_t  BREAK_INSTR = 0x100073;
+  static const uint32_t BREAK_INSTR = 0x100073;
 
   //! Constant which is the sample period (in instruction steps) during
   //! "continue" etc.
@@ -138,7 +126,7 @@ private:
 
   //! Our associated simulated CPU
 
-  ITarget * cpu;
+  ITarget *cpu;
 
   //! Our trace flags
 
@@ -175,7 +163,7 @@ private:
 
   //! Stop mode
 
-  StopMode  mStopMode;
+  StopMode mStopMode;
 
   //! Current PTID
 
@@ -184,7 +172,7 @@ private:
   //! Next process to report, this is only used when responding to
   //! qfThreadInfo and qsThreadInfo requests.
 
-  unsigned int  mNextProcess;
+  unsigned int mNextProcess;
 
   //! Track when we are processing a syscall.  We shouldn't get nested
   //! syscalls.
@@ -203,97 +191,61 @@ private:
   //! Class to keep track of the number of cores on the machine, and how
   //! many are still alive.
 
-  class CoreManager
-  {
+  class CoreManager {
   public:
-    CoreManager (unsigned int count);
+    CoreManager(unsigned int count);
 
-    unsigned int getCpuCount () const
-    {
-      return mNumCores;
-    }
+    unsigned int getCpuCount() const { return mNumCores; }
 
-    unsigned int getLiveCoreCount () const
-    {
-      return mLiveCores;
-    }
+    unsigned int getLiveCoreCount() const { return mLiveCores; }
 
-    static unsigned int pid2CoreNum (unsigned int pid)
-    {
-      return pid - 1;
-    }
+    static unsigned int pid2CoreNum(unsigned int pid) { return pid - 1; }
 
-    static unsigned int coreNum2Pid (unsigned int coreNum)
-    {
+    static unsigned int coreNum2Pid(unsigned int coreNum) {
       return coreNum + 1;
     }
 
-    bool isCoreLive (unsigned int coreNum) const
-    {
-      return mCoreStates[coreNum].isLive ();
+    bool isCoreLive(unsigned int coreNum) const {
+      return mCoreStates[coreNum].isLive();
     }
 
-    bool killCoreNum (unsigned int coreNum);
+    bool killCoreNum(unsigned int coreNum);
 
-    void reset ();
+    void reset();
 
     //! Class to keep track of the current state of one target core.
 
-    class CoreState
-    {
+    class CoreState {
     public:
-      CoreState ()
-        : mStopReason (ITarget::ResumeRes::INTERRUPTED),
-          mResumeType (ITarget::ResumeType::NONE),
-          mStopReported (true),
-          mIsLive (true)
-      {
+      CoreState()
+          : mStopReason(ITarget::ResumeRes::INTERRUPTED),
+            mResumeType(ITarget::ResumeType::NONE), mStopReported(true),
+            mIsLive(true) {
         //! None.
       }
 
-      void killCore ()
-      {
-        mIsLive = false;
-      }
+      void killCore() { mIsLive = false; }
 
-      bool isLive () const
-      {
-        return mIsLive;
-      }
+      bool isLive() const { return mIsLive; }
 
-      ITarget::ResumeRes stopReason () const
-      {
-        return mStopReason;
-      }
+      ITarget::ResumeRes stopReason() const { return mStopReason; }
 
-      bool isRunning () const
-      {
+      bool isRunning() const {
         return mResumeType != ITarget::ResumeType::NONE;
       }
 
-      bool hasUnreportedStop () const
-      {
-        return !mStopReported;
-      }
+      bool hasUnreportedStop() const { return !mStopReported; }
 
-      void reportStopReason ()
-      {
-        mStopReported = true;
-      }
+      void reportStopReason() { mStopReported = true; }
 
-      void setStopReason (ITarget::ResumeRes res)
-      {
+      void setStopReason(ITarget::ResumeRes res) {
         mStopReason = res;
         mStopReported = (res == ITarget::ResumeRes::NONE);
       }
 
-      void setResumeType (ITarget::ResumeType type)
-      {
-        mResumeType = type;
-      }
+      void setResumeType(ITarget::ResumeType type) { mResumeType = type; }
 
     private:
-
       // The last reason that this core stopped.
       ITarget::ResumeRes mStopReason;
 
@@ -309,22 +261,20 @@ private:
       bool mIsLive;
     };
 
-    CoreState& operator[] (std::size_t idx)
-    {
-      assert (idx < mNumCores);
+    CoreState &operator[](std::size_t idx) {
+      assert(idx < mNumCores);
       return mCoreStates[idx];
     }
 
-    const CoreState& operator[] (std::size_t idx) const
-    {
-      assert (idx < mNumCores);
+    const CoreState &operator[](std::size_t idx) const {
+      assert(idx < mNumCores);
       return mCoreStates[idx];
     }
 
   private:
     // Delete default and copy constructors.
-    CoreManager () = delete;
-    CoreManager (const CoreManager &) = delete;
+    CoreManager() = delete;
+    CoreManager(const CoreManager &) = delete;
 
     //! Total number of cores.
     unsigned int mNumCores;
@@ -333,50 +283,44 @@ private:
     //! number of entries in mCoreLive that are true.
     unsigned int mLiveCores;
 
-    std::vector <CoreState> mCoreStates;
+    std::vector<CoreState> mCoreStates;
   };
 
   //! Keep track of core count, and which cores are live.
   CoreManager mCoreManager;
 
   // Main RSP request handler
-  void  rspClientRequest ();
+  void rspClientRequest();
 
   // Handle the various RSP requests
-  int   stringLength (uint32_t addr);
-  void  rspSyscallRequest ();
-  void  rspSyscallReply ();
-  void  rspReportException (TargetSignal  sig = TargetSignal::TRAP);
-  void  rspReadAllRegs ();
-  void  rspWriteAllRegs ();
-  void  rspReadMem ();
-  void  rspWriteMem ();
-  void  rspReadReg ();
-  void  rspWriteReg ();
-  void  rspQuery ();
-  void  rspCommand ();
-  void  rspSetCommand (const char* cmd);
-  void  rspShowCommand (const char* cmd);
-  void  rspSet ();
-  void  rspRestart ();
-  void  rspVpkt ();
-  void  rspWriteMemBin ();
-  void  rspRemoveMatchpoint ();
-  void  rspInsertMatchpoint ();
-  void  rspWriteNextThreadInfo ();
-  void  rspVCont ();
-  void  rspVKill ();
+  int stringLength(uint32_t addr);
+  void rspSyscallRequest();
+  void rspSyscallReply();
+  void rspReportException(TargetSignal sig = TargetSignal::TRAP);
+  void rspReadAllRegs();
+  void rspWriteAllRegs();
+  void rspReadMem();
+  void rspWriteMem();
+  void rspReadReg();
+  void rspWriteReg();
+  void rspQuery();
+  void rspCommand();
+  void rspSetCommand(const char *cmd);
+  void rspShowCommand(const char *cmd);
+  void rspSet();
+  void rspRestart();
+  void rspVpkt();
+  void rspWriteMemBin();
+  void rspRemoveMatchpoint();
+  void rspInsertMatchpoint();
+  void rspWriteNextThreadInfo();
+  void rspVCont();
+  void rspVKill();
 
-  void  doCoreActions (void);
-  bool  getNextStopEvent (unsigned int &, ITarget::ResumeRes &);
-  bool  processStopEvents (void);
+  void doCoreActions(void);
+  bool getNextStopEvent(unsigned int &, ITarget::ResumeRes &);
+  bool processStopEvents(void);
 
-};	// GdbServer ()
+}; // GdbServer ()
 
-#endif	// GDB_SERVER_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// End:
+#endif // GDB_SERVER_H

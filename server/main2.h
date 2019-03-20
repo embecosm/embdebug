@@ -23,7 +23,7 @@
 #include "ITarget.h"
 #include "TraceFlags.h"
 
-int main2 (ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
-           int rspPort, bool writePort);
+int main2(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
+          int rspPort, bool writePort);
 
 #endif

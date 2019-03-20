@@ -25,66 +25,50 @@
 #include <cstdint>
 #include <vector>
 
-
 //! A memory map class
 
 //! A convenience class for describing memory maps
 
-class MemMap final
-{
- public:
-
+class MemMap final {
+public:
   //! Enumeration for memory map.
 
-  enum class Type
-  {
-    UNKNOWN,			//!< Unknown memory type
-    IMEM,			//!< Instruction memory
-    DMEM,			//!< Data memory
-    PERS,			//!< peripheral space
-    ALIAS,			//!< alias space
-    EMEM,			//!< ethernet memory
-    PCIMEM			//!< PCI memory space
+  enum class Type {
+    UNKNOWN, //!< Unknown memory type
+    IMEM,    //!< Instruction memory
+    DMEM,    //!< Data memory
+    PERS,    //!< peripheral space
+    ALIAS,   //!< alias space
+    EMEM,    //!< ethernet memory
+    PCIMEM   //!< PCI memory space
   };
 
   // Constructor and destructor.
 
-  MemMap ();
-  ~MemMap ();
+  MemMap();
+  ~MemMap();
 
   // Public methods
 
-  void  addRegion (const uint64_t  base,
-		   const uint64_t  start,
-		   const uint64_t  end,
-		   const Type      type);
-  Type  findRegion (const uint64_t     addr,
-		    const std::size_t  size) const;
+  void addRegion(const uint64_t base, const uint64_t start, const uint64_t end,
+                 const Type type);
+  Type findRegion(const uint64_t addr, const std::size_t size) const;
 
- private:
-
-  struct MemMapEntry
-  {
-    uint64_t  start;
-    uint64_t  end;
-    Type      type;
+private:
+  struct MemMapEntry {
+    uint64_t start;
+    uint64_t end;
+    Type type;
   };
 
   //! The memory map
 
-  std::vector <MemMapEntry> mMemMap;
+  std::vector<MemMapEntry> mMemMap;
 
   // No public default copy constructor.
 
-  MemMap (const MemMap &) {};
+  MemMap(const MemMap &){};
 
-};	// class MemMap
+}; // class MemMap
 
-#endif	// MEMMAP_H
-
-
-// Local Variables:
-// mode: C++
-// c-file-style: "gnu"
-// show-trailing-whitespace: t
-// End:
+#endif // MEMMAP_H
