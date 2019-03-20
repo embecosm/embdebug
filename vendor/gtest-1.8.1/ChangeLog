@@ -1,0 +1,27 @@
+2018-11-06  Graham Markall  <graham.markall@embecosm.com>
+
+        * Makefile.am: Disable build and run of Googletest tests. Add no-op
+	install operation.
+        * Makefile.in: New file.
+        * aclocal.m4: New file.
+        * build-aux/compile: New file.
+        * build-aux/config.guess: New file.
+        * build-aux/config.h.in: New file.
+        * build-aux/config.sub: New file.
+        * build-aux/depcomp: New file.
+        * build-aux/install-sh: New file.
+        * build-aux/ltmain.sh: New file.
+        * build-aux/missing: New file.
+        * build-aux/test-driver: New file.
+        * configure: New file.
+        * configure.ac: Correct Googletest version number
+        * m4/libtool.m4: New file.
+        * m4/ltoptions.m4: New file.
+        * m4/ltsugar.m4: New file.
+        * m4/ltversion.m4: New file.
+        * m4/lt~obsolete.m4: New file.
+
+2018-11-06  Graham Markall  <graham.markall@embecosm.com>
+
+	* *: Vendored in from tag release-1.8.1 of
+	https://github.com/google/googletest
