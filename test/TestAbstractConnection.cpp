@@ -33,7 +33,7 @@ protected:
                              c) override { /* TBC */
     return true;
   }
-  virtual int getRspCharRaw(bool __attribute__((unused)) blocking) {
+  virtual int getRspCharRaw(bool __attribute__((unused)) blocking) override {
     if (_buf)
       return _buf[_pos++];
     else
