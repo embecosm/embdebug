@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
+#include "embdebug/Init.h"
 #include "AbstractConnection.h"
 #include "GdbServer.h"
 #include "RspConnection.h"
@@ -16,8 +17,8 @@ using namespace EmbDebug;
 
 static ITarget *globalTargetHandle = nullptr;
 
-int main2(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
-          int rspPort, bool writePort) {
+int EmbDebug::init(ITarget *target, TraceFlags *traceFlags,
+                   bool useStreamConnection, int rspPort, bool writePort) {
   // Take a global reference to the target so that we can get at it
   // from sc_time_stamp
   globalTargetHandle = target;

@@ -8,6 +8,10 @@ set(embdebug_VERSION
 
 project(embdebug VERSION ${embdebug_VERSION} LANGUAGES C CXX)
 
+# Setup the RPATH so that the dynamic linker can find the shared libraries when
+# they are installed
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
 # Macro for testing whether a flag is supported, and adding it to CFLAGS/CXXFLAGS
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
@@ -45,6 +49,7 @@ enable_testing()
 
 add_subdirectory(include/embdebug)
 add_subdirectory(server)
+add_subdirectory(tools)
 add_subdirectory(test)
 add_subdirectory(vendor)
 
@@ -58,6 +63,7 @@ else()
                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                     COMMAND find include/embdebug -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
                     COMMAND find server -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
+                    COMMAND find tools -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
                     COMMAND find test -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
   )
 endif()

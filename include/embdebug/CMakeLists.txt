@@ -1,4 +1,5 @@
-set(INSTALL_HEADERS ITarget.h
+set(INSTALL_HEADERS Init.h
+                    ITarget.h
                     MemMap.h
                     RegisterSizes.h
                     Timeout.h

@@ -6,16 +6,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef MAIN2_H
-#define MAIN2_H
-
-#include "ITarget.h"
-#include "TraceFlags.h"
+#ifndef INIT_H
+#define INIT_H
 
 namespace EmbDebug {
 
-int main2(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
-          int rspPort, bool writePort);
+class ITarget;
+class TraceFlags;
+
+int init(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
+         int rspPort, bool writePort);
 
 } // namespace EmbDebug
 
