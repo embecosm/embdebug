@@ -217,9 +217,6 @@ pkginclude_internal_HEADERS = \
 lib_libgtest_main_la_SOURCES = src/gtest_main.cc
 lib_libgtest_main_la_LIBADD = lib/libgtest.la
 
-# We don't want the gtest tests to run as part of the gdbserver tests, so we
-# comment this out.
-
 # Build rules for samples and tests. Automake's naming for some of
 # these variables isn't terribly obvious, so this is a brief
 # reference:
@@ -227,103 +224,103 @@ lib_libgtest_main_la_LIBADD = lib/libgtest.la
 # TESTS -- Programs run automatically by "make check"
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
 
-# TESTS=
-# TESTS_ENVIRONMENT = GTEST_SOURCE_DIR="$(srcdir)/test" \
-#                     GTEST_BUILD_DIR="$(top_builddir)/test"
-# check_PROGRAMS=
-# 
-# # A simple sample on using gtest.
-# TESTS += samples/sample1_unittest \
-#     samples/sample2_unittest \
-#     samples/sample3_unittest \
-#     samples/sample4_unittest \
-#     samples/sample5_unittest \
-#     samples/sample6_unittest \
-#     samples/sample7_unittest \
-#     samples/sample8_unittest \
-#     samples/sample9_unittest \
-#     samples/sample10_unittest
-# check_PROGRAMS += samples/sample1_unittest \
-#     samples/sample2_unittest \
-#     samples/sample3_unittest \
-#     samples/sample4_unittest \
-#     samples/sample5_unittest \
-#     samples/sample6_unittest \
-#     samples/sample7_unittest \
-#     samples/sample8_unittest \
-#     samples/sample9_unittest \
-#     samples/sample10_unittest
-# 
-# samples_sample1_unittest_SOURCES = samples/sample1_unittest.cc samples/sample1.cc
-# samples_sample1_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample2_unittest_SOURCES = samples/sample2_unittest.cc samples/sample2.cc
-# samples_sample2_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample3_unittest_SOURCES = samples/sample3_unittest.cc
-# samples_sample3_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample4_unittest_SOURCES = samples/sample4_unittest.cc samples/sample4.cc
-# samples_sample4_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample5_unittest_SOURCES = samples/sample5_unittest.cc samples/sample1.cc
-# samples_sample5_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample6_unittest_SOURCES = samples/sample6_unittest.cc
-# samples_sample6_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample7_unittest_SOURCES = samples/sample7_unittest.cc
-# samples_sample7_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# samples_sample8_unittest_SOURCES = samples/sample8_unittest.cc
-# samples_sample8_unittest_LDADD = lib/libgtest_main.la \
-#                                  lib/libgtest.la
-# 
-# # Also verify that libgtest works by itself.
-# samples_sample9_unittest_SOURCES = samples/sample9_unittest.cc
-# samples_sample9_unittest_LDADD = lib/libgtest.la
-# samples_sample10_unittest_SOURCES = samples/sample10_unittest.cc
-# samples_sample10_unittest_LDADD = lib/libgtest.la
-# 
-# # This tests most constructs of gtest and verifies that libgtest_main
-# # and libgtest work.
-# TESTS += test/gtest_all_test
-# check_PROGRAMS += test/gtest_all_test
-# test_gtest_all_test_SOURCES = test/gtest_all_test.cc
-# test_gtest_all_test_LDADD = lib/libgtest_main.la \
-#                             lib/libgtest.la
-# 
-# # Tests that fused gtest files compile and work.
-# FUSED_GTEST_SRC = \
-#   fused-src/gtest/gtest-all.cc \
-#   fused-src/gtest/gtest.h \
-#   fused-src/gtest/gtest_main.cc
-# 
-# if HAVE_PYTHON
-# TESTS += test/fused_gtest_test
-# check_PROGRAMS += test/fused_gtest_test
-# test_fused_gtest_test_SOURCES = $(FUSED_GTEST_SRC) \
-#                                 samples/sample1.cc samples/sample1_unittest.cc
-# test_fused_gtest_test_CPPFLAGS = -I"$(srcdir)/fused-src"
-# 
-# # Build rules for putting fused Google Test files into the distribution
-# # package. The user can also create those files by manually running
-# # scripts/fuse_gtest_files.py.
-# $(test_fused_gtest_test_SOURCES): fused-gtest
-# 
-# fused-gtest: $(pkginclude_HEADERS) $(pkginclude_internal_HEADERS) \
-#              $(GTEST_SRC) src/gtest-all.cc src/gtest_main.cc \
-#              scripts/fuse_gtest_files.py
-# 	mkdir -p "$(srcdir)/fused-src"
-# 	chmod -R u+w "$(srcdir)/fused-src"
-# 	rm -f "$(srcdir)/fused-src/gtest/gtest-all.cc"
-# 	rm -f "$(srcdir)/fused-src/gtest/gtest.h"
-# 	"$(srcdir)/scripts/fuse_gtest_files.py" "$(srcdir)/fused-src"
-# 	cp -f "$(srcdir)/src/gtest_main.cc" "$(srcdir)/fused-src/gtest/"
-# 
-# maintainer-clean-local:
-# 	rm -rf "$(srcdir)/fused-src"
-# endif
+TESTS=
+TESTS_ENVIRONMENT = GTEST_SOURCE_DIR="$(srcdir)/test" \
+                    GTEST_BUILD_DIR="$(top_builddir)/test"
+check_PROGRAMS=
+
+# A simple sample on using gtest.
+TESTS += samples/sample1_unittest \
+    samples/sample2_unittest \
+    samples/sample3_unittest \
+    samples/sample4_unittest \
+    samples/sample5_unittest \
+    samples/sample6_unittest \
+    samples/sample7_unittest \
+    samples/sample8_unittest \
+    samples/sample9_unittest \
+    samples/sample10_unittest
+check_PROGRAMS += samples/sample1_unittest \
+    samples/sample2_unittest \
+    samples/sample3_unittest \
+    samples/sample4_unittest \
+    samples/sample5_unittest \
+    samples/sample6_unittest \
+    samples/sample7_unittest \
+    samples/sample8_unittest \
+    samples/sample9_unittest \
+    samples/sample10_unittest
+
+samples_sample1_unittest_SOURCES = samples/sample1_unittest.cc samples/sample1.cc
+samples_sample1_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample2_unittest_SOURCES = samples/sample2_unittest.cc samples/sample2.cc
+samples_sample2_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample3_unittest_SOURCES = samples/sample3_unittest.cc
+samples_sample3_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample4_unittest_SOURCES = samples/sample4_unittest.cc samples/sample4.cc
+samples_sample4_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample5_unittest_SOURCES = samples/sample5_unittest.cc samples/sample1.cc
+samples_sample5_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample6_unittest_SOURCES = samples/sample6_unittest.cc
+samples_sample6_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample7_unittest_SOURCES = samples/sample7_unittest.cc
+samples_sample7_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+samples_sample8_unittest_SOURCES = samples/sample8_unittest.cc
+samples_sample8_unittest_LDADD = lib/libgtest_main.la \
+                                 lib/libgtest.la
+
+# Also verify that libgtest works by itself.
+samples_sample9_unittest_SOURCES = samples/sample9_unittest.cc
+samples_sample9_unittest_LDADD = lib/libgtest.la
+samples_sample10_unittest_SOURCES = samples/sample10_unittest.cc
+samples_sample10_unittest_LDADD = lib/libgtest.la
+
+# This tests most constructs of gtest and verifies that libgtest_main
+# and libgtest work.
+TESTS += test/gtest_all_test
+check_PROGRAMS += test/gtest_all_test
+test_gtest_all_test_SOURCES = test/gtest_all_test.cc
+test_gtest_all_test_LDADD = lib/libgtest_main.la \
+                            lib/libgtest.la
+
+# Tests that fused gtest files compile and work.
+FUSED_GTEST_SRC = \
+  fused-src/gtest/gtest-all.cc \
+  fused-src/gtest/gtest.h \
+  fused-src/gtest/gtest_main.cc
+
+if HAVE_PYTHON
+TESTS += test/fused_gtest_test
+check_PROGRAMS += test/fused_gtest_test
+test_fused_gtest_test_SOURCES = $(FUSED_GTEST_SRC) \
+                                samples/sample1.cc samples/sample1_unittest.cc
+test_fused_gtest_test_CPPFLAGS = -I"$(srcdir)/fused-src"
+
+# Build rules for putting fused Google Test files into the distribution
+# package. The user can also create those files by manually running
+# scripts/fuse_gtest_files.py.
+$(test_fused_gtest_test_SOURCES): fused-gtest
+
+fused-gtest: $(pkginclude_HEADERS) $(pkginclude_internal_HEADERS) \
+             $(GTEST_SRC) src/gtest-all.cc src/gtest_main.cc \
+             scripts/fuse_gtest_files.py
+	mkdir -p "$(srcdir)/fused-src"
+	chmod -R u+w "$(srcdir)/fused-src"
+	rm -f "$(srcdir)/fused-src/gtest/gtest-all.cc"
+	rm -f "$(srcdir)/fused-src/gtest/gtest.h"
+	"$(srcdir)/scripts/fuse_gtest_files.py" "$(srcdir)/fused-src"
+	cp -f "$(srcdir)/src/gtest_main.cc" "$(srcdir)/fused-src/gtest/"
+
+maintainer-clean-local:
+	rm -rf "$(srcdir)/fused-src"
+endif
 
 # Death tests may produce core dumps in the build directory. In case
 # this happens, clean them to keep distcleancheck happy.
@@ -332,19 +329,11 @@ CLEANFILES = core
 # Disables 'make install' as installing a compiled version of Google
 # Test can lead to undefined behavior due to violation of the
 # One-Definition Rule.
-# 
-# install-exec-local:
-# 	echo "'make install' is dangerous and not supported. Instead, see README for how to integrate Google Test into your build system."
-# 	false
-# 
-# install-data-local:
-# 	echo "'make install' is dangerous and not supported. Instead, see README for how to integrate Google Test into your build system."
-# 	false
 
-# Make install a no-op. It is not usually recommended to override
-# automake-provided targets, but this provides a quick solution to stop
-# the install of gtest being attempted.
+install-exec-local:
+	echo "'make install' is dangerous and not supported. Instead, see README for how to integrate Google Test into your build system."
+	false
 
-install:
-	echo "Skipping install for gtest"
-
+install-data-local:
+	echo "'make install' is dangerous and not supported. Instead, see README for how to integrate Google Test into your build system."
+	false
