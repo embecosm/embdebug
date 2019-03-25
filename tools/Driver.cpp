@@ -7,7 +7,6 @@
 // ----------------------------------------------------------------------------
 
 #include <algorithm>
-#include <dlfcn.h>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -16,6 +15,12 @@
 #include "embdebug/ITarget.h"
 #include "embdebug/Init.h"
 #include "embdebug/TraceFlags.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
 
 using std::cerr;
 using std::cout;
@@ -58,6 +63,7 @@ string trace_help() {
 
 typedef ITarget *(*create_target_func)(TraceFlags *);
 
+#ifndef _WIN32
 ITarget *load_target_so(string soname, TraceFlags *traceFlags) {
   void *handle = dlopen(soname.c_str(), RTLD_NOW);
   if (!handle) {
@@ -72,6 +78,24 @@ ITarget *load_target_so(string soname, TraceFlags *traceFlags) {
   }
   return create_target(traceFlags);
 }
+#endif
+
+#ifdef _WIN32
+ITarget *load_target_dll(string dllname, TraceFlags *traceFlags) {
+  HMODULE handle = LoadLibrary(dllname.c_str());
+  if (!handle) {
+    cerr << "Failed to load " << dllname << "." << endl;
+    exit(EXIT_FAILURE);
+  }
+  create_target_func create_target =
+      (create_target_func)GetProcAddress(handle, "create_target");
+  if (!create_target) {
+    cerr << "Failed to look up create_target function." << endl;
+    exit(EXIT_FAILURE);
+  }
+  return create_target(traceFlags);
+}
+#endif
 
 int main(int argc, char *argv[]) {
   string soName;
@@ -161,7 +185,11 @@ int main(int argc, char *argv[]) {
   ITarget *target;
 
   cerr << "Loading ITarget interface from dynamic library: " << soName << endl;
+#ifdef _WIN32
+  target = load_target_dll(soName, &traceFlags);
+#else
   target = load_target_so(soName, &traceFlags);
+#endif
 
   return init(target, &traceFlags, from_stdin, rspPort, false);
 }

@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <strings.h>
 
 #include "embdebug/TraceFlags.h"
 

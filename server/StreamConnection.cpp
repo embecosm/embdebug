@@ -13,8 +13,16 @@
 #include <csignal>
 #include <cstring>
 
+#if WIN32
+#include <io.h>
+#include <winsock.h>
+typedef __int64 ssize_t;
+#define STDIN_FILENO _fileno(stdin)
+#define STDOUT_FILENO _fileno(stdout)
+#else
 #include <sys/select.h>
 #include <unistd.h>
+#endif
 
 #include "StreamConnection.h"
 #include "embdebug/Utils.h"

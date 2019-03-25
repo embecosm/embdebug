@@ -8,13 +8,22 @@ set(EMBDEBUG_SOURCES AbstractConnection.cpp
                      MemMap.cpp
                      MpHash.cpp
                      Ptid.cpp
-                     RspConnection.cpp
                      RspPacket.cpp
                      StreamConnection.cpp
                      Timeout.cpp
                      TraceFlags.cpp
                      Utils.cpp
                      VContActions.cpp)
+if (WIN32)
+  list(APPEND EMBDEBUG_SOURCES RspConnectionWin32.cpp)
+else()
+  list(APPEND EMBDEBUG_SOURCES RspConnectionUnix.cpp)
+endif()
+
+# When building for Windows, link against winsock
+if (WIN32)
+  list(APPEND EMBDEBUG_LIBS ws2_32)
+endif()
 
 # Create object library for building two server libraries
 add_library(gdbserverobjs OBJECT ${EMBDEBUG_SOURCES})
@@ -34,6 +43,8 @@ set_target_properties(embdebug-shared PROPERTIES
 set_target_properties(embdebug-static PROPERTIES
                       VERSION ${embdebug_VERSION})
 
+target_link_libraries(embdebug-shared ${EMBDEBUG_LIBS})
+target_link_libraries(embdebug-static ${EMBDEBUG_LIBS})
 install(TARGETS embdebug-shared embdebug-static
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)

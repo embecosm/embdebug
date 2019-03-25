@@ -181,7 +181,7 @@ bool Ptid::decode(const char *buf) {
       cerr << "Warning: Invalid TID, " << buf << ": ignored." << endl;
       return false;
     }
-  } else if (nullptr == (ptr = index(buf, '.'))) {
+  } else if (nullptr == (ptr = strchr(buf, '.'))) {
     // Just a PID
 
     pid = decodeField(&(buf[1]), strlen(&(buf[1])));

@@ -17,6 +17,10 @@
 #include <string>
 #include <vector>
 
+#if _WIN32
+#define strcasecmp _stricmp
+#endif
+
 #include "GdbServer.h"
 #include "SyscallReplyPacket.h"
 #include "VContActions.h"

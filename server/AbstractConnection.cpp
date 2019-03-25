@@ -14,9 +14,6 @@
 #include <csignal>
 #include <cstring>
 
-#include <sys/select.h>
-#include <unistd.h>
-
 #include "AbstractConnection.h"
 #include "embdebug/Utils.h"
 
