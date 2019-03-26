@@ -18,6 +18,8 @@ macro(configure_compiler_defaults)
   # Set warning/error flags
   if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_if_supported("/W4" "WARNINGS")
+    set(CMAKE_CXX_FLAGS "-D_CRT_SECURE_NO_WARNINGS ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_C_FLAGS "-D_CRT_SECURE_NO_WARNINGS ${CMAKE_C_FLAGS}")
   else()
     add_if_supported("-Wall -Wextra -pedantic" "WARNINGS")
   endif()
