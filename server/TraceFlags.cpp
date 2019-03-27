@@ -156,7 +156,7 @@ void TraceFlags::flag(const string &flagName, const bool flagState,
     if (numeric) {
       try {
         numeric_val = std::stoi(flagVal);
-      } catch (const std::logic_error &e) {
+      } catch (const std::logic_error &) {
         cerr << "*** ERROR *** Failed to parse numeric value of " << flagVal
              << endl;
         exit(EXIT_FAILURE);

@@ -58,7 +58,7 @@ MemMap::Type MemMap::findRegion(const uint64_t addr,
 
   if (size > 0)
     for (auto it = mMemMap.begin(); it != mMemMap.end(); it++) {
-      const uint32_t locAddr = (addr + size - 1);
+      const uint64_t locAddr = (addr + size - 1);
 
       if ((it->start <= locAddr) && (locAddr <= it->end)) {
         endType = it->type;

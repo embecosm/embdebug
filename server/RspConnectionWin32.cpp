@@ -153,7 +153,7 @@ void RspConnection::rspClose() {
     if (!traceFlags->traceSilent())
       cout << "Closing connection" << endl;
 
-    close(clientFd);
+    _close(clientFd);
     clientFd = -1;
   }
 }
@@ -182,7 +182,7 @@ bool RspConnection::putRspCharRaw(char c) {
   // Write until successful (we retry after interrupts) or catastrophic
   // failure.
   while (true) {
-    switch (write(clientFd, &c, sizeof(c))) {
+    switch (_write(clientFd, &c, sizeof(c))) {
     case -1:
       // Error: only allow interrupts or would block
       if ((EAGAIN != errno) && (EINTR != errno)) {

@@ -11,7 +11,15 @@
 #include <sstream>
 #include <string>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4018 4267) // Workaround cxxopts.hpp issues #147, #148
+#endif
 #include "cxxopts-2.1.2/include/cxxopts.hpp"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 #include "embdebug/ITarget.h"
 #include "embdebug/Init.h"
 #include "embdebug/TraceFlags.h"

@@ -236,7 +236,7 @@ int Ptid::decodeField(const char *buf, const std::size_t len) const {
   else if ((2 == len) && ('-' == buf[0]) && ('1' == buf[1]))
     return PTID_ALL;
   else if (Utils::isHexStr(buf, len))
-    return Utils::hex2Val(buf, len);
+    return (int)(Utils::hex2Val(buf, len));
   else
     return PTID_INV;
 }

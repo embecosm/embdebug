@@ -22,6 +22,8 @@ typedef __int64 ssize_t;
 #else
 #include <sys/select.h>
 #include <unistd.h>
+#define _write write
+#define _read read
 #endif
 
 #include "StreamConnection.h"
@@ -102,7 +104,7 @@ bool StreamConnection::putRspCharRaw(char c) {
   // Write until successful (we retry after interrupts) or catastrophic
   // failure.
   while (true) {
-    switch (write(STDOUT_FILENO, &c, sizeof(c))) {
+    switch (_write(STDOUT_FILENO, &c, sizeof(c))) {
     case -1:
       // Error: only allow interrupts or would block
       if ((EAGAIN != errno) && (EINTR != errno)) {
@@ -168,7 +170,7 @@ int StreamConnection::getRspCharRaw(bool blocking) {
     default: {
       ssize_t count;
 
-      if ((count = read(STDIN_FILENO, &c, sizeof(c))) == -1)
+      if ((count = _read(STDIN_FILENO, &c, sizeof(c))) == -1)
         return -1;
 
       if (count == 0)

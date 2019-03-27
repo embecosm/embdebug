@@ -701,8 +701,8 @@ void GdbServer::rspWriteAllRegs() {
   for (int regNum = 0; regNum < RISCV_NUM_REGS; regNum++) {
     std::size_t byteSize = sizeof(uint_reg_t);
 
-    uint32_t val = Utils::hex2RegVal(&(pkt.data[pktSize]), byteSize,
-                                     true /* little endian */);
+    uint32_t val = uint32_t(Utils::hex2RegVal(&(pkt.data[pktSize]), byteSize,
+                                              true /* little endian */));
     pktSize += byteSize * 2; // 2 chars per hex digit
 
     if (byteSize != cpu->writeRegister(regNum, val))
@@ -1158,13 +1158,13 @@ void GdbServer::rspCommand() {
     rsp->putPkt(pkt);
   } else if (0 == strcmp(cmd, "exit")) {
     mExitServer = true;
-  } else if ((1 == sscanf(cmd, "timeout %lu", &timeout)) ||
-             (1 == sscanf(cmd, "real-timeout %lu", &timeout))) {
+  } else if ((1 == sscanf(cmd, "timeout %" PRIx64, &timeout)) ||
+             (1 == sscanf(cmd, "real-timeout %" PRIx64, &timeout))) {
     mTimeout.realTimeout(
         std::chrono::duration<double>(static_cast<double>(timeout)));
     pkt.packStr("OK");
     rsp->putPkt(pkt);
-  } else if (1 == sscanf(cmd, "cycle-timeout %lu", &timeout)) {
+  } else if (1 == sscanf(cmd, "cycle-timeout %" PRIx64, &timeout)) {
     mTimeout.cycleTimeout(timeout);
     pkt.packStr("OK");
     rsp->putPkt(pkt);
@@ -1556,7 +1556,7 @@ void GdbServer::rspVKill() {
     return;
   }
 
-  pid = Utils::hex2Val(str, strlen(str));
+  pid = (int)(Utils::hex2Val(str, strlen(str)));
 
   if (!mCoreManager.killCoreNum(CoreManager::pid2CoreNum(pid))) {
     pkt.packStr("E01");
