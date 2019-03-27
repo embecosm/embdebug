@@ -28,8 +28,8 @@
 #include "Ptid.h"
 #include "RspConnection.h"
 #include "RspPacket.h"
-#include "embdebug/RegisterSizes.h"
 #include "embdebug/Timeout.h"
+#include "embdebug/Types.h"
 
 namespace EmbDebug {
 
@@ -279,7 +279,7 @@ private:
   void rspClientRequest();
 
   // Handle the various RSP requests
-  int stringLength(uint32_t addr);
+  int stringLength(uint_addr_t addr);
   void rspSyscallRequest();
   void rspSyscallReply();
   void rspReportException(TargetSignal sig = TargetSignal::TRAP);

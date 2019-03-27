@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "Gdbserver_compat.h"
-#include "RegisterSizes.h"
+#include "Types.h"
 
 namespace EmbDebug {
 
@@ -128,7 +128,7 @@ public:
   //!                    number of bytes.
   //! \param[in]  size   Number of bytes of memory to be read.
   //! \return The number of bytes read.
-  virtual std::size_t read(const uint32_t addr, uint8_t *buffer,
+  virtual std::size_t read(const uint_addr_t addr, uint8_t *buffer,
                            const std::size_t size) = 0;
 
   //! \brief Write data to the target's memory
@@ -139,7 +139,7 @@ public:
   //! \param[in] size   Number of bytes of memory to be written to target
   //!                   memory from the buffer.
   //! \return The number of bytes written.
-  virtual std::size_t write(const uint32_t addr, const uint8_t *buffer,
+  virtual std::size_t write(const uint_addr_t addr, const uint8_t *buffer,
                             const std::size_t size) = 0;
 
   // Insert and remove a matchpoint (breakpoint or watchpoint) at the given
@@ -151,7 +151,7 @@ public:
   //!                      inserted at.
   //! \param[in] matchType Type of the matchpoint (eg breakpoint/watchpoint)
   //! \return True if the matchpoint was successfully inserted.
-  virtual bool insertMatchpoint(const uint32_t addr,
+  virtual bool insertMatchpoint(const uint_addr_t addr,
                                 const MatchType matchType) = 0;
 
   //! \brief Remove a matchpoint (breakpoint/watchpoint) at a given address
@@ -159,7 +159,7 @@ public:
   //! \param[in] addr      Target memory address of a matchpoint to be removed.
   //! \param[in] matchType Type of the matchpoint (eg breakpoint/watchpoint)
   //! \return True if the matchpoint was successfully removed.
-  virtual bool removeMatchpoint(const uint32_t addr,
+  virtual bool removeMatchpoint(const uint_addr_t addr,
                                 const MatchType matchType) = 0;
 
   //! \brief Pass through of an RSP command to the target

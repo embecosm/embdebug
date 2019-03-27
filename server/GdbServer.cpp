@@ -99,7 +99,7 @@ int GdbServer::rspServer() {
 //! Some F request packets want to know the length of the string
 //! argument, so we have this simple function here to calculate that.
 
-int GdbServer::stringLength(uint32_t addr) {
+int GdbServer::stringLength(uint_addr_t addr) {
   uint8_t ch;
   int count = 0;
   while (1 == cpu->read(addr + count, &ch, 1)) {
