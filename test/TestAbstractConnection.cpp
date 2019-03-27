@@ -1,5 +1,7 @@
 #include <stdexcept>
 
+#include "embdebug/Gdbserver_compat.h"
+
 #include "AbstractConnection.h"
 #include "RspPacket.h"
 
@@ -29,11 +31,10 @@ public:
   }
 
 protected:
-  virtual bool putRspCharRaw(char __attribute__((unused))
-                             c) override { /* TBC */
+  virtual bool putRspCharRaw(char c EMBDEBUG_ATTR_UNUSED) override { /* TBC */
     return true;
   }
-  virtual int getRspCharRaw(bool __attribute__((unused)) blocking) override {
+  virtual int getRspCharRaw(bool blocking EMBDEBUG_ATTR_UNUSED) override {
     if (_buf)
       return _buf[_pos++];
     else

@@ -14,6 +14,7 @@
 #include <iostream>
 #include <vector>
 
+#include "Gdbserver_compat.h"
 #include "RegisterSizes.h"
 
 namespace EmbDebug {
@@ -87,7 +88,7 @@ public:
   //! match any valid cpu number.
   static const unsigned int INVALID_CPU_NUMBER = (unsigned int)-1;
 
-  explicit ITarget(const TraceFlags *traceFlags __attribute__((unused))){};
+  explicit ITarget(const TraceFlags *traceFlags EMBDEBUG_ATTR_UNUSED){};
   virtual ~ITarget(){};
 
   virtual ResumeRes terminate() = 0;
