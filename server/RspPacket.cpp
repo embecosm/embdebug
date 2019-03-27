@@ -33,13 +33,12 @@ using namespace EmbDebug;
 //! @param[in]  _bufSize        Size of data buffer to allocate
 RspPacket::RspPacket(int _bufSize) : bufSize(_bufSize) {
   data = new char[_bufSize];
-
-} // RspPacket ();
+}
 
 //! Destructor
 
 //! Give back the data buffer
-RspPacket::~RspPacket() { delete[] data; } // ~RspPacket ()
+RspPacket::~RspPacket() { delete[] data; }
 
 //! Pack a string into a packet.
 
@@ -61,8 +60,7 @@ void RspPacket::packStr(const char *str) {
   strncpy(data, str, slen);
   data[slen] = 0;
   len = slen;
-
-} // packStr ()
+}
 
 //! Pack a const string as a hex encoded string into a packet for qRcmd.
 
@@ -92,8 +90,7 @@ void RspPacket::packHexstr(const char *str) {
   }
   len = slen * 2 + 1;
   data[len] = 0;
-
-} // packStr ()
+}
 
 //! Pack a const string as a hex encoded string into a packet for qRcmd.
 
@@ -137,23 +134,22 @@ void RspPacket::packRcmdStr(const char *str, const bool toStdoutP) {
   }
   len = slen * 2 + offset;
   data[len] = 0;
-
-} // packRcmdStr ()
+}
 
 //! Get the data buffer size
 
 //! @return  The data buffer size
-int RspPacket::getBufSize() { return bufSize; } // getBufSize ()
+int RspPacket::getBufSize() { return bufSize; }
 
 //! Get the current number of chars in the data buffer
 
 //! @return  The number of chars in the data buffer
-int RspPacket::getLen() { return len; } // getLen ()
+int RspPacket::getLen() { return len; }
 
 //! Set the number of chars in the data buffer
 
 //! @param[in] _len  The number of chars to be set
-void RspPacket::setLen(int _len) { len = _len; } // setLen ()
+void RspPacket::setLen(int _len) { len = _len; }
 
 namespace EmbDebug {
 
@@ -164,7 +160,6 @@ namespace EmbDebug {
 ostream &operator<<(ostream &s, RspPacket &p) {
   return s << "RSP packet: " << std::dec << std::setw(3) << p.getLen()
            << std::setw(0) << " chars, \"" << p.data << "\"";
-
-} // operator<< ()
+}
 
 } // namespace EmbDebug

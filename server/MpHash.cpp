@@ -24,12 +24,12 @@ MpHash::MpHash(int _size) : size(_size) {
   for (int i = 0; i < size; i++) {
     hashTab[i] = NULL;
   }
-} // MpHash ()
+}
 
 //! Destructor
 
 //! Free the hash table
-MpHash::~MpHash() { delete[] hashTab; } // ~MpHash ()
+MpHash::~MpHash() { delete[] hashTab; }
 
 //! Add an entry to the hash table
 
@@ -64,8 +64,7 @@ void MpHash::add(MpType type, uint32_t addr, uint32_t instr) {
   curr->next = hashTab[hv];
 
   hashTab[hv] = curr;
-
-} // add ()
+}
 
 //! Look up an entry in the matchpoint hash table
 
@@ -86,8 +85,7 @@ MpEntry *MpHash::lookup(MpType type, uint32_t addr) {
   }
 
   return NULL; // Not found
-
-} // lookup ()
+}
 
 //! Delete an entry from the matchpoint hash table
 
@@ -132,5 +130,4 @@ bool MpHash::remove(MpType type, uint32_t addr, uint32_t *instr) {
   }
 
   return false; // Not found
-
-} // remove ()
+}

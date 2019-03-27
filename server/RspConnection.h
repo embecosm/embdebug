@@ -50,9 +50,8 @@ private:
 
   virtual bool putRspCharRaw(char c);
   virtual int getRspCharRaw(bool blocking);
-
-}; // RspConnection ()
+};
 
 } // namespace EmbDebug
 
-#endif // RSP_CONNECTION_H
+#endif

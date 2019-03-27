@@ -34,8 +34,7 @@ bool Utils::isHexStr(const char *buf, const std::size_t len) {
       return false;
 
   return true;
-
-} // isHexStr ()
+}
 
 //! Utility to give the value of a hex char
 
@@ -51,8 +50,7 @@ uint8_t Utils::char2Hex(int c) {
              : ((c >= '0') && (c <= '9'))
                    ? c - '0'
                    : ((c >= 'A') && (c <= 'F')) ? c - 'A' + 10 : -1;
-
-} // char2Hex ()
+}
 
 //! Utility mapping a value to hex character
 
@@ -76,8 +74,7 @@ char Utils::hex2Char(uint8_t d) {
                             "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
   return map[d];
-
-} // hex2Char ()
+}
 
 //! Convert a register value to a hex digit string
 
@@ -114,8 +111,7 @@ void Utils::regVal2Hex(uint64_t val, char *buf, int numBytes,
   }
 
   buf[numBytes * 2] = '\0'; // Useful to terminate as string
-
-} // regVal2Hex ()
+}
 
 //! Convert a hex digit string to a register value
 
@@ -146,8 +142,7 @@ uint64_t Utils::hex2RegVal(const char *buf, int numBytes,
   }
 
   return val;
-
-} // hex2RegVal ()
+}
 
 //! Convert any non-negative value to a hex digit string
 
@@ -184,8 +179,7 @@ std::size_t Utils::val2Hex(uint64_t val, char *buf) {
 
   buf[numChars] = '\0';
   return strlen(buf);
-
-} // val2Hex ()
+}
 
 //! Convert a hex digit string to a general non-negative value
 
@@ -205,8 +199,7 @@ uint64_t Utils::hex2Val(const char *buf, std::size_t len) {
     val = (val << 4) | char2Hex(buf[i]);
 
   return val;
-
-} // hex2Val ()
+}
 
 //! Convert an ASCII character string to pairs of hex digits
 
@@ -226,8 +219,7 @@ void Utils::ascii2Hex(char *dest, char *src) {
   }
 
   dest[i * 2] = '\0';
-
-} // ascii2hex ()
+}
 
 //! Convert pairs of hex digits to an ASCII character string
 
@@ -245,8 +237,7 @@ void Utils::hex2Ascii(char *dest, char *src) {
   }
 
   dest[i] = '\0';
-
-} // hex2ascii ()
+}
 
 //! "Unescape" RSP binary data
 
@@ -276,8 +267,7 @@ int Utils::rspUnescape(char *buf, int len) {
   }
 
   return toOffset;
-
-} // rspUnescape () */
+}
 
 //! Split a string into delimited tokens
 
@@ -304,8 +294,7 @@ vector<string> &Utils::split(const string &s, const string &delim,
   } while (next != s.npos);
 
   return elems;
-
-} // split ()
+}
 
 //! Convert a string to an integer.
 
@@ -336,4 +325,4 @@ bool Utils::str2int(int &i, const std::string &str, int base) {
 
   i = val;
   return true;
-} // str2int ()
+}

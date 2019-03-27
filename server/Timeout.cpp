@@ -16,7 +16,7 @@ using namespace EmbDebug;
 
 Timeout::Timeout()
     : mTimeoutType(Timeout::Type::NONE), mRealTimeout(duration<double>::zero()),
-      mCycleTimeout(0) {} // Timeout::Timeout ()
+      mCycleTimeout(0) {}
 
 //! Constructor for a wall clock GDB server timeout.
 
@@ -24,7 +24,7 @@ Timeout::Timeout()
 
 Timeout::Timeout(const duration<double> realTimeout)
     : mTimeoutType(Timeout::Type::REAL), mRealTimeout(realTimeout),
-      mCycleTimeout(0) {} // Timeout::Timeout ()
+      mCycleTimeout(0) {}
 
 //! Constructor for a cycle count GDB server timeout.
 
@@ -32,14 +32,13 @@ Timeout::Timeout(const duration<double> realTimeout)
 
 Timeout::Timeout(const uint64_t cycleTimeout)
     : mTimeoutType(Timeout::Type::CYCLE),
-      mRealTimeout(duration<double>::zero()), mCycleTimeout(cycleTimeout) {
-} // Timeout::Timeout ()
+      mRealTimeout(duration<double>::zero()), mCycleTimeout(cycleTimeout) {}
 
 //! Destructor.
 
 //! Empty at present
 
-Timeout::~Timeout() {} // Timeout::~Timeout ()
+Timeout::~Timeout() {}
 
 //! Accessor: Set no timeout
 
@@ -47,8 +46,7 @@ void Timeout::clearTimeout() {
   mTimeoutType = Type::NONE;
   mRealTimeout = duration<double>::zero();
   mCycleTimeout = 0;
-
-} // Timeout::clearTimeout ()
+}
 
 //! Accessor: Get wall clock timeout.
 
@@ -57,8 +55,7 @@ void Timeout::clearTimeout() {
 
 std::chrono::duration<double> Timeout::realTimeout() const {
   return mRealTimeout;
-
-} // Timeout::realTimeout ()
+}
 
 //! Accessor: Set wall clock timeout.
 
@@ -68,18 +65,14 @@ void Timeout::realTimeout(const duration<double> realTimeout) {
   mTimeoutType = Type::REAL;
   mRealTimeout = realTimeout;
   mCycleTimeout = 0;
-
-} // Timeout::realTimeout ()
+}
 
 //! Accessor: Get cycle count timeout.
 
 //! @return The cycle count timeout, which will be zero if we are not using
 //!         wall clock timeouts.
 
-uint64_t Timeout::cycleTimeout() const {
-  return mCycleTimeout;
-
-} // Timeout::cycleTimeout ()
+uint64_t Timeout::cycleTimeout() const { return mCycleTimeout; }
 
 //! Accessor: Set cycle count timeout.
 
@@ -89,8 +82,7 @@ void Timeout::cycleTimeout(const uint64_t cycleTimeout) {
   mTimeoutType = Type::CYCLE;
   mRealTimeout = duration<double>::zero();
   mCycleTimeout = cycleTimeout;
-
-} // Timeout::cycleTimeout ()
+}
 
 //! Do we have a timeout set?
 
@@ -99,28 +91,19 @@ void Timeout::cycleTimeout(const uint64_t cycleTimeout) {
 
 //! @return  TRUE if eithe
 
-bool Timeout::haveTimeout() const {
-  return mTimeoutType != Type::NONE;
-
-} // Timeout::isCycleTimeout ()
+bool Timeout::haveTimeout() const { return mTimeoutType != Type::NONE; }
 
 //! Is this a wall clock timeout?
 
 //! @return  TRUE if this is a wall clock timeout.
 
-bool Timeout::isRealTimeout() const {
-  return mTimeoutType == Type::REAL;
-
-} // Timeout::isRealTimeout ()
+bool Timeout::isRealTimeout() const { return mTimeoutType == Type::REAL; }
 
 //! Is this a cycle count timeout?
 
 //! @return  TRUE if this is a cycle count timeout.
 
-bool Timeout::isCycleTimeout() const {
-  return mTimeoutType == Type::CYCLE;
-
-} // Timeout::isCycleTimeout ()
+bool Timeout::isCycleTimeout() const { return mTimeoutType == Type::CYCLE; }
 
 //! Set a timestamp now for the current CPU
 
@@ -129,8 +112,7 @@ bool Timeout::isCycleTimeout() const {
 void Timeout::timeStamp(ITarget *cpu) {
   mRealStamp = std::chrono::system_clock::now();
   mCycleStamp = cpu->getCycleCount();
-
-} // Timeout::timeStamp ()
+}
 
 //! Are we more than duration past the time stamp
 
@@ -155,4 +137,4 @@ bool Timeout::timedOut(ITarget *cpu) const {
     std::cerr << "*** ABORT: Impossible clock type in timedOut" << std::endl;
     abort();
   }
-} // Timeout::timedOut ()
+}

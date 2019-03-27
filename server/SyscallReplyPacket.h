@@ -141,4 +141,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif /* SYSCALLREPLYPACKET_H */
+#endif

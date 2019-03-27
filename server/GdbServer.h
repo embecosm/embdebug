@@ -308,9 +308,8 @@ private:
   void doCoreActions(void);
   bool getNextStopEvent(unsigned int &, ITarget::ResumeRes &);
   bool processStopEvents(void);
-
-}; // GdbServer ()
+};
 
 } // namespace EmbDebug
 
-#endif // GDB_SERVER_H
+#endif

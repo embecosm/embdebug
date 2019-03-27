@@ -71,8 +71,7 @@ private:
   //! All the info about flags. This is a map from the name of the flag.
 
   static std::map<const std::string, FlagInfo> sFlagInfo;
-
-}; // TraceFlags ()
+};
 
 } // namespace EmbDebug
 

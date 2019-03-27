@@ -83,8 +83,7 @@ private:
   //! Cycle count time stamp
 
   uint64_t mCycleStamp;
-
-}; // Timeout ()
+};
 
 } // namespace EmbDebug
 

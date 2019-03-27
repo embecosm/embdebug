@@ -16,13 +16,13 @@ using namespace EmbDebug;
 
 //! Placeholder for now.
 
-MemMap::MemMap() {} // MemMap::MemMap ()
+MemMap::MemMap() {}
 
 //! Destructor
 
 //! Placeholder for now.
 
-MemMap::~MemMap() {} // MemMap::~MemMap ()
+MemMap::~MemMap() {}
 
 void MemMap::addRegion(const uint64_t base, const uint64_t start,
                        const uint64_t end, const MemMap::Type type) {
@@ -34,8 +34,7 @@ void MemMap::addRegion(const uint64_t base, const uint64_t start,
   MemMapEntry m = {base | start, base | end, type};
 
   mMemMap.push_back(m);
-
-} // MemMap::addRegion ()
+}
 
 //! Helper function to identify address space
 
@@ -90,5 +89,4 @@ MemMap::Type MemMap::findRegion(const uint64_t addr,
   }
 
   return startType;
-
-} // MemMap::findRegion ()
+}

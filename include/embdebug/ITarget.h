@@ -164,8 +164,7 @@ private:
 
   ITarget(){};
   ITarget(const ITarget &){};
-
-}; // class ITarget
+};
 
 // Output operators for scoped enumerations
 

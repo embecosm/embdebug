@@ -45,15 +45,14 @@ using namespace EmbDebug;
 RspConnection::RspConnection(int _portNum, TraceFlags *_traceFlags,
                              bool _writePort)
     : AbstractConnection(_traceFlags), portNum(_portNum), clientFd(-1),
-      writePort(_writePort) {} // RspConnection ()
+      writePort(_writePort) {}
 
 //! Destructor
 
 //! Close the connection if it is still open
 RspConnection::~RspConnection() {
   this->rspClose(); // Don't confuse with any other close ()
-
-} // ~RspConnection ()
+}
 
 //! Get a new client connection.
 
@@ -151,8 +150,7 @@ bool RspConnection::rspConnect() {
          << endl;
 
   return true;
-
-} // rspConnect ()
+}
 
 //! Close a client connection if it is open
 void RspConnection::rspClose() {
@@ -163,12 +161,12 @@ void RspConnection::rspClose() {
     close(clientFd);
     clientFd = -1;
   }
-} // rspClose ()
+}
 
 //! Report if we are connected to a client.
 
 //! @return  TRUE if we are connected, FALSE otherwise
-bool RspConnection::isConnected() { return -1 != clientFd; } // isConnected ()
+bool RspConnection::isConnected() { return -1 != clientFd; }
 
 //! Put a single character out on the RSP connection
 
@@ -207,7 +205,7 @@ bool RspConnection::putRspCharRaw(char c) {
       return true; // Success, we can return
     }
   }
-} // putRspCharRaw ()
+}
 
 //! Get a single character from the RSP connection
 
@@ -252,4 +250,4 @@ int RspConnection::getRspCharRaw(bool blocking) {
       return c & 0xff; // Success, we can return (no sign extend!)
     }
   }
-} // getRspCharRaw ()
+}

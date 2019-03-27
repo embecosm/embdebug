@@ -58,7 +58,7 @@ GdbServer::GdbServer(AbstractConnection *_conn, ITarget *_cpu,
 
 //! Destructor
 
-GdbServer::~GdbServer() {} // ~GdbServer
+GdbServer::~GdbServer() {}
 
 //! Main loop to listen for RSP requests
 
@@ -90,7 +90,7 @@ int GdbServer::rspServer() {
   }
 
   return EXIT_SUCCESS;
-} // rspServer ()
+}
 
 //! Some F request packets want to know the length of the string
 //! argument, so we have this simple function here to calculate that.
@@ -399,7 +399,7 @@ bool GdbServer::processStopEvents(void) {
   }
 
   return false;
-} // processStopEvent ()
+}
 
 //! Deal with a request from the GDB client session
 
@@ -640,7 +640,7 @@ void GdbServer::rspClientRequest() {
     cerr << "Warning: Unknown RSP request" << pkt.data << endl;
     return;
   }
-} // rspClientRequest ()
+}
 
 //! Send a packet acknowledging an exception has occurred
 
@@ -656,8 +656,7 @@ void GdbServer::rspReportException(TargetSignal sig) {
   pkt.setLen(strlen(pkt.data));
 
   rsp->putPkt(pkt);
-
-} // rspReportException ()
+}
 
 //! Handle a RSP read all registers request
 
@@ -685,8 +684,7 @@ void GdbServer::rspReadAllRegs() {
   pkt.data[pktSize] = 0;
   pkt.setLen(pktSize);
   rsp->putPkt(pkt);
-
-} // rspReadAllRegs ()
+}
 
 //! Handle a RSP write all registers request
 
@@ -710,8 +708,7 @@ void GdbServer::rspWriteAllRegs() {
 
   pkt.packStr("OK");
   rsp->putPkt(pkt);
-
-} // rspWriteAllRegs ()
+}
 
 //! Handle a RSP read memory (symbolic) request
 
@@ -760,8 +757,7 @@ void GdbServer::rspReadMem() {
   pkt.data[off * 2] = '\0'; // End of string
   pkt.setLen(strlen(pkt.data));
   rsp->putPkt(pkt);
-
-} // rsp_read_mem ()
+}
 
 //! Handle a RSP write memory (symbolic) request
 
@@ -811,8 +807,7 @@ void GdbServer::rspWriteMem() {
 
   pkt.packStr("OK");
   rsp->putPkt(pkt);
-
-} // rspWriteMem ()
+}
 
 //! Read a single register
 
@@ -843,8 +838,7 @@ void GdbServer::rspReadReg() {
 
   pkt.setLen(strlen(pkt.data));
   rsp->putPkt(pkt);
-
-} // rspReadReg ()
+}
 
 //! Write a single register
 
@@ -882,8 +876,7 @@ void GdbServer::rspWriteReg() {
 
   pkt.packStr("OK");
   rsp->putPkt(pkt);
-
-} // rspWriteReg ()
+}
 
 //! Send out a single thread info reply packet
 
@@ -1059,7 +1052,7 @@ void GdbServer::rspQuery() {
     pkt.packStr("");
     rsp->putPkt(pkt);
   }
-} // rspQuery ()
+}
 
 //! Handle a RSP qRcmd request
 
@@ -1267,8 +1260,7 @@ void GdbServer::rspCommand() {
   }
 
   delete[] cmd;
-
-} // rspCommand ()
+}
 
 //! Handle a RSP qRcmd request for set
 
@@ -1381,7 +1373,7 @@ void GdbServer::rspSetCommand(const char *cmd) {
       rsp->putPkt(pkt);
     }
   }
-} // RspSetCommand ()
+}
 
 //! Handle a RSP qRcmd request for show
 
@@ -1451,7 +1443,7 @@ void GdbServer::rspShowCommand(const char *cmd) {
       rsp->putPkt(pkt);
     }
   }
-} // rspShowCommand ()
+}
 
 //! Handle a RSP set request.
 
@@ -1478,8 +1470,7 @@ void GdbServer::rspSet() {
 
   pkt.packStr("");
   rsp->putPkt(pkt);
-
-} // rspSet ()
+}
 
 //! Handle a 'vCont:' packet.  The actual list of things to do is after the
 //! 'vCont:' in the packet buffer.
@@ -1603,7 +1594,7 @@ void GdbServer::rspVpkt() {
     pkt.packStr("");
     rsp->putPkt(pkt);
   }
-} // rspVpkt ()
+}
 
 //! Handle a RSP write memory (binary) request
 
@@ -1650,8 +1641,7 @@ void GdbServer::rspWriteMemBin() {
 
   pkt.packStr("OK");
   rsp->putPkt(pkt);
-
-} // rspWriteMemBin ()
+}
 
 //! Handle a RSP remove breakpoint or matchpoint request
 
@@ -1811,7 +1801,7 @@ void GdbServer::rspRemoveMatchpoint() {
     rsp->putPkt(pkt);
     return;
   }
-} // rspRemoveMatchpoint ()
+}
 
 //! Handle a RSP insert breakpoint or matchpoint request
 
@@ -1949,7 +1939,7 @@ void GdbServer::rspInsertMatchpoint() {
     rsp->putPkt(pkt);
     return;
   }
-} // rspInsertMatchpoint ()
+}
 
 namespace EmbDebug {
 
@@ -1987,8 +1977,7 @@ std::ostream &operator<<(std::ostream &s, GdbServer::TargetSignal p) {
   }
 
   return s << name;
-
-} // operator<< ()
+}
 
 //! Output operator for StopMode enumeration
 
@@ -2012,8 +2001,7 @@ std::ostream &operator<<(std::ostream &s, GdbServer::StopMode p) {
   }
 
   return s << name;
-
-} // operator<< ()
+}
 
 } // namespace EmbDebug
 

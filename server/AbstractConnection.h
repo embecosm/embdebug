@@ -70,7 +70,7 @@ private:
 
   bool putRspChar(char c);
   int getRspChar();
-}; // AbstractConnection ()
+};
 
 // Default implementation of the destructor.
 
@@ -85,4 +85,4 @@ inline AbstractConnection::AbstractConnection(TraceFlags *_traceFlags)
 
 } // namespace EmbDebug
 
-#endif // ABSTRACT_CONNECTION_H
+#endif

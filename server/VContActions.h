@@ -53,4 +53,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif // VCONTACTIONS_H
+#endif

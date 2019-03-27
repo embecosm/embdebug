@@ -24,38 +24,37 @@ using namespace EmbDebug;
 Ptid::Ptid(const int pid, const int tid) : mPid(pid), mTid(tid) {
   if (!validate())
     cerr << "Invalid PTID created: " << *this << endl;
-
-} // Ptid ()
+}
 
 //! Destructor.
 
 //! For now nothing to do
 
-Ptid::~Ptid() {} // ~Ptid
+Ptid::~Ptid() {}
 
 //! Accessor to set the PID.
 
 //! @param[in] The PID value to use
 
-void Ptid::pid(const int _pid) { mPid = _pid; } // pid ()
+void Ptid::pid(const int _pid) { mPid = _pid; }
 
 //! Accessor to get the PID.
 
 //! @results  The value of the PID
 
-int Ptid::pid() const { return mPid; } // pid ()
+int Ptid::pid() const { return mPid; }
 
 //! Accessor to set the TID.
 
 //! @param[in] The TID value to use
 
-void Ptid::tid(const int _tid) { mTid = _tid; } // tid ()
+void Ptid::tid(const int _tid) { mTid = _tid; }
 
 //! Accessor to get the TID.
 
 //! @results  The value of the TID
 
-int Ptid::tid() const { return mTid; } // tid ()
+int Ptid::tid() const { return mTid; }
 
 //! Select a specific PTID
 
@@ -122,8 +121,7 @@ bool Ptid::crystalize(int defaultPid, int defaultTid) {
   mTid = tid;
 
   return true;
-
-} // crystalize ()
+}
 
 //! Is this a valid PTID
 
@@ -141,8 +139,7 @@ bool Ptid::validate() {
     return false;
   else
     return true;
-
-} // validate ()
+}
 
 //! Break out a PTID
 
@@ -216,8 +213,7 @@ bool Ptid::decode(const char *buf) {
   mPid = pid;
   mTid = tid;
   return true;
-
-} // rspBreakoutPid ()
+}
 
 //! Break out a single PTID field
 
@@ -243,8 +239,7 @@ int Ptid::decodeField(const char *buf, const std::size_t len) const {
     return Utils::hex2Val(buf, len);
   else
     return PTID_INV;
-
-} // decodeField ()
+}
 
 //! Encode a PTID
 
@@ -270,8 +265,7 @@ bool Ptid::encode(char *buf) {
   buf[off + len] = '\0';
 
   return (0 != len);
-
-} // encode ()
+}
 
 //! Encode a PTID field
 
@@ -304,7 +298,7 @@ std::size_t Ptid::encodeField(char *buf, int ptid) {
 
     return Utils::val2Hex(ptid, buf);
   }
-} // encodeField ()
+}
 
 //! Output operator for Ptid class
 
@@ -316,7 +310,6 @@ namespace EmbDebug {
 
 std::ostream &operator<<(std::ostream &s, Ptid p) {
   return s << "{" << p.mPid << "," << p.mTid << "}";
-
-} // operator<< ()
+}
 
 } // namespace EmbDebug

@@ -58,9 +58,8 @@ private:
 
   int decodeField(const char *buf, const std::size_t len) const;
   std::size_t encodeField(char *buf, int ptid);
-
-}; // Ptid ()
+};
 
 } // namespace EmbDebug
 
-#endif // PTID_H
+#endif

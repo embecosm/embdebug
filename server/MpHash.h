@@ -69,4 +69,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif // MP_HASH_H
+#endif

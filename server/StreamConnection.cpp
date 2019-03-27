@@ -39,14 +39,14 @@ using namespace EmbDebug;
 StreamConnection::StreamConnection(TraceFlags *_traceFlags)
     : AbstractConnection(_traceFlags), mIsConnected(true) {
   // Nothing.
-} // StreamConnection ()
+}
 
 //! Destructor
 
 //! Close the connection if it is still open
 StreamConnection::~StreamConnection() {
   this->rspClose(); // Don't confuse with any other close ()
-} // ~StreamConnection ()
+}
 
 //! Get a new client connection.
 
@@ -74,16 +74,16 @@ bool StreamConnection::rspConnect() {
   // the process, we're connected from the start.  As we currently always
   // report that we're connected this should never be called.
   return false;
-} // rspConnect ()
+}
 
 //! Close a client connection if it is open.  This is called once we detect
 //! that stdin might have closed.  Remember we're now in a closed state.
-void StreamConnection::rspClose() { mIsConnected = false; } // rspClose ()
+void StreamConnection::rspClose() { mIsConnected = false; }
 
 //! Report if we are connected to a client.
 
 //! @return  TRUE if we are connected, FALSE otherwise
-bool StreamConnection::isConnected() { return mIsConnected; } // isConnected ()
+bool StreamConnection::isConnected() { return mIsConnected; }
 
 //! Put a single character out on the RSP connection
 
@@ -116,7 +116,7 @@ bool StreamConnection::putRspCharRaw(char c) {
       return true; // Success, we can return
     }
   }
-} // putRspCharRaw ()
+}
 
 //! Get a single character from the RSP connection
 
@@ -174,4 +174,4 @@ int StreamConnection::getRspCharRaw(bool blocking) {
     }
     }
   }
-} // getRspCharRaw ()
+}

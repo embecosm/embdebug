@@ -40,8 +40,8 @@ private:
 
   // Track whether we are connected or not.
   bool mIsConnected;
-}; // StreamConnection ()
+};
 
 } // namespace EmbDebug
 
-#endif // STREAM_CONNECTION_H
+#endif

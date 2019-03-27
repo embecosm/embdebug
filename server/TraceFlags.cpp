@@ -40,8 +40,7 @@ TraceFlags::TraceFlags() {
   sFlagInfo["exec"] = {false, nullptr, 0};
   sFlagInfo["verbosity"] = {false, nullptr, 0};
   sFlagInfo["ipg"] = {false, nullptr, 50};
-
-} // TraceFlags::TraceFlags ()
+}
 
 //! Destructor for the trace flags.
 
@@ -53,106 +52,73 @@ TraceFlags::~TraceFlags() {
     }
 
   sFlagInfo.clear();
-
-} // TraceFlags::~TraceFlags ()
+}
 
 //! Is RSP tracing enabled?
 
 //! @return  TRUE if the RSP tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceRsp() const {
-  return flagState("rsp");
-
-} // TraceFlags::traceRsp ()
+bool TraceFlags::traceRsp() const { return flagState("rsp"); }
 
 //! Is connection tracing enabled?
 
 //! @return  TRUE if the CONN tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceConn() const {
-  return flagState("conn");
-
-} // TraceFlags::traceConn ()
+bool TraceFlags::traceConn() const { return flagState("conn"); }
 
 //! Is breakpoint tracing enabled?
 
 //! @return  TRUE if the BREAK tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceBreak() const {
-  return flagState("break");
-
-} // TraceFlags::traceBreak ()
+bool TraceFlags::traceBreak() const { return flagState("break"); }
 
 //! Is VCD tracing enabled?
 
 //! @return  TRUE if the VCD tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceVcd() const {
-  return flagState("vcd");
-
-} // TraceFlags::traceVcd ()
+bool TraceFlags::traceVcd() const { return flagState("vcd"); }
 
 //! Is silent running enabled?
 
 //! @return  TRUE if the SILENT tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceSilent() const {
-  return flagState("silent");
-
-} // TraceFlags::traceSilent ()
+bool TraceFlags::traceSilent() const { return flagState("silent"); }
 
 //! Is disassembly enabled?
 
 //! @return  TRUE if the DISAS tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceDisas() const {
-  return flagState("disas");
-
-} // TraceFlags::traceDisas ()
+bool TraceFlags::traceDisas() const { return flagState("disas"); }
 
 //! Is quiet disassembly enabled?
 
 //! @return  TRUE if the QDISAS tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceQdisas() const {
-  return flagState("qdisas");
-
-} // TraceFlags::traceDisas ()
+bool TraceFlags::traceQdisas() const { return flagState("qdisas"); }
 
 //! Is per step disassembly flushing enabled?
 
 //! @return  TRUE if the DFLUSH tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceDflush() const {
-  return flagState("dflush");
-
-} // TraceFlags::traceDflush ()
+bool TraceFlags::traceDflush() const { return flagState("dflush"); }
 
 //! Is per step disassembly flushing enabled?
 
 //! @return  TRUE if the MEM tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceMem() const {
-  return flagState("mem");
-
-} // TraceFlags::traceMem ()
+bool TraceFlags::traceMem() const { return flagState("mem"); }
 
 //! Is execution tracing enabled ?
 
 //! @return  TRUE if the EXEC tracing flag is set, FALSE otherwise
 
-bool TraceFlags::traceExec() const {
-  return flagState("exec");
-
-} // TraceFlags::traceMem ()
+bool TraceFlags::traceExec() const { return flagState("exec"); }
 
 int32_t TraceFlags::traceVerbosity() const {
   return flagNumericVal("verbosity");
-} // TraceFlags::traceVerbosity ()
+}
 
-int32_t TraceFlags::traceIPG() const {
-  return flagNumericVal("ipg");
-} // TraceFlags::traceIPG ()
+int32_t TraceFlags::traceIPG() const { return flagNumericVal("ipg"); }
 
 //! Is this a real flag
 
@@ -161,13 +127,11 @@ int32_t TraceFlags::traceIPG() const {
 
 bool TraceFlags::isFlag(const string &flagName) const {
   return sFlagInfo.find(flagName) != sFlagInfo.end();
-
-} // TraceFlags::isFlag ()
+}
 
 bool TraceFlags::isNumericFlag(const string &flagName) const {
   return ((flagName == "verbosity") || (flagName == "ipg"));
-
-} // TraceFlags::isNumericFlag ()
+}
 
 //! Set a named flags state and value
 
@@ -206,7 +170,7 @@ void TraceFlags::flag(const string &flagName, const bool flagState,
     cerr << "*** ERROR *** Attempt to set bad trace flag" << endl;
     exit(EXIT_FAILURE);
   }
-} // TraceFlags::flag ()
+}
 
 //! Set a named flag's state
 
@@ -224,7 +188,7 @@ void TraceFlags::flagState(const string &flagName, const bool flagState) {
     cerr << "*** ERROR *** Attempt to set state of bad trace flag" << endl;
     exit(EXIT_FAILURE);
   }
-} // TraceFlags::flagState ()
+}
 
 //! Get the state of a named flag
 
@@ -240,7 +204,7 @@ bool TraceFlags::flagState(const string &flagName) const {
     cerr << "*** ERROR *** Attempt to get state of bad trace flag" << endl;
     exit(EXIT_FAILURE);
   }
-} // TraceFlags::flagState ()
+}
 
 //! Set a named flag's value
 
@@ -261,7 +225,7 @@ void TraceFlags::flagVal(const string &flagName, const string &flagVal) {
     cerr << "*** ERROR *** Attempt to set value of bad trace flag" << endl;
     exit(EXIT_FAILURE);
   }
-} // TraceFlags::flagVal ()
+}
 
 //! Get the value of a named flag
 
@@ -283,7 +247,7 @@ string TraceFlags::flagVal(const string &flagName) const {
     cerr << "*** ERROR *** Attempt to get value of bad trace flag" << endl;
     exit(EXIT_FAILURE);
   }
-} // TraceFlags::flagVal ()
+}
 
 //! Get the numeric value of a named flag
 
@@ -299,7 +263,7 @@ int32_t TraceFlags::flagNumericVal(const string &flagName) const {
     cerr << "*** ABORT *** Attempt to get value of bad trace flag" << endl;
     exit(EXIT_FAILURE);
   }
-} // TraceFlags::flagVal ()
+}
 
 //! Parse a command line argument
 
@@ -339,7 +303,7 @@ bool TraceFlags::parseArg(string &arg) {
     } else
       return false;
   }
-} // TraceFlags::parseArg ()
+}
 
 //! Dump out all the trace state
 
@@ -361,5 +325,4 @@ string TraceFlags::dump() {
   }
 
   return oss.str();
-
-} // TraceFlags::dump ()
+}

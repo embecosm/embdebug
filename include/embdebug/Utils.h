@@ -42,8 +42,7 @@ private:
   // Private constructor cannot be instantiated
 
   Utils(){};
-
-}; // class Utils
+};
 
 } // namespace EmbDebug
 

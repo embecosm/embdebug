@@ -143,8 +143,7 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
       cerr << "Warning: RSP packet overran buffer" << endl;
     }
   }
-
-} // getPkt ()
+}
 
 //! Put the packet out on the RSP connection
 
@@ -223,8 +222,7 @@ bool AbstractConnection::putPkt(RspPacket &pkt) {
   }
 
   return true;
-
-} // putPkt ()
+}
 
 //! Put a single character out on the RSP connection
 
@@ -234,10 +232,7 @@ bool AbstractConnection::putPkt(RspPacket &pkt) {
 //! @param[in] c  The character to put out
 //! @return  TRUE if char sent OK, FALSE if not (communications failure)
 
-bool AbstractConnection::putRspChar(char c) {
-  return putRspCharRaw(c);
-
-} // putRspChar ()
+bool AbstractConnection::putRspChar(char c) { return putRspCharRaw(c); }
 
 //! Get a single character from the RSP connection with buffering
 
@@ -266,8 +261,7 @@ int AbstractConnection::getRspChar() {
     ch = getRspCharRaw(true);
 
   return ch;
-
-} // getRspChar ()
+}
 
 //! Have we received a break character.
 
@@ -299,5 +293,4 @@ bool AbstractConnection::haveBreak() {
     return true;
   } else
     return false;
-
-} // haveBreak ()
+}

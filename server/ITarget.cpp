@@ -40,8 +40,7 @@ std::ostream &operator<<(std::ostream &s, ITarget::ResumeType p) {
   }
 
   return s << name;
-
-} // operator<< ()
+}
 
 //! Output operator for ResumeRes enumeration
 
@@ -80,8 +79,7 @@ std::ostream &operator<<(std::ostream &s, ITarget::ResumeRes p) {
   }
 
   return s << name;
-
-} // operator<< ()
+}
 
 } // namespace EmbDebug
 
@@ -116,5 +114,4 @@ std::ostream &operator<<(std::ostream &s, ITarget::MatchType p) {
   }
 
   return s << name;
-
-} // operator<< ()
+}

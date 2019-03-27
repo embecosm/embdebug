@@ -57,8 +57,7 @@ private:
   // No public default copy constructor.
 
   MemMap(const MemMap &){};
-
-}; // class MemMap
+};
 
 } // namespace EmbDebug
 
