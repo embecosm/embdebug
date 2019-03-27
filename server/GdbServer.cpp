@@ -855,7 +855,7 @@ void GdbServer::rspReadReg() {
 //! Each byte is packed as a pair of hex digits.
 
 void GdbServer::rspWriteReg() {
-  std::size_t regByteSize = sizeof(uint_reg_t);
+  std::size_t regByteSize = cpu->getRegisterSize();
   unsigned int regNum;
   const int valstr_len = 2 * sizeof(uint_reg_t);
   char valstr[valstr_len + 1]; // Allow for EOS
@@ -1023,11 +1023,12 @@ void GdbServer::rspQuery() {
 
     std::ostringstream xmlStream;
 
+    int regWidth = cpu->getRegisterSize();
     xmlStream << "<?xml version=\"1.0\"?>" << endl;
     xmlStream << "<!DOCTYPE target SYSTEM \"gdb-target.dtd\">" << endl;
     xmlStream << "<target version=\"1.0\">" << endl;
-    xmlStream << "<architecture>riscv:rv" << 8 * sizeof(uint_reg_t)
-              << "</architecture>" << endl;
+    xmlStream << "<architecture>riscv:rv" << 8 * regWidth << "</architecture>"
+              << endl;
     xmlStream << "</target>" << endl;
 
     std::string xmlString = xmlStream.str();

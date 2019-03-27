@@ -92,6 +92,9 @@ public:
   virtual uint64_t getCycleCount() const = 0;
   virtual uint64_t getInstrCount() const = 0;
 
+  // Get the size of registers for the machine
+  virtual int getRegisterSize() const = 0;
+
   // Read contents of a target register.
 
   virtual std::size_t readRegister(const int reg, uint_reg_t &value) = 0;

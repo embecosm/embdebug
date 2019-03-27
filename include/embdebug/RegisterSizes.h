@@ -14,13 +14,8 @@
 
 namespace EmbDebug {
 
-#if 1
 typedef uint64_t uint_reg_t;
 #define PRIxREG PRIx64
-#else
-typedef uint32_t uint_reg_t;
-#define PRIxREG PRIx32
-#endif
 
 } // namespace EmbDebug
 
