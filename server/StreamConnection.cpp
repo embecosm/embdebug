@@ -37,16 +37,12 @@ using namespace EmbDebug;
 //! @param[in] _portNum     the port number to connect to
 //! @param[in] _traceFlags  flags controlling tracing
 StreamConnection::StreamConnection(TraceFlags *_traceFlags)
-    : AbstractConnection(_traceFlags), mIsConnected(true) {
-  // Nothing.
-}
+    : AbstractConnection(_traceFlags), mIsConnected(true) {}
 
 //! Destructor
 
 //! Close the connection if it is still open
-StreamConnection::~StreamConnection() {
-  this->rspClose(); // Don't confuse with any other close ()
-}
+StreamConnection::~StreamConnection() { this->rspClose(); }
 
 //! Get a new client connection.
 

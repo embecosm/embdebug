@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef VCONTACTIONS_H
-#define VCONTACTIONS_H
+#ifndef VCONT_ACTIONS_H
+#define VCONT_ACTIONS_H
 
 #include "Ptid.h"
 

@@ -74,14 +74,10 @@ private:
 
 // Default implementation of the destructor.
 
-inline AbstractConnection::~AbstractConnection() {
-  // Nothing.
-}
+inline AbstractConnection::~AbstractConnection() {}
 
 inline AbstractConnection::AbstractConnection(TraceFlags *_traceFlags)
-    : traceFlags(_traceFlags), mHavePendingBreak(false), mNumGetBufChars(0) {
-  // Nothing.
-}
+    : traceFlags(_traceFlags), mHavePendingBreak(false), mNumGetBufChars(0) {}
 
 } // namespace EmbDebug
 

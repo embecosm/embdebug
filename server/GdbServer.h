@@ -208,9 +208,7 @@ private:
       CoreState()
           : mStopReason(ITarget::ResumeRes::INTERRUPTED),
             mResumeType(ITarget::ResumeType::NONE), mStopReported(true),
-            mIsLive(true) {
-        //! None.
-      }
+            mIsLive(true) {}
 
       void killCore() { mIsLive = false; }
 

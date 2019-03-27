@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef SYSCALLREPLYPACKET_H
-#define SYSCALLREPLYPACKET_H
+#ifndef SYSCALL_REPLY_PACKET_H
+#define SYSCALL_REPLY_PACKET_H
 
 namespace EmbDebug {
 
@@ -15,9 +15,7 @@ class SyscallReplyPacket {
 public:
   //! Constructor.
 
-  SyscallReplyPacket() : mValid(false) {
-    // Nothing.
-  }
+  SyscallReplyPacket() : mValid(false) {}
 
   //! Parse syscall reply packet in DATA, updating class member variables
   //! as appropriate.
