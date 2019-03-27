@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef REGISTERSIZES_H
-#define REGISTERSIZES_H
+#ifndef EMBDEBUG_REGISTER_SIZES_H
+#define EMBDEBUG_REGISTER_SIZES_H
 
 #include <cinttypes>
 #include <cstdint>
@@ -19,4 +19,4 @@ typedef uint64_t uint_reg_t;
 
 } // namespace EmbDebug
 
-#endif /* REGISTERSIZES_H */
+#endif

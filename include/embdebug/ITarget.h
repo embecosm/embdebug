@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef ITARGET_H
-#define ITARGET_H
+#ifndef EMBDEBUG_ITARGET_H
+#define EMBDEBUG_ITARGET_H
 
 #include <chrono>
 #include <cstddef>
@@ -175,4 +175,4 @@ std::ostream &operator<<(std::ostream &s, ITarget::MatchType p);
 
 } // namespace EmbDebug
 
-#endif // ITARGET_H
+#endif

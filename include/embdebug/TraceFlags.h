@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef TRACE_FLAGS_H
-#define TRACE_FLAGS_H
+#ifndef EMBDEBUG_TRACE_FLAGS_H
+#define EMBDEBUG_TRACE_FLAGS_H
 
 #include <cstring>
 #include <map>
@@ -76,4 +76,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif // TRACE_FLAGS_H
+#endif

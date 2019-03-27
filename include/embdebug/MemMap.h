@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef MEMMAP_H
-#define MEMMAP_H
+#ifndef EMBDEBUG_MEMMAP_H
+#define EMBDEBUG_MEMMAP_H
 
 #include <cstdint>
 #include <vector>
@@ -62,4 +62,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif // MEMMAP_H
+#endif

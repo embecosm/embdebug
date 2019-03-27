@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef EMBDEBUG_UTILS_H
+#define EMBDEBUG_UTILS_H
 
 #include <cstdint>
 #include <string>
@@ -47,4 +47,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif // UTILS_H
+#endif

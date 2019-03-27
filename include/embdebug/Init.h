@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef INIT_H
-#define INIT_H
+#ifndef EMBDEBUG_INIT_H
+#define EMBDEBUG_INIT_H
 
 namespace EmbDebug {
 

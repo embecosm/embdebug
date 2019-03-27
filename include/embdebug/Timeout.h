@@ -6,8 +6,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#ifndef TIMEOUT_H
-#define TIMEOUT_H
+#ifndef EMBDEBUG_TIMEOUT_H
+#define EMBDEBUG_TIMEOUT_H
 
 #include <chrono>
 #include <cstdint>
@@ -88,4 +88,4 @@ private:
 
 } // namespace EmbDebug
 
-#endif // TIMEOUT_H
+#endif
