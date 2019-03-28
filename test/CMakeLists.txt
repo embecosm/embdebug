@@ -4,7 +4,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(TESTS TestAbstractConnection
           TestPtid
           TestRspPacket
-          TestUtils)
+          TestUtils
+          TestGdbServerRSP)
 
 # Supress a warning tripped in gtest
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")

@@ -275,9 +275,11 @@ private:
   //! Keep track of core count, and which cores are live.
   CoreManager mCoreManager;
 
+protected:
   // Main RSP request handler
   void rspClientRequest();
 
+private:
   // Handle the various RSP requests
   int stringLength(uint_addr_t addr);
   void rspSyscallRequest();
