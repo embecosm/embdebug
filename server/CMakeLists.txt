@@ -16,10 +16,24 @@ set(EMBDEBUG_SOURCES AbstractConnection.cpp
                      Utils.cpp
                      VContActions.cpp)
 
-add_library(embdebug SHARED ${EMBDEBUG_SOURCES})
+# Create object library for building two server libraries
+add_library(gdbserverobjs OBJECT ${EMBDEBUG_SOURCES})
+set_property(TARGET gdbserverobjs PROPERTY POSITION_INDEPENDENT_CODE 1)
+add_library(embdebug-shared SHARED $<TARGET_OBJECTS:gdbserverobjs>)
+add_library(embdebug-static STATIC $<TARGET_OBJECTS:gdbserverobjs>)
 
-set_target_properties(embdebug PROPERTIES
+if (BUILD_SHARED_LIBS)
+  add_library(embdebug ALIAS embdebug-shared)
+else()
+  add_library(embdebug ALIAS embdebug-static)
+endif()
+
+set_target_properties(embdebug-shared PROPERTIES
                       VERSION ${embdebug_VERSION}
                       SOVERSION ${embdebug_VERSION_MAJOR})
+set_target_properties(embdebug-static PROPERTIES
+                      VERSION ${embdebug_VERSION})
 
-install(TARGETS embdebug DESTINATION lib)
+install(TARGETS embdebug-shared embdebug-static
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
