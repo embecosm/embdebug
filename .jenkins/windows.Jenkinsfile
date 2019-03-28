@@ -13,7 +13,7 @@ pipeline {
     stage('Build') {
       steps {
         dir('build') {
-          bat script: 'cmake -DEMBDEBUG_ENABLE_WERROR=TRUE -Dgtest_force_shared_crt=TRUE ..'
+          bat script: 'cmake -A Win32 -DEMBDEBUG_ENABLE_WERROR=TRUE -Dgtest_force_shared_crt=TRUE ..'
           bat script: 'cmake --build . --target ALL_BUILD'
         }
       }
