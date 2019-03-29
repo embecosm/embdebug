@@ -11,6 +11,17 @@
 
 #include "AbstractConnection.h"
 
+// This provides a valid typedef for the Windows SOCKET type, but avoids pulling
+// in winsock2.h; doing so would pollute the global and preprocessor namespaces.
+#ifdef WIN32
+#if defined(_WIN64)
+typedef unsigned __int64 UINT_PTR;
+#else
+typedef _W64 unsigned int UINT_PTR;
+#endif
+typedef UINT_PTR SOCKET;
+#endif
+
 namespace EmbDebug {
 
 class TraceFlags;
@@ -38,9 +49,13 @@ private:
 
   int portNum;
 
-  //! The client file descriptor
+  //! The client file descriptor/socket
 
+#ifdef WIN32
+  SOCKET clientSock;
+#else
   int clientFd;
+#endif
 
   //! Whether to write the port number to a text file on startup
 

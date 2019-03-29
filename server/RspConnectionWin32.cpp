@@ -14,8 +14,9 @@
 #include <csignal>
 #include <cstring>
 
+#include <WS2tcpip.h>
 #include <io.h>
-#include <winsock.h>
+#include <winsock2.h>
 typedef int socklen_t;
 
 #include "RspConnection.h"
@@ -40,14 +41,21 @@ using namespace EmbDebug;
 //! @param[in] _traceFlags  flags controlling tracing
 RspConnection::RspConnection(int _portNum, TraceFlags *_traceFlags,
                              bool _writePort)
-    : AbstractConnection(_traceFlags), portNum(_portNum), clientFd(-1),
-      writePort(_writePort) {}
+    : AbstractConnection(_traceFlags), portNum(_portNum),
+      clientSock(INVALID_SOCKET), writePort(_writePort) {
+  // Initialize Winsock 2.2.
+  WSAData wsaData;
+  if (int error = WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+    cerr << "Warning: WSAStartup failed with error " << error << "." << endl;
+  }
+}
 
 //! Destructor
 
 //! Close the connection if it is still open
 RspConnection::~RspConnection() {
   this->rspClose(); // Don't confuse with any other close ()
+  WSACleanup();
 }
 
 //! Get a new client connection.
@@ -73,15 +81,16 @@ RspConnection::~RspConnection() {
 //!          if the error was so serious the program must be aborted.
 bool RspConnection::rspConnect() {
   // Open a socket on which we'll listen for clients
-  int tmpFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (tmpFd < 0) {
+  SOCKET tmpSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (tmpSock == INVALID_SOCKET) {
     cerr << "ERROR: Cannot open RSP socket" << endl;
     return false;
   }
 
   // Allow rapid reuse of the port on this socket
   int optval = 1;
-  setsockopt(tmpFd, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval));
+  setsockopt(tmpSock, SOL_SOCKET, SO_REUSEADDR, (char *)&optval,
+             sizeof(optval));
 
   // Bind the port to the socket
   struct sockaddr_in sockAddr;
@@ -89,13 +98,13 @@ bool RspConnection::rspConnect() {
   sockAddr.sin_port = htons(portNum);
   sockAddr.sin_addr.s_addr = INADDR_ANY;
 
-  if (bind(tmpFd, (struct sockaddr *)&sockAddr, sizeof(sockAddr))) {
+  if (bind(tmpSock, (struct sockaddr *)&sockAddr, sizeof(sockAddr))) {
     cerr << "ERROR: Cannot bind to RSP socket" << endl;
     return false;
   }
 
   // Listen for (at most one) client
-  if (listen(tmpFd, 1)) {
+  if (listen(tmpSock, 1)) {
     cerr << "ERROR: Cannot listen on RSP socket" << endl;
     return false;
   }
@@ -103,7 +112,7 @@ bool RspConnection::rspConnect() {
   // If port 0 specified, determine which port we were assigned
   if (portNum == 0) {
     socklen_t len = sizeof(sockAddr);
-    getsockname(tmpFd, (struct sockaddr *)&sockAddr, &len);
+    getsockname(tmpSock, (struct sockaddr *)&sockAddr, &len);
     portNum = ntohs(sockAddr.sin_port);
   }
 
@@ -119,30 +128,34 @@ bool RspConnection::rspConnect() {
   }
   // Accept a client which connects
   socklen_t len = sizeof(sockAddr); // Size of the socket address
-  clientFd = accept(tmpFd, (struct sockaddr *)&sockAddr, &len);
+  clientSock = accept(tmpSock, (struct sockaddr *)&sockAddr, &len);
 
-  if (-1 == clientFd) {
-    cerr << "Warning: Failed to accept RSP client: " << strerror(errno) << endl;
+  if (!isConnected()) {
+    cerr << "Warning: Failed to accept RSP client: " << WSAGetLastError()
+         << endl;
     return true; // OK to retry
   }
 
   // Enable TCP keep alive process
   optval = 1;
-  setsockopt(clientFd, SOL_SOCKET, SO_KEEPALIVE, (char *)&optval,
+  setsockopt(clientSock, SOL_SOCKET, SO_KEEPALIVE, (char *)&optval,
              sizeof(optval));
 
   // Don't delay small packets, for better interactive response (disable
   // Nagel's algorithm)
   optval = 1;
-  setsockopt(clientFd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval,
+  setsockopt(clientSock, IPPROTO_TCP, TCP_NODELAY, (char *)&optval,
              sizeof(optval));
 
   // Socket is no longer needed
-  _close(tmpFd); // No longer need this
+  closesocket(tmpSock); // No longer need this
 
-  if (!traceFlags->traceSilent())
-    cout << "Remote debugging from host " << inet_ntoa(sockAddr.sin_addr)
+  if (!traceFlags->traceSilent()) {
+    char str[INET_ADDRSTRLEN];
+    cout << "Remote debugging from host "
+         << inet_ntop(AF_INET, &sockAddr.sin_addr, str, INET_ADDRSTRLEN)
          << endl;
+  }
 
   return true;
 }
@@ -153,15 +166,19 @@ void RspConnection::rspClose() {
     if (!traceFlags->traceSilent())
       cout << "Closing connection" << endl;
 
-    _close(clientFd);
-    clientFd = -1;
+    // Attempt to shutdown connection before closing socket
+    if (shutdown(clientSock, SD_SEND) == SOCKET_ERROR)
+      cerr << "Warning: shutdown failed: " << WSAGetLastError() << endl;
+
+    closesocket(clientSock);
+    clientSock = INVALID_SOCKET;
   }
 }
 
 //! Report if we are connected to a client.
 
 //! @return  TRUE if we are connected, FALSE otherwise
-bool RspConnection::isConnected() { return -1 != clientFd; }
+bool RspConnection::isConnected() { return INVALID_SOCKET != clientSock; }
 
 //! Put a single character out on the RSP connection
 
@@ -173,33 +190,20 @@ bool RspConnection::isConnected() { return -1 != clientFd; }
 //! @return  TRUE if char sent OK, FALSE if not (communications failure)
 
 bool RspConnection::putRspCharRaw(char c) {
-  if (-1 == clientFd) {
+  if (clientSock == INVALID_SOCKET) {
     cerr << "Warning: Attempt to write '" << c
          << "' to unopened RSP client: Ignored" << endl;
     return false;
   }
 
-  // Write until successful (we retry after interrupts) or catastrophic
-  // failure.
-  while (true) {
-    switch (_write(clientFd, &c, sizeof(c))) {
-    case -1:
-      // Error: only allow interrupts or would block
-      if ((EAGAIN != errno) && (EINTR != errno)) {
-        cerr << "Warning: Failed to write to RSP client: "
-             << "Closing client connection: " << strerror(errno) << endl;
-        return false;
-      }
-
-      break;
-
-    case 0:
-      break; // Nothing written! Try again
-
-    default:
-      return true; // Success, we can return
-    }
+  // Attempt to write to the socket
+  if (send(clientSock, &c, sizeof(c), 0) == SOCKET_ERROR) {
+    cerr << "Warning: Failed to write to RSP Client: "
+         << "Closing client connection: " << WSAGetLastError() << endl;
+    rspClose();
+    return false;
   }
+  return true;
 }
 
 //! Get a single character from the RSP connection
@@ -212,32 +216,31 @@ bool RspConnection::putRspCharRaw(char c) {
 //!          block, and blocking is true.
 
 int RspConnection::getRspCharRaw(bool blocking) {
-  if (-1 == clientFd) {
+  if (!isConnected()) {
     cerr << "Warning: Attempt to read from "
          << "unopened RSP client: Ignored" << endl;
     return -1;
   }
 
+  // Set the blocking mode of the client socket
+  u_long blockingMode = blocking ? 0 : 1;
+  if (ioctlsocket(clientSock, FIONBIO, &blockingMode))
+    cerr << "Warning: Unable to set blocking mode of socket." << endl;
+
   // Blocking read until successful (we retry after interrupts) or
   // catastrophic failure.
 
-  for (;;) {
+  while (true) {
     char c;
-
-    // FIXME: Port blocking if moving to pure WinSock implementation
-    switch (recv(clientFd, &c, sizeof(c), 0)) {
-    case -1:
-      if (!blocking && (errno == EAGAIN || errno == EWOULDBLOCK))
+    switch (recv(clientSock, &c, sizeof(c), 0)) {
+    case SOCKET_ERROR:
+      // If non-blocking and no data, return -1
+      if (!blocking && WSAGetLastError() == WSAEWOULDBLOCK)
         return -1;
 
-      // Error: only allow interrupts
-
-      if (EINTR != errno) {
-        cerr << "Warning: Failed to read from RSP client: "
-             << "Closing client connection: " << strerror(errno) << endl;
-        return -1;
-      }
-      break;
+      cerr << "Warning: Failed to read from RSP client: " << WSAGetLastError()
+           << endl;
+      return -1;
 
     case 0:
       return -1;
