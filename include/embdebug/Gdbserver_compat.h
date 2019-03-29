@@ -16,6 +16,7 @@
 // A list of these macros are defined below:
 //
 // EMBDEBUG_ATTR_UNUSED - Note that a paramater/variable is unused
+// EMBDEBUG_VISIBLE_API - Exports a symbol for shared objects
 
 // EMBDEBUG_ATTR_UNUSED
 #if defined(__GNUC__)
@@ -26,6 +27,15 @@
 #endif
 #else
 #define EMBDEBUG_ATTR_UNUSED
+#endif
+
+// EMBDEBUG_VISIBLE_API
+#ifdef _MSC_VER
+#define EMBDEBUG_VISIBLE_API __declspec(dllexport)
+#elif defined(__GNUC__) || defined(__clang__)
+#define EMBDEBUG_VISIBLE_API __attribute__((visibility("default")))
+#else
+#define EMBDEBUG_VISIBLE_API
 #endif
 
 #endif
