@@ -251,7 +251,7 @@ int Ptid::decodeField(const char *buf, const std::size_t len) const {
 bool Ptid::encode(char *buf) {
   buf[0] = 'p';
 
-  int off = 1;
+  std::size_t off = 1;
   std::size_t len = encodeField(&(buf[off]), mPid);
 
   if (0 == len)

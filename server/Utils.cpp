@@ -249,9 +249,9 @@ void Utils::hex2Ascii(char *dest, char *src) {
 //! @para[in]  len   The number of bytes to be converted
 
 //! @return  The number of bytes AFTER conversion
-int Utils::rspUnescape(char *buf, int len) {
-  int fromOffset = 0; // Offset to source char
-  int toOffset = 0;   // Offset to dest char
+std::size_t Utils::rspUnescape(char *buf, std::size_t len) {
+  std::size_t fromOffset = 0; // Offset to source char
+  std::size_t toOffset = 0;   // Offset to dest char
 
   while (fromOffset < len) {
     // Is it escaped

@@ -38,4 +38,12 @@
 #define EMBDEBUG_VISIBLE_API
 #endif
 
+#if UINTPTR_MAX == 0xffffffffffffffff
+#define PRIxSIZE PRIx64
+#elif UINTPTR_MAX == 0xffffffff
+#define PRIxSIZE PRIx32
+#else
+#error "Could not set PRIxSIZE"
+#endif
+
 #endif

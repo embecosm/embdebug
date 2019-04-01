@@ -670,13 +670,13 @@ void GdbServer::rspReportException(TargetSignal sig) {
 //! Each byte is packed as a pair of hex digits.
 
 void GdbServer::rspReadAllRegs() {
-  int pktSize = 0;
+  std::size_t pktSize = 0;
 
   // The registers. GDB client expects them to be packed according to target
   // endianness.
   for (int regNum = 0; regNum < RISCV_NUM_REGS; regNum++) {
-    uint_reg_t val; // Enough for even the PC
-    int byteSize;   // Size of reg in bytes
+    uint_reg_t val;       // Enough for even the PC
+    std::size_t byteSize; // Size of reg in bytes
 
     byteSize = cpu->readRegister(regNum, val);
     Utils::regVal2Hex(val, &(pkt.data[pktSize]), byteSize,
@@ -695,14 +695,14 @@ void GdbServer::rspReadAllRegs() {
 //! Each value is written into the simulated register.
 
 void GdbServer::rspWriteAllRegs() {
-  int pktSize = 0;
+  std::size_t pktSize = 0;
 
   // The registers
   for (int regNum = 0; regNum < RISCV_NUM_REGS; regNum++) {
     std::size_t byteSize = sizeof(uint_reg_t);
 
-    uint32_t val = uint32_t(Utils::hex2RegVal(&(pkt.data[pktSize]), byteSize,
-                                              true /* little endian */));
+    uint64_t val = Utils::hex2RegVal(&(pkt.data[pktSize]), byteSize,
+                                     true /* little endian */);
     pktSize += byteSize * 2; // 2 chars per hex digit
 
     if (byteSize != cpu->writeRegister(regNum, val))
@@ -726,10 +726,10 @@ void GdbServer::rspWriteAllRegs() {
 
 void GdbServer::rspReadMem() {
   uint_reg_t addr; // Where to read the memory
-  int len;         // Number of bytes to read
-  int off;         // Offset into the memory
+  uint_addr_t len; // Number of bytes to read
+  uint_addr_t off; // Offset into the memory
 
-  if (2 != sscanf(pkt.data, "m%" PRIxREG ",%x:", &addr, (unsigned *)&len)) {
+  if (2 != sscanf(pkt.data, "m%" PRIxREG ",%" PRIxADDR ":", &addr, &len)) {
     cerr << "Warning: Failed to recognize RSP read memory command: " << pkt.data
          << endl;
     pkt.packStr("E01");
@@ -747,7 +747,7 @@ void GdbServer::rspReadMem() {
   // Refill the buffer with the reply
   for (off = 0; off < len; off++) {
     uint8_t ch;
-    uint32_t ret;
+    std::size_t ret;
 
     ret = cpu->read(addr + off, &ch, 1);
 
@@ -775,10 +775,10 @@ void GdbServer::rspReadMem() {
 //! The length given is the number of bytes to be written.
 
 void GdbServer::rspWriteMem() {
-  uint32_t addr; // Where to write the memory
-  int len;       // Number of bytes to write
+  uint_addr_t addr; // Where to write the memory
+  uint_addr_t len;  // Number of bytes to write
 
-  if (2 != sscanf(pkt.data, "M%x,%x:", &addr, (unsigned *)&len)) {
+  if (2 != sscanf(pkt.data, "M%" PRIxADDR ",%" PRIxADDR ":", &addr, &len)) {
     cerr << "Warning: Failed to recognize RSP write memory " << pkt.data
          << endl;
     pkt.packStr("E01");
@@ -788,7 +788,7 @@ void GdbServer::rspWriteMem() {
 
   // Find the start of the data and check there is the amount we expect.
   char *symDat = (char *)(memchr(pkt.data, ':', pkt.getBufSize())) + 1;
-  int datLen = pkt.getLen() - (symDat - pkt.data);
+  std::size_t datLen = pkt.getLen() - (symDat - pkt.data);
 
   // Sanity check
   if (len * 2 != datLen) {
@@ -800,7 +800,7 @@ void GdbServer::rspWriteMem() {
   }
 
   // Write the bytes to memory (no check the address is OK here)
-  for (int off = 0; off < len; off++) {
+  for (std::size_t off = 0; off < len; off++) {
     uint8_t nyb1 = Utils::char2Hex(symDat[off * 2]);
     uint8_t nyb2 = Utils::char2Hex(symDat[off * 2 + 1]);
     uint8_t val = static_cast<unsigned int>((nyb1 << 4) | nyb2);
@@ -835,7 +835,7 @@ void GdbServer::rspReadReg() {
   // Get the relevant register. GDB client expects them to be packed according
   // to target endianness.
   uint_reg_t val;
-  int byteSize;
+  std::size_t byteSize;
 
   byteSize = cpu->readRegister(regNum, val);
   Utils::regVal2Hex(val, pkt.data, byteSize, true /* little endian */);
@@ -986,7 +986,7 @@ void GdbServer::rspQuery() {
         xmlRegsStr = ";qXfer:features:read+";
       }
 
-    sprintf(pkt.data, "PacketSize=%x;QNonStop+;VContSupported+%s%s",
+    sprintf(pkt.data, "PacketSize=%" PRIxSIZE ";QNonStop+;VContSupported+%s%s",
             pkt.getBufSize(), multiProcStr, xmlRegsStr);
 
     pkt.setLen(strlen(pkt.data));
@@ -1229,14 +1229,14 @@ void GdbServer::rspCommand() {
   // Don't forget to document them.
 
   else if (0 == strncmp(cmd, "set ", strlen("set "))) {
-    int i;
+    std::size_t i;
 
     for (i = strlen("set "); isspace(cmd[i]); i++)
       ;
 
     rspSetCommand(cmd + i);
   } else if (0 == strncmp(cmd, "show ", strlen("show "))) {
-    int i;
+    std::size_t i;
 
     for (i = strlen("show "); isspace(cmd[i]); i++)
       ;
@@ -1278,7 +1278,7 @@ void GdbServer::rspCommand() {
 void GdbServer::rspSetCommand(const char *cmd) {
   vector<string> tokens;
   Utils::split(cmd, " ", tokens);
-  int numTok = tokens.size();
+  std::size_t numTok = tokens.size();
 
   // Look for any options we can handle.
 
@@ -1391,7 +1391,7 @@ void GdbServer::rspSetCommand(const char *cmd) {
 void GdbServer::rspShowCommand(const char *cmd) {
   vector<string> tokens;
   Utils::split(cmd, " ", tokens);
-  int numTok = tokens.size();
+  std::size_t numTok = tokens.size();
 
   if ((numTok == 1) && (string("debug") == tokens[0])) {
     // monitor show debug
@@ -1616,7 +1616,7 @@ void GdbServer::rspWriteMemBin() {
   uint32_t addr;   // Where to write the memory
   std::size_t len; // Number of bytes to write
 
-  if (2 != sscanf(pkt.data, "X%x,%lx:", &addr, &len)) {
+  if (2 != sscanf(pkt.data, "X%" PRIx32 ",%" PRIxSIZE ":", &addr, &len)) {
     cerr << "Warning: Failed to recognize RSP write memory command: "
          << pkt.data << endl;
     pkt.packStr("E01");
@@ -1626,12 +1626,12 @@ void GdbServer::rspWriteMemBin() {
 
   // Find the start of the data and "unescape" it.
   uint8_t *bindat = (uint8_t *)(memchr(pkt.data, ':', pkt.getBufSize())) + 1;
-  int off = (char *)bindat - pkt.data;
+  std::size_t off = (char *)bindat - pkt.data;
   std::size_t newLen = Utils::rspUnescape((char *)bindat, pkt.getLen() - off);
 
   // Sanity check
   if (newLen != len) {
-    int minLen = len < newLen ? len : newLen;
+    std::size_t minLen = len < newLen ? len : newLen;
 
     cerr << "Warning: Write of " << len << " bytes requested, but " << newLen
          << " bytes supplied. " << minLen << " will be written" << endl;

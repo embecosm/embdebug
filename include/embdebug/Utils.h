@@ -31,7 +31,7 @@ public:
   static uint64_t hex2Val(const char *buf, std::size_t len);
   static void ascii2Hex(char *dest, char *src);
   static void hex2Ascii(char *dest, char *src);
-  static int rspUnescape(char *buf, int len);
+  static std::size_t rspUnescape(char *buf, std::size_t len);
   static std::vector<std::string> &split(const std::string &s,
                                          const std::string &delim,
                                          std::vector<std::string> &elems);

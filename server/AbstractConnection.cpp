@@ -46,9 +46,9 @@ using namespace EmbDebug;
 bool AbstractConnection::getPkt(RspPacket &pkt) {
   // Keep getting packets, until one is found with a valid checksum
   while (true) {
-    int bufSize = pkt.getBufSize();
+    std::size_t bufSize = pkt.getBufSize();
     unsigned char checksum; // The checksum we have computed
-    int count;              // Index into the buffer
+    std::size_t count;      // Index into the buffer
     int ch;                 // Current character
 
     // Wait around for the start character ('$'). Ignore all other
@@ -154,14 +154,14 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
 //! @return  TRUE to indicate success, FALSE otherwise (means a communications
 //!          failure).
 bool AbstractConnection::putPkt(RspPacket &pkt) {
-  int len = pkt.getLen();
+  std::size_t len = pkt.getLen();
   int ch; // Ack char
 
   // Construct $<packet info>#<checksum>. Repeat until the GDB client
   // acknowledges satisfactory receipt.
   do {
     unsigned char checksum = 0; // Computed checksum
-    int count = 0;              // Index into the buffer
+    std::size_t count = 0;      // Index into the buffer
 
     if (!putRspChar('$')) // Start char
     {
