@@ -136,3 +136,101 @@ INSTANTIATE_TEST_CASE_P(
         MinimalTestCase("$R#52", "+"), MinimalTestCase("$s#73", "+"),
         MinimalTestCase("$S#53", "+"), MinimalTestCase("$t#74", "+"),
         MinimalTestCase("$T#54+", "+$OK#9a"), MinimalTestCase("$L#4c", "+")));
+
+struct RegisterReadWriteOp {
+  bool mIsWrite;
+  int mReg;
+  uint_reg_t mValue;
+
+  bool operator<(const RegisterReadWriteOp &other) const {
+    return std::tie(mIsWrite, mReg, mValue) <
+           std::tie(other.mIsWrite, other.mReg, other.mValue);
+  }
+  bool operator==(const RegisterReadWriteOp &other) const {
+    return std::tie(mIsWrite, mReg, mValue) ==
+           std::tie(other.mIsWrite, other.mReg, other.mValue);
+  }
+};
+
+class RegisterReadWriteTestTarget : public StubTarget {
+public:
+  RegisterReadWriteTestTarget(const TraceFlags *traceFlags)
+      : StubTarget(traceFlags), mRegisterReadWriteOps() {}
+  ~RegisterReadWriteTestTarget() override {}
+
+  unsigned int getCpuCount() override { return 1; }
+
+  int getRegisterSize() const override { return 2; }
+
+  std::size_t readRegister(const int reg, uint_reg_t &value) override {
+    value = 0;
+    RegisterReadWriteOp op = {false, reg, value};
+
+    if (mRegisterReadWriteOps.count(op))
+      throw std::runtime_error("Duplicate register read/write operation");
+    mRegisterReadWriteOps.insert(op);
+    return getRegisterSize();
+  }
+
+  std::size_t writeRegister(const int reg, const uint_reg_t value) override {
+    RegisterReadWriteOp op = {true, reg, value};
+
+    if (mRegisterReadWriteOps.count(op))
+      throw std::runtime_error("Duplicate register read/write operation");
+    mRegisterReadWriteOps.insert(op);
+    return getRegisterSize();
+  }
+
+public:
+  std::set<RegisterReadWriteOp> mRegisterReadWriteOps;
+};
+
+struct RegisterReadWriteTestCase {
+  std::string mInPacket;
+  std::string mOutPacket;
+  std::set<RegisterReadWriteOp> mRegisterReadWriteOps;
+};
+
+class RegisterReadWriteRspTest
+    : public ::testing::TestWithParam<RegisterReadWriteTestCase> {
+protected:
+  void SetUp() override {
+    flags = new TraceFlags();
+    conn = new TestConnection(flags);
+    target = new RegisterReadWriteTestTarget(flags);
+    server = new TestGdbServer(conn, target, flags, EXIT_ON_KILL);
+  }
+  void TearDown() override {
+    delete server;
+    delete target;
+    delete conn;
+    delete flags;
+  }
+
+  TraceFlags *flags;
+  TestConnection *conn;
+  RegisterReadWriteTestTarget *target;
+  TestGdbServer *server;
+};
+
+TEST_P(RegisterReadWriteRspTest, RegisterReadWriteRsp) {
+  auto testCase = GetParam();
+
+  char outBuf[1024];
+  conn->setInBuf(testCase.mInPacket.c_str());
+  conn->setOutBuf(outBuf);
+
+  server->wrapRspClientRequest();
+
+  EXPECT_EQ(std::strlen(outBuf), testCase.mOutPacket.size());
+  EXPECT_EQ(std::string(outBuf, outBuf + std::strlen(outBuf)),
+            testCase.mOutPacket);
+  EXPECT_EQ(target->mRegisterReadWriteOps, testCase.mRegisterReadWriteOps);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    GdbServerRsp, RegisterReadWriteRspTest,
+    ::testing::Values(
+        RegisterReadWriteTestCase({"$p0#a0+", "+$0000#c0", {{false, 0, 0}}}),
+        RegisterReadWriteTestCase(
+            {"$P0=beef#4f+", "+$OK#9a", {{true, 0, 0xefbe}}})));
