@@ -22,7 +22,7 @@ public:
   char *data;
 
   // Constructor and destructor
-  RspPacket(int _bufSize);
+  RspPacket(std::size_t _bufSize);
   ~RspPacket();
 
   // Pack a constant string into a packet
@@ -34,9 +34,9 @@ public:
   void packHexstr(const char *str);
 
   // Accessors
-  int getBufSize();
-  int getLen();
-  void setLen(int _len);
+  std::size_t getBufSize();
+  std::size_t getLen();
+  void setLen(std::size_t _len);
 
 private:
   //! The data buffer size

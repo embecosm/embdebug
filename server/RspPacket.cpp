@@ -31,7 +31,7 @@ using namespace EmbDebug;
 
 //! @param[in]  _rspConnection  The RSP connection we will use
 //! @param[in]  _bufSize        Size of data buffer to allocate
-RspPacket::RspPacket(int _bufSize) : bufSize(_bufSize) {
+RspPacket::RspPacket(std::size_t _bufSize) : bufSize(_bufSize) {
   data = new char[_bufSize];
 }
 
@@ -139,17 +139,17 @@ void RspPacket::packRcmdStr(const char *str, const bool toStdoutP) {
 //! Get the data buffer size
 
 //! @return  The data buffer size
-int RspPacket::getBufSize() { return bufSize; }
+std::size_t RspPacket::getBufSize() { return bufSize; }
 
 //! Get the current number of chars in the data buffer
 
 //! @return  The number of chars in the data buffer
-int RspPacket::getLen() { return len; }
+std::size_t RspPacket::getLen() { return len; }
 
 //! Set the number of chars in the data buffer
 
 //! @param[in] _len  The number of chars to be set
-void RspPacket::setLen(int _len) { len = _len; }
+void RspPacket::setLen(std::size_t _len) { len = _len; }
 
 namespace EmbDebug {
 
