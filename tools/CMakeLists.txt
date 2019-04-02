@@ -15,6 +15,7 @@ else()
 endif()
 
 set_target_properties(embdebug-driver PROPERTIES
+                      ENABLE_EXPORTS 1
                       OUTPUT_NAME embdebug)
 
 install(TARGETS embdebug-driver DESTINATION bin)
