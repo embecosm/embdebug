@@ -256,3 +256,95 @@ INSTANTIATE_TEST_CASE_P(
                                    "$Gdeadbeef#67+",
                                    "+$OK#9a",
                                    {{true, 0, 0xadde}, {true, 1, 0xefbe}}})));
+
+struct MemoryReadWriteOp {
+  bool mIsWrite;
+  uint_addr_t mAddr;
+  std::vector<uint8_t> mValue;
+
+  bool operator==(const MemoryReadWriteOp &other) const {
+    return std::tie(mIsWrite, mAddr, mValue) ==
+           std::tie(other.mIsWrite, other.mAddr, other.mValue);
+  }
+};
+
+class MemoryReadWriteTestTarget : public StubTarget {
+public:
+  MemoryReadWriteTestTarget(const TraceFlags *traceFlags)
+      : StubTarget(traceFlags), mMemoryReadWriteOp() {}
+  ~MemoryReadWriteTestTarget() override {}
+
+  unsigned int getCpuCount() override { return 1; }
+
+  int getRegisterCount() const override { return 1; }
+
+  std::size_t read(const uint_addr_t addr, uint8_t *buffer,
+                   const std::size_t size) override {
+    mMemoryReadWriteOp = {false, addr, std::vector<uint8_t>()};
+    for (size_t i = 0; i < size; ++i)
+      buffer[i] = 0;
+    return size;
+  }
+  std::size_t write(const uint_addr_t addr, const uint8_t *buffer,
+                    const std::size_t size) override {
+    mMemoryReadWriteOp = {true, addr,
+                          std::vector<uint8_t>(buffer, buffer + size)};
+    return size;
+  }
+
+public:
+  MemoryReadWriteOp mMemoryReadWriteOp;
+};
+
+struct MemoryReadWriteTestCase {
+  std::string mInPacket;
+  std::string mOutPacket;
+  MemoryReadWriteOp mMemoryReadWriteOp;
+};
+
+class MemoryReadWriteRspTest
+    : public ::testing::TestWithParam<MemoryReadWriteTestCase> {
+protected:
+  void SetUp() override {
+    auto testCase = GetParam();
+
+    flags = new TraceFlags();
+    conn = new TestConnection(flags);
+    target = new MemoryReadWriteTestTarget(flags);
+    server = new TestGdbServer(conn, target, flags, EXIT_ON_KILL);
+  }
+  void TearDown() override {
+    delete server;
+    delete target;
+    delete conn;
+    delete flags;
+  }
+
+  TraceFlags *flags;
+  TestConnection *conn;
+  MemoryReadWriteTestTarget *target;
+  TestGdbServer *server;
+};
+
+TEST_P(MemoryReadWriteRspTest, MemoryReadWriteRsp) {
+  auto testCase = GetParam();
+
+  char outBuf[1024];
+  conn->setInBuf(testCase.mInPacket.c_str());
+  conn->setOutBuf(outBuf);
+
+  server->wrapRspClientRequest();
+
+  EXPECT_EQ(std::strlen(outBuf), testCase.mOutPacket.size());
+  EXPECT_EQ(std::string(outBuf, outBuf + std::strlen(outBuf)),
+            testCase.mOutPacket);
+  EXPECT_EQ(target->mMemoryReadWriteOp, testCase.mMemoryReadWriteOp);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    GdbServerRsp, MemoryReadWriteRspTest,
+    ::testing::Values(MemoryReadWriteTestCase(
+                          {"$mf00d,1:#2e+", "+$00#60", {false, 0xf00d, {}}}),
+                      MemoryReadWriteTestCase({"$Mcabba9e5,1:55#0a+",
+                                               "+$OK#9a",
+                                               {true, 0xcabba9e5, {0x55}}})));
