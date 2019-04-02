@@ -100,7 +100,7 @@ void Utils::regVal2Hex(uint64_t val, char *buf, std::size_t numBytes,
       val = val / 256;
     }
   } else {
-    for (std::size_t n = numBytes - 1; n-- > 0;) {
+    for (std::size_t n = numBytes; n-- > 0;) {
       unsigned char byte = val & 0xff;
 
       buf[n * 2] = hex2Char((byte >> 4) & 0xf);
