@@ -42,6 +42,10 @@ public:
     PRINT_PLACEHOLDER();
     return 0;
   }
+  int getRegisterCount() const override {
+    PRINT_PLACEHOLDER();
+    return 0;
+  }
   int getRegisterSize() const override {
     PRINT_PLACEHOLDER();
     return 0;

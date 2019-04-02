@@ -83,21 +83,6 @@ private:
   // For now these are hard-coded constants, but they need to be made
   // configurable.
 
-  //! Total number of regs. 32 general regs + PC
-
-  static const int RISCV_NUM_REGS = 33;
-
-  //! Total bytes taken by regs. 4 bytes for each
-
-  static const int RISCV_NUM_REG_BYTES = RISCV_NUM_REGS * sizeof(uint_reg_t);
-
-  //! Minimum packet size for RSP. Must be large enough for any initial
-  //! dialogue. Should at least allow all the registers ASCII encloded + end of
-  //! string marker.
-
-  static const int RSP_PKT_SIZE =
-      (RISCV_NUM_REG_BYTES * 2 + 1) < 256 ? 256 : RISCV_NUM_REG_BYTES * 2 + 1;
-
   // Default values for PTIDs.
 
   static const int PID_DEFAULT = 1; //!< Default PID is core 0
@@ -123,6 +108,9 @@ private:
   //! Our associated RSP interface
 
   AbstractConnection *rsp;
+
+  //! The number of registers in the CPU
+  int mNumRegs;
 
   //! The packet pointer. There is only ever one packet in use at one time, so
   //! there is no need to repeatedly allocate and delete it.

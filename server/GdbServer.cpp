@@ -54,11 +54,16 @@ using namespace EmbDebug;
 
 GdbServer::GdbServer(AbstractConnection *_conn, ITarget *_cpu,
                      TraceFlags *traceFlags, KillBehaviour _killBehaviour)
-    : cpu(_cpu), traceFlags(traceFlags), rsp(_conn), pkt(RSP_PKT_SIZE),
-      killBehaviour(_killBehaviour), mExitServer(false), mHaveMultiProc(false),
-      mStopMode(StopMode::ALL_STOP), mPtid(PID_DEFAULT, TID_DEFAULT),
-      mNextProcess(1), mHandlingSyscall(false), mKillCoreOnExit(false),
-      mCoreManager(cpu->getCpuCount()) {} // GdbServer ()
+    : cpu(_cpu), traceFlags(traceFlags), rsp(_conn),
+      mNumRegs(cpu->getRegisterCount()), pkt(0), killBehaviour(_killBehaviour),
+      mExitServer(false), mHaveMultiProc(false), mStopMode(StopMode::ALL_STOP),
+      mPtid(PID_DEFAULT, TID_DEFAULT), mNextProcess(1), mHandlingSyscall(false),
+      mKillCoreOnExit(false), mCoreManager(cpu->getCpuCount()) {
+  // The packet size needs to be big enough to transmit all of the registers
+  // as ASCII encoded hex digits, plus an end of string marker.
+  pkt = RspPacket(std::max(static_cast<std::size_t>(256),
+                           mNumRegs * sizeof(uint_reg_t) * 2 + 1));
+}
 
 //! Destructor
 
@@ -674,7 +679,7 @@ void GdbServer::rspReadAllRegs() {
 
   // The registers. GDB client expects them to be packed according to target
   // endianness.
-  for (int regNum = 0; regNum < RISCV_NUM_REGS; regNum++) {
+  for (int regNum = 0; regNum < mNumRegs; regNum++) {
     uint_reg_t val;       // Enough for even the PC
     std::size_t byteSize; // Size of reg in bytes
 
@@ -698,7 +703,7 @@ void GdbServer::rspWriteAllRegs() {
   std::size_t pktSize = 0;
 
   // The registers
-  for (int regNum = 0; regNum < RISCV_NUM_REGS; regNum++) {
+  for (int regNum = 0; regNum < mNumRegs; regNum++) {
     std::size_t byteSize = sizeof(uint_reg_t);
 
     uint64_t val = Utils::hex2RegVal(&(pkt.data[pktSize]), byteSize,

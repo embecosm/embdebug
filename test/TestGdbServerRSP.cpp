@@ -87,6 +87,8 @@ public:
   ~MinimalTestTarget() override {}
 
   unsigned int getCpuCount() override { return 1; }
+
+  int getRegisterCount() const override { return 1; }
 };
 
 typedef std::pair<std::string, std::string> MinimalTestCase;
@@ -154,13 +156,16 @@ struct RegisterReadWriteOp {
 
 class RegisterReadWriteTestTarget : public StubTarget {
 public:
-  RegisterReadWriteTestTarget(const TraceFlags *traceFlags)
-      : StubTarget(traceFlags), mRegisterReadWriteOps() {}
+  RegisterReadWriteTestTarget(const TraceFlags *traceFlags, int registerCount,
+                              int registerSize)
+      : StubTarget(traceFlags), mRegisterCount(registerCount),
+        mRegisterSize(registerSize), mRegisterReadWriteOps() {}
   ~RegisterReadWriteTestTarget() override {}
 
   unsigned int getCpuCount() override { return 1; }
 
-  int getRegisterSize() const override { return 2; }
+  int getRegisterCount() const override { return mRegisterCount; }
+  int getRegisterSize() const override { return mRegisterSize; }
 
   std::size_t readRegister(const int reg, uint_reg_t &value) override {
     value = 0;
@@ -181,6 +186,10 @@ public:
     return getRegisterSize();
   }
 
+private:
+  const int mRegisterCount;
+  const int mRegisterSize;
+
 public:
   std::set<RegisterReadWriteOp> mRegisterReadWriteOps;
 };
@@ -197,7 +206,7 @@ protected:
   void SetUp() override {
     flags = new TraceFlags();
     conn = new TestConnection(flags);
-    target = new RegisterReadWriteTestTarget(flags);
+    target = new RegisterReadWriteTestTarget(flags, 2, 2);
     server = new TestGdbServer(conn, target, flags, EXIT_ON_KILL);
   }
   void TearDown() override {

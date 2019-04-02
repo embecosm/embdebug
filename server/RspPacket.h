@@ -23,7 +23,12 @@ public:
 
   // Constructor and destructor
   RspPacket(std::size_t _bufSize);
+  RspPacket(RspPacket &&other);
+  RspPacket(const RspPacket &other) = delete;
   ~RspPacket();
+
+  RspPacket &operator=(const RspPacket &other) = delete;
+  RspPacket &operator=(RspPacket &&other);
 
   // Pack a constant string into a packet
   void packStr(const char *str);    // For fixed packets

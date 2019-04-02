@@ -45,6 +45,10 @@ public:
     throw std::runtime_error("Unimplemented method called");
     return 0;
   }
+  int getRegisterCount() const override {
+    throw std::runtime_error("Unimplemented method called");
+    return 0;
+  }
   int getRegisterSize() const override {
     throw std::runtime_error("Unimplemented method called");
     return 0;

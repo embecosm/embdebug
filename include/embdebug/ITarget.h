@@ -99,6 +99,9 @@ public:
   virtual uint64_t getCycleCount() const = 0;
   virtual uint64_t getInstrCount() const = 0;
 
+  //! \brief Get the number of registers in the CPU
+  virtual int getRegisterCount() const = 0;
+
   //! \brief Get the size of registers in the CPU in bytes.
   virtual int getRegisterSize() const = 0;
 
