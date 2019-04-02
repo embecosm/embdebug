@@ -700,15 +700,15 @@ void GdbServer::rspReadAllRegs() {
 //! Each value is written into the simulated register.
 
 void GdbServer::rspWriteAllRegs() {
-  std::size_t pktSize = 0;
+  std::size_t pktPos = 1;
 
   // The registers
   for (int regNum = 0; regNum < mNumRegs; regNum++) {
-    std::size_t byteSize = sizeof(uint_reg_t);
+    std::size_t byteSize = cpu->getRegisterSize();
 
-    uint64_t val = Utils::hex2RegVal(&(pkt.data[pktSize]), byteSize,
+    uint64_t val = Utils::hex2RegVal(&(pkt.data[pktPos]), byteSize,
                                      true /* little endian */);
-    pktSize += byteSize * 2; // 2 chars per hex digit
+    pktPos += byteSize * 2; // 2 chars per hex digit
 
     if (byteSize != cpu->writeRegister(regNum, val))
       cerr << "Warning: Size != " << byteSize << " when writing reg " << regNum
