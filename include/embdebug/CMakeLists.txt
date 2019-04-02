@@ -1,4 +1,5 @@
-set(INSTALL_HEADERS Init.h
+set(INSTALL_HEADERS Gdbserver_compat.h
+                    Init.h
                     ITarget.h
                     MemMap.h
                     Timeout.h
