@@ -15,16 +15,9 @@
 
 using namespace EmbDebug;
 
-static ITarget *globalTargetHandle = nullptr;
-
 int EmbDebug::init(ITarget *target, TraceFlags *traceFlags,
                    bool useStreamConnection, int rspPort, bool writePort) {
-  // Take a global reference to the target so that we can get at it
-  // from sc_time_stamp
-  globalTargetHandle = target;
-
   AbstractConnection *conn;
-  ;
   KillBehaviour killBehaviour;
   if (useStreamConnection) {
     conn = new StreamConnection(traceFlags);
@@ -47,14 +40,4 @@ int EmbDebug::init(ITarget *target, TraceFlags *traceFlags,
 
   delete conn;
   return ret;
-}
-
-//! Function to handle $time calls in the Verilog
-
-double sc_time_stamp() {
-  // If we are called before cpu has been constructed, return 0.0
-  if (globalTargetHandle != nullptr)
-    return globalTargetHandle->timeStamp();
-  else
-    return 0.0;
 }
