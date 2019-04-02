@@ -195,6 +195,8 @@ public:
 };
 
 struct RegisterReadWriteTestCase {
+  int mRegCount;
+  int mRegSize;
   std::string mInPacket;
   std::string mOutPacket;
   std::set<RegisterReadWriteOp> mRegisterReadWriteOps;
@@ -204,9 +206,12 @@ class RegisterReadWriteRspTest
     : public ::testing::TestWithParam<RegisterReadWriteTestCase> {
 protected:
   void SetUp() override {
+    auto testCase = GetParam();
+
     flags = new TraceFlags();
     conn = new TestConnection(flags);
-    target = new RegisterReadWriteTestTarget(flags, 2, 2);
+    target = new RegisterReadWriteTestTarget(flags, testCase.mRegCount,
+                                             testCase.mRegSize);
     server = new TestGdbServer(conn, target, flags, EXIT_ON_KILL);
   }
   void TearDown() override {
@@ -240,6 +245,14 @@ TEST_P(RegisterReadWriteRspTest, RegisterReadWriteRsp) {
 INSTANTIATE_TEST_CASE_P(
     GdbServerRsp, RegisterReadWriteRspTest,
     ::testing::Values(
-        RegisterReadWriteTestCase({"$p0#a0+", "+$0000#c0", {{false, 0, 0}}}),
         RegisterReadWriteTestCase(
-            {"$P0=beef#4f+", "+$OK#9a", {{true, 0, 0xefbe}}})));
+            {1, 2, "$p0#a0+", "+$0000#c0", {{false, 0, 0}}}),
+        RegisterReadWriteTestCase(
+            {1, 2, "$P0=beef#4f+", "+$OK#9a", {{true, 0, 0xefbe}}}),
+        RegisterReadWriteTestCase(
+            {2, 2, "$g#67+", "+$00000000#80", {{false, 0, 0}, {false, 1, 0}}}),
+        RegisterReadWriteTestCase({2,
+                                   2,
+                                   "$Gdeadbeef#67+",
+                                   "+$OK#9a",
+                                   {{true, 0, 0xadde}, {true, 1, 0xefbe}}})));
