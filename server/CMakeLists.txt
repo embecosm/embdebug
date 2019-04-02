@@ -6,7 +6,6 @@ set(EMBDEBUG_SOURCES AbstractConnection.cpp
                      Init.cpp
                      ITarget.cpp
                      MemMap.cpp
-                     MpHash.cpp
                      Ptid.cpp
                      RspPacket.cpp
                      StreamConnection.cpp

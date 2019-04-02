@@ -24,7 +24,6 @@
 
 // Class headers
 
-#include "MpHash.h"
 #include "Ptid.h"
 #include "RspConnection.h"
 #include "RspPacket.h"
@@ -74,11 +73,25 @@ private:
 
   enum class StopMode : char { NON_STOP, ALL_STOP };
 
+  //! Enumeration of different types of matchpoint.
+
+  //! These have explicit values matching the second digit of 'z' and 'Z'
+  //! packets.
+  enum class MatchpointType : int {
+    BP_MEMORY = 0,
+    BP_HARDWARE = 1,
+    WP_WRITE = 2,
+    WP_READ = 3,
+    WP_ACCESS = 4
+  };
+
   // stream operators have to be friends to access private members
 
   friend std::ostream &operator<<(std::ostream &s, TargetSignal p);
 
   friend std::ostream &operator<<(std::ostream &s, StopMode p);
+
+  friend std::ostream &operator<<(std::ostream &s, MatchpointType p);
 
   // For now these are hard-coded constants, but they need to be made
   // configurable.
@@ -119,7 +132,7 @@ private:
 
   //! Hash table for matchpoints
 
-  MpHash mpHash;
+  std::map<std::pair<MatchpointType, uint_addr_t>, uint64_t> mMatchpointMap;
 
   //! Timeout for continue.
 

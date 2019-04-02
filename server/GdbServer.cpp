@@ -56,10 +56,11 @@ using namespace EmbDebug;
 GdbServer::GdbServer(AbstractConnection *_conn, ITarget *_cpu,
                      TraceFlags *traceFlags, KillBehaviour _killBehaviour)
     : cpu(_cpu), traceFlags(traceFlags), rsp(_conn),
-      mNumRegs(cpu->getRegisterCount()), pkt(0), killBehaviour(_killBehaviour),
-      mExitServer(false), mHaveMultiProc(false), mStopMode(StopMode::ALL_STOP),
-      mPtid(PID_DEFAULT, TID_DEFAULT), mNextProcess(1), mHandlingSyscall(false),
-      mKillCoreOnExit(false), mCoreManager(cpu->getCpuCount()) {
+      mNumRegs(cpu->getRegisterCount()), pkt(0), mMatchpointMap(),
+      killBehaviour(_killBehaviour), mExitServer(false), mHaveMultiProc(false),
+      mStopMode(StopMode::ALL_STOP), mPtid(PID_DEFAULT, TID_DEFAULT),
+      mNextProcess(1), mHandlingSyscall(false), mKillCoreOnExit(false),
+      mCoreManager(cpu->getCpuCount()) {
   // The packet size needs to be big enough to transmit all of the registers
   // as ASCII encoded hex digits, plus an end of string marker.
   pkt = RspPacket(std::max(static_cast<std::size_t>(256),
@@ -1660,11 +1661,11 @@ void GdbServer::rspWriteMemBin() {
 //! @todo This doesn't work with icache/immu yet
 
 void GdbServer::rspRemoveMatchpoint() {
-  MpType type;       // What sort of matchpoint
-  uint32_t addr;     // Address specified
-  uint32_t instr;    // Instruction value found
-  std::size_t len;   // Matchpoint length
-  uint8_t *instrVec; // Instruction as byte vector
+  MatchpointType type; // What sort of matchpoint
+  uint_addr_t addr;    // Address specified
+  uint64_t instr;      // Instruction value found
+  std::size_t len;     // Matchpoint length
+  uint8_t *instrVec;   // Instruction as byte vector
 
   pkt.packStr("");
   rsp->putPkt(pkt);
@@ -1692,9 +1693,11 @@ void GdbServer::rspRemoveMatchpoint() {
 
   // Sort out the type of matchpoint
   switch (type) {
-  case BP_MEMORY:
+  case MatchpointType::BP_MEMORY: {
     // Software (memory) breakpoint
-    if (mpHash.remove(type, addr, &instr)) {
+    auto matchpointPos = mMatchpointMap.find(std::make_pair(type, addr));
+    if (matchpointPos != mMatchpointMap.end()) {
+      mMatchpointMap.erase(matchpointPos);
       if (traceFlags->traceRsp()) {
         cout << "RSP trace: software (memory) breakpoint removed from 0x" << hex
              << addr << dec << endl;
@@ -1722,10 +1725,12 @@ void GdbServer::rspRemoveMatchpoint() {
     pkt.packStr("OK");
     rsp->putPkt(pkt);
     return;
-
-  case BP_HARDWARE:
+  }
+  case MatchpointType::BP_HARDWARE: {
     // Hardware breakpoint
-    if (mpHash.remove(type, addr, &instr)) {
+    auto matchpointPos = mMatchpointMap.find(std::make_pair(type, addr));
+    if (matchpointPos != mMatchpointMap.end()) {
+      mMatchpointMap.erase(matchpointPos);
       if (traceFlags->traceRsp()) {
         cout << "Rsp trace: hardware breakpoint removed from 0x NOT IMPLEMENTED"
              << hex << addr << dec << endl;
@@ -1743,10 +1748,12 @@ void GdbServer::rspRemoveMatchpoint() {
     }
 
     return;
-
-  case WP_WRITE:
+  }
+  case MatchpointType::WP_WRITE: {
     // Write watchpoint
-    if (mpHash.remove(type, addr, &instr)) {
+    auto matchpointPos = mMatchpointMap.find(std::make_pair(type, addr));
+    if (matchpointPos != mMatchpointMap.end()) {
+      mMatchpointMap.erase(matchpointPos);
       if (traceFlags->traceRsp()) {
         cout << "RSP trace: write watchpoint removed from 0x" << hex << addr
              << dec << endl;
@@ -1762,10 +1769,12 @@ void GdbServer::rspRemoveMatchpoint() {
     }
 
     return;
-
-  case WP_READ:
+  }
+  case MatchpointType::WP_READ: {
     // Read watchpoint
-    if (mpHash.remove(type, addr, &instr)) {
+    auto matchpointPos = mMatchpointMap.find(std::make_pair(type, addr));
+    if (matchpointPos != mMatchpointMap.end()) {
+      mMatchpointMap.erase(matchpointPos);
       if (traceFlags->traceRsp()) {
         cout << "RSP trace: read watchpoint removed from 0x" << hex << addr
              << dec << endl;
@@ -1781,10 +1790,12 @@ void GdbServer::rspRemoveMatchpoint() {
     }
 
     return;
-
-  case WP_ACCESS:
+  }
+  case MatchpointType::WP_ACCESS: {
     // Access (read/write) watchpoint
-    if (mpHash.remove(type, addr, &instr)) {
+    auto matchpointPos = mMatchpointMap.find(std::make_pair(type, addr));
+    if (matchpointPos != mMatchpointMap.end()) {
+      mMatchpointMap.erase(matchpointPos);
       if (traceFlags->traceRsp()) {
         cout << "RSP trace: access (read/write) watchpoint removed "
                 "from 0x"
@@ -1802,7 +1813,7 @@ void GdbServer::rspRemoveMatchpoint() {
     }
 
     return;
-
+  }
   default:
     cerr << "Warning: RSP matchpoint type " << type
          << " not recognized: ignored" << endl;
@@ -1817,11 +1828,11 @@ void GdbServer::rspRemoveMatchpoint() {
 //! @todo For now only memory breakpoints are handled
 
 void GdbServer::rspInsertMatchpoint() {
-  MpType type;       // What sort of matchpoint
-  uint32_t addr;     // Address specified
-  uint32_t instr;    // Instruction value found
-  std::size_t len;   // Matchpoint length
-  uint8_t *instrVec; // Instruction as byte vector
+  MatchpointType type; // What sort of matchpoint
+  uint_addr_t addr;    // Address specified
+  uint64_t instr;      // Instruction value found
+  std::size_t len;     // Matchpoint length
+  uint8_t *instrVec;   // Instruction as byte vector
 
   pkt.packStr("");
   rsp->putPkt(pkt);
@@ -1849,7 +1860,7 @@ void GdbServer::rspInsertMatchpoint() {
 
   // Sort out the type of matchpoint
   switch (type) {
-  case BP_MEMORY:
+  case MatchpointType::BP_MEMORY:
     // Software (memory) breakpoint. Extract the instruction.
     instrVec = reinterpret_cast<uint8_t *>(&instr);
 
@@ -1859,7 +1870,7 @@ void GdbServer::rspInsertMatchpoint() {
 
     // Record the breakpoint and write a breakpoint instruction in its
     // place.
-    mpHash.add(type, addr, instr);
+    mMatchpointMap.insert({std::make_pair(type, addr), instr});
 
     if (traceFlags->traceBreak())
       cerr << "Inserting a breakpoint over the  instruction (0x" << hex
@@ -1883,9 +1894,10 @@ void GdbServer::rspInsertMatchpoint() {
     rsp->putPkt(pkt);
     return;
 
-  case BP_HARDWARE:
+  case MatchpointType::BP_HARDWARE:
     // Hardware breakpoint
-    mpHash.add(type, addr, 0); // No instr for HW matchpoints
+    mMatchpointMap.insert(
+        {std::make_pair(type, addr), 0}); // No instr for HW matchpoints
 
     if (traceFlags->traceRsp()) {
       cout << "RSP trace: hardware breakpoint set at 0x NOT IMPLEMENTED" << hex
@@ -1899,9 +1911,10 @@ void GdbServer::rspInsertMatchpoint() {
 
     return;
 
-  case WP_WRITE:
+  case MatchpointType::WP_WRITE:
     // Write watchpoint
-    mpHash.add(type, addr, 0); // No instr for HW matchpoints
+    mMatchpointMap.insert(
+        {std::make_pair(type, addr), 0}); // No instr for HW matchpoints
 
     if (traceFlags->traceRsp()) {
       cout << "RSP trace: write watchpoint set at 0x" << hex << addr << dec
@@ -1913,9 +1926,10 @@ void GdbServer::rspInsertMatchpoint() {
 
     return;
 
-  case WP_READ:
+  case MatchpointType::WP_READ:
     // Read watchpoint
-    mpHash.add(type, addr, 0); // No instr for HW matchpoints
+    mMatchpointMap.insert(
+        {std::make_pair(type, addr), 0}); // No instr for HW matchpoints
 
     if (traceFlags->traceRsp()) {
       cout << "RSP trace: read watchpoint set at 0x" << hex << addr << dec
@@ -1927,9 +1941,10 @@ void GdbServer::rspInsertMatchpoint() {
 
     return;
 
-  case WP_ACCESS:
+  case MatchpointType::WP_ACCESS:
     // Access (read/write) watchpoint
-    mpHash.add(type, addr, 0); // No instr for HW matchpoints
+    mMatchpointMap.insert(
+        {std::make_pair(type, addr), 0}); // No instr for HW matchpoints
 
     if (traceFlags->traceRsp()) {
       cout << "RSP trace: access (read/write) watchpoint set at 0x" << hex
@@ -2009,6 +2024,37 @@ std::ostream &operator<<(std::ostream &s, GdbServer::StopMode p) {
     break;
   }
 
+  return s << name;
+}
+
+//! Output operator for MatchpointType enumeration
+
+//! @param[in] s  The stream to output to.
+//! @param[in] p  The MatchpointType value to output.
+//! @return  The stream with the item appended.
+std::ostream &operator<<(std::ostream &s, GdbServer::MatchpointType p) {
+  const char *name;
+
+  switch (p) {
+  case GdbServer::MatchpointType::BP_MEMORY:
+    name = "BP_MEMORY";
+    break;
+  case GdbServer::MatchpointType::BP_HARDWARE:
+    name = "BP_HARDWARE";
+    break;
+  case GdbServer::MatchpointType::WP_WRITE:
+    name = "WP_WRITE";
+    break;
+  case GdbServer::MatchpointType::WP_READ:
+    name = "WP_READ";
+    break;
+  case GdbServer::MatchpointType::WP_ACCESS:
+    name = "WP_ACCESS";
+    break;
+  default:
+    name = "unknown";
+    break;
+  }
   return s << name;
 }
 
