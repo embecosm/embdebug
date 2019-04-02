@@ -34,6 +34,7 @@ using namespace EmbDebug;
 RspPacket::RspPacket(std::size_t _bufSize) : bufSize(_bufSize) {
   data = new char[_bufSize];
 }
+
 RspPacket::RspPacket(RspPacket &&other) {
   bufSize = other.bufSize;
   data = other.data;

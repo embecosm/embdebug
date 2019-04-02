@@ -704,9 +704,8 @@ void GdbServer::rspWriteAllRegs() {
   std::size_t pktPos = 1;
 
   // The registers
+  std::size_t byteSize = cpu->getRegisterSize();
   for (int regNum = 0; regNum < mNumRegs; regNum++) {
-    std::size_t byteSize = cpu->getRegisterSize();
-
     uint64_t val = Utils::hex2RegVal(&(pkt.data[pktPos]), byteSize,
                                      true /* little endian */);
     pktPos += byteSize * 2; // 2 chars per hex digit
