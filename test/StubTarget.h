@@ -9,7 +9,7 @@
 #ifndef STUB_TARGET_H
 #define STUB_TARGET_H
 
-#include "embdebug/Gdbserver_compat.h"
+#include "embdebug/Compat.h"
 #include "embdebug/ITarget.h"
 
 namespace EmbDebug {

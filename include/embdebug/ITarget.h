@@ -14,7 +14,7 @@
 #include <iostream>
 #include <vector>
 
-#include "Gdbserver_compat.h"
+#include "Compat.h"
 #include "Types.h"
 
 namespace EmbDebug {

@@ -1,6 +1,6 @@
 #include <stdexcept>
 
-#include "embdebug/Gdbserver_compat.h"
+#include "embdebug/Compat.h"
 
 #include "AbstractConnection.h"
 #include "RspPacket.h"

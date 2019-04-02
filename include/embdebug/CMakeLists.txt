@@ -1,4 +1,4 @@
-set(INSTALL_HEADERS Gdbserver_compat.h
+set(INSTALL_HEADERS Compat.h
                     Init.h
                     ITarget.h
                     MemMap.h

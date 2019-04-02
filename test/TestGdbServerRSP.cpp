@@ -4,7 +4,7 @@
 #include "GdbServer.h"
 #include "RspPacket.h"
 #include "StubTarget.h"
-#include "embdebug/Gdbserver_compat.h"
+#include "embdebug/Compat.h"
 #include "embdebug/ITarget.h"
 
 #include "gtest/gtest.h"

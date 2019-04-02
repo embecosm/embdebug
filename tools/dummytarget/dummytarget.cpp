@@ -8,7 +8,7 @@
 
 #include <sstream>
 
-#include "embdebug/Gdbserver_compat.h"
+#include "embdebug/Compat.h"
 #include "embdebug/ITarget.h"
 
 #define PRINT_PLACEHOLDER()                                                    \
