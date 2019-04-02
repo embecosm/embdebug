@@ -130,7 +130,7 @@ uint64_t Utils::hex2RegVal(const char *buf, std::size_t numBytes,
   uint64_t val = 0; // The result
 
   if (isLittleEndianP) {
-    for (std::size_t n = numBytes - 1; n-- > 0;) {
+    for (std::size_t n = numBytes; n-- > 0;) {
       val = (val << 4) | char2Hex(buf[n * 2]);
       val = (val << 4) | char2Hex(buf[n * 2 + 1]);
     }
