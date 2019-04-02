@@ -23,9 +23,9 @@ public:
   static bool isHexStr(const char *buf, const std::size_t len);
   static uint8_t char2Hex(int c);
   static char hex2Char(uint8_t d);
-  static void regVal2Hex(uint64_t val, char *buf, int numBytes,
+  static void regVal2Hex(uint64_t val, char *buf, std::size_t numBytes,
                          bool isLittleEndianP);
-  static uint64_t hex2RegVal(const char *buf, int numBytes,
+  static uint64_t hex2RegVal(const char *buf, std::size_t numBytes,
                              bool isLittleEndianP);
   static std::size_t val2Hex(uint64_t val, char *buf);
   static uint64_t hex2Val(const char *buf, std::size_t len);

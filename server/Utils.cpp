@@ -88,10 +88,10 @@ char Utils::hex2Char(uint8_t d) {
 //! @param[out] buf              the buffer for the text string
 //! @param[in]  numBytes         the number of significant bytes in val
 //! @param[in]  isLittleEndianP  true if this is a little endian architecture.
-void Utils::regVal2Hex(uint64_t val, char *buf, int numBytes,
+void Utils::regVal2Hex(uint64_t val, char *buf, std::size_t numBytes,
                        bool isLittleEndianP) {
   if (isLittleEndianP) {
-    for (int n = 0; n < numBytes; n++) {
+    for (std::size_t n = 0; n < numBytes; n++) {
       unsigned char byte = val & 0xff;
 
       buf[n * 2] = hex2Char((byte >> 4) & 0xf);
@@ -100,7 +100,7 @@ void Utils::regVal2Hex(uint64_t val, char *buf, int numBytes,
       val = val / 256;
     }
   } else {
-    for (int n = numBytes - 1; n >= 0; n--) {
+    for (std::size_t n = numBytes - 1; n-- > 0;) {
       unsigned char byte = val & 0xff;
 
       buf[n * 2] = hex2Char((byte >> 4) & 0xf);
@@ -125,17 +125,17 @@ void Utils::regVal2Hex(uint64_t val, char *buf, int numBytes,
 //! @param[in] isLittleEndianP  true if this is a little endian architecture.
 
 //! @return  The value to convert
-uint64_t Utils::hex2RegVal(const char *buf, int numBytes,
+uint64_t Utils::hex2RegVal(const char *buf, std::size_t numBytes,
                            bool isLittleEndianP) {
   uint64_t val = 0; // The result
 
   if (isLittleEndianP) {
-    for (int n = numBytes - 1; n >= 0; n--) {
+    for (std::size_t n = numBytes - 1; n-- > 0;) {
       val = (val << 4) | char2Hex(buf[n * 2]);
       val = (val << 4) | char2Hex(buf[n * 2 + 1]);
     }
   } else {
-    for (int n = 0; n < numBytes; n++) {
+    for (std::size_t n = 0; n < numBytes; n++) {
       val = (val << 4) | char2Hex(buf[n * 2]);
       val = (val << 4) | char2Hex(buf[n * 2 + 1]);
     }
