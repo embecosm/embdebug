@@ -3,20 +3,27 @@
 // Generator for Linux test
 def buildLinuxJob(prefix, shared) {
   return {
-    node('linux') {
+    node('linux-docker') {
       stage("Linux ${prefix}: Checkout") {
         deleteDir()
         checkout scm
       }
+      stage("Linux ${prefix}: Build docker image") {
+        image = docker.build("gdbserver-test-${prefix}", "-f .jenkins/docker/linux-${image}.dockerfile .jenkins/docker")
+      }
       stage("Linux ${prefix}: Build") {
-        dir('build') {
-          sh "cmake -DBUILD_SHARED_LIBS=${shared} -DEMBDEBUG_ENABLE_WERROR=TRUE .."
-          sh 'cmake --build . --target all'
+        image.inside {
+          dir('build') {
+            sh "cmake -DBUILD_SHARED_LIBS=${shared} -DEMBDEBUG_ENABLE_WERROR=TRUE .."
+            sh 'cmake --build . --target all'
+          }
         }
       }
       stage("Linux ${prefix}: Test") {
-        dir('build') {
-          sh 'cmake --build . --target test'
+        image.inside {
+          dir('build') {
+            sh 'cmake --build . --target test'
+          }
         }
       }
     }
@@ -48,9 +55,16 @@ def buildWindowsJob(version, generator, abi) {
 
 // Map of all variants to run
 def JOBS = [:]
-JOBS['linux-shared'] = buildLinuxJob('shared', true)
-JOBS['linux-static'] = buildLinuxJob('static', false)
 
+// Linux targets
+def LINUX_TARGETS = ['centos7-gcc7', 'centos7-gcc6', 'centos7-gcc5', 'centos7-clang',
+                     'ubuntu1604-gcc', 'ubuntu1604-clang', 'ubuntu1804-gcc', 'ubuntu1804-clang']
+LINUX_TARGETS.each { name -> 
+  JOBS["linux-${name}-shared"] = buildLinuxJob("${name}-shared", name, true)
+  JOBS["linux-${name}-static"] = buildLinuxJob("${name}-static", name, true)
+}
+
+// Windows targets
 def VS_VERSIONS = ['2015': 'Visual Studio 14 2015',
                    '2017': 'Visual Studio 15 2017',
                    '2019': 'Visual Studio 16 2019']
