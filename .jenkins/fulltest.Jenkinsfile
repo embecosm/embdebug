@@ -53,6 +53,29 @@ def buildWindowsJob(version, generator, abi) {
   }
 }
 
+// Generator for macOS test
+def buildMacOSJob(prefix, shared) {
+  return {
+    node('macos') {
+      stage("macOS ${prefix}: Checkout") {
+        deleteDir()
+        checkout scm
+      }
+      stage("macOS ${prefix}: Build") {
+        dir('build') {
+          sh "cmake -DBUILD_SHARED_LIBS=${shared} -DEMBDEBUG_ENABLE_WERROR=TRUE .."
+          sh 'cmake --build . --target all'
+        }
+      }
+      stage("macOS ${prefix}: Test") {
+        dir('build') {
+          sh 'cmake --build . --target test'
+        }
+      }
+    }
+  }
+}
+
 // Map of all variants to run
 def JOBS = [:]
 
@@ -72,6 +95,10 @@ VS_VERSIONS.each { vers, gen ->
   JOBS["windows-${vers}-Win32"] = buildWindowsJob(vers, gen, 'Win32')
   JOBS["windows-${vers}-x64"] = buildWindowsJob(vers, gen, 'x64')
 }
+
+// macOS targets
+JOBS["macos-shared"] = buildMacOSJob("Shared", true)
+JOBS["macos-static"] = buildMacOSJob("Static", false)
 
 // Run all jobs
 parallel JOBS
