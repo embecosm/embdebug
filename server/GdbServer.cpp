@@ -992,7 +992,7 @@ void GdbServer::rspQuery() {
         xmlRegsStr = ";qXfer:features:read+";
       }
 
-    sprintf(pkt.data, "PacketSize=%" PRIxSIZE ";QNonStop+;VContSupported+%s%s",
+    sprintf(pkt.data, "PacketSize=%" PRIxPTR ";QNonStop+;VContSupported+%s%s",
             pkt.getBufSize(), multiProcStr, xmlRegsStr);
 
     pkt.setLen(strlen(pkt.data));
@@ -1622,7 +1622,7 @@ void GdbServer::rspWriteMemBin() {
   uint32_t addr;   // Where to write the memory
   std::size_t len; // Number of bytes to write
 
-  if (2 != sscanf(pkt.data, "X%" PRIx32 ",%" PRIxSIZE ":", &addr, &len)) {
+  if (2 != sscanf(pkt.data, "X%" PRIx32 ",%" PRIxPTR ":", &addr, &len)) {
     cerr << "Warning: Failed to recognize RSP write memory command: "
          << pkt.data << endl;
     pkt.packStr("E01");
