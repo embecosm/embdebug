@@ -5,4 +5,4 @@ LABEL maintainer simon.cook@embecosm.com
 # Install required packages
 RUN apt-get -y update && \
   DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y build-essential cmake
+  apt-get install -y build-essential git cmake

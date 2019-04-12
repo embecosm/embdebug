@@ -32,5 +32,8 @@ VS_VERSIONS.each { vers, gen ->
 JOBS["macos-shared"] = generators.buildMacOSJob("Shared", true)
 JOBS["macos-static"] = generators.buildMacOSJob("Static", false)
 
+// Style test
+JOBS["style"] = generators.buildStyleJob()
+
 // Run jobs in parallel
 parallel JOBS

@@ -77,4 +77,39 @@ def buildMacOSJob(prefix, shared) {
   }
 }
 
+// Generator for job that will fail if clang-format makes changes
+def buildStyleJob() {
+  return {
+    node('linux-docker') {
+      stage("Style: Checkout") {
+        deleteDir()
+        checkout scm
+      }
+      stage("Style: Build docker image") {
+        image = docker.build("gdbserver-test-ubuntu1804-clang", "-f .jenkins/docker/linux-ubuntu1804-clang.dockerfile .jenkins/docker")
+      }
+      stage("Style: Configure") {
+        image.inside {
+          dir('build') {
+            sh "cmake .."
+          }
+        }
+      }
+      stage("Style: Test") {
+        image.inside {
+          dir('build') {
+            sh 'cmake --build . --target clang-format'
+            sh 'git diff > style-differences.diff'
+            def count = sh(script: 'cat style-differences.diff | wc -l', returnStdout: true) as Integer
+            if (count > 0) {
+              archiveArtifacts allowEmptyArchive: true, artifacts: 'style-differences.diff'
+              currentBuild.result = 'UNSTABLE'
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 return this;

@@ -8,5 +8,5 @@ USER 0
 
 # Enable EPEL and install required packages
 RUN yum -y install epel-release
-RUN yum -y upgrade && yum install -y cmake3 make
+RUN yum -y upgrade && yum install -y cmake3 make git
 RUN ln -s /usr/bin/cmake3 /usr/bin/cmake
