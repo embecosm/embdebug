@@ -1,58 +1,13 @@
-pipeline {
-  agent { label 'macos' }
-  options { skipDefaultCheckout() }
+// macOS smoke test
 
-  stages {
-    stage('Checkout') {
-      steps {
-        deleteDir()
-        checkout scm
-      }
-    }
-    stage('Build and test') {
-      parallel {
-        // This builds and tests an explicitly static build
-        stage('Static') {
-          stages {
-            stage('Build') {
-              steps {
-                dir('build-static') {
-                  sh 'cmake -DBUILD_SHARED_LIBS=TRUE -DEMBDEBUG_ENABLE_WERROR=TRUE ..'
-                  sh 'cmake --build . --target all'
-                }
-              }
-            }
-            stage('Test') {
-              steps {
-                dir('build-static') {
-                  sh 'cmake --build . --target test'
-                }
-              }
-            }
-          }
-        }
-
-        // This builds and tests an explicitly shared build
-        stage('Shared') {
-          stages {
-            stage('Build') {
-              steps {
-                dir('build-shared') {
-                  sh 'cmake -DBUILD_SHARED_LIBS=TRUE -DEMBDEBUG_ENABLE_WERROR=TRUE ..'
-                  sh 'cmake --build . --target all'
-                }
-              }
-            }
-            stage('Test') {
-              steps {
-                dir('build-shared') {
-                  sh 'cmake --build . --target test'
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+// Load generators
+node('master') {
+  checkout scm
+  generators = load '.jenkins/jobgenerators.groovy'
 }
+
+// Run macOS Tests
+JOBS = [:]
+JOBS['static'] = generators.buildMacOSJob('static', false)
+JOBS['shared'] = generators.buildMacOSJob('shared', true)
+parallel JOBS
