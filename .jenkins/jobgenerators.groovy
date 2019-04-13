@@ -23,7 +23,7 @@ def buildLinuxJob(prefix, image, shared, extra_flags = '') {
       stage("Linux ${prefix}: Test") {
         image.inside {
           dir('build') {
-            sh 'cmake --build . --target test'
+            sh 'CTEST_OUTPUT_ON_FAILURE=1 cmake --build . --target test'
           }
         }
       }
@@ -47,7 +47,7 @@ def buildWindowsJob(version, generator, abi) {
       }
       stage("MSVC ${version} ${abi}: Test") {
         dir('build') {
-          bat script: 'cmake --build . --target RUN_TESTS'
+          bat script: 'set CTEST_OUTPUT_ON_FAILURE=1 && cmake --build . --target RUN_TESTS'
         }
       }
     }
@@ -70,7 +70,7 @@ def buildMacOSJob(prefix, shared) {
       }
       stage("macOS ${prefix}: Test") {
         dir('build') {
-          sh 'cmake --build . --target test'
+          sh 'CTEST_OUTPUT_ON_FAILURE=1 cmake --build . --target test'
         }
       }
     }
