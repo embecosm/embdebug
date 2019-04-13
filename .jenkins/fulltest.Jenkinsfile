@@ -32,8 +32,10 @@ VS_VERSIONS.each { vers, gen ->
 JOBS["macos-shared"] = generators.buildMacOSJob("Shared", true)
 JOBS["macos-static"] = generators.buildMacOSJob("Static", false)
 
-// Style test
+// Style and sanitiziers test
 JOBS["style"] = generators.buildStyleJob()
+JOBS["asan"] = generators.buildLinuxJob("asan", "ubuntu1604-clang", false, "-fsanitize=address")
+JOBS["ubsan"] = generators.buildLinuxJob("ubsan", "ubuntu1604-clang", false, "-fsanitize=undefined")
 
 // Run jobs in parallel
 parallel JOBS

@@ -9,6 +9,6 @@ RUN apt-get -y update && \
 
 # Install clang toolchain, update alternatives
 RUN DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y clang clang-format
+  apt-get install -y clang clang-format llvm
 RUN update-alternatives --set c++ /usr/bin/clang++ && \
   update-alternatives --set cc /usr/bin/clang
