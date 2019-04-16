@@ -49,6 +49,9 @@ RspPacket::RspPacket(RspPacket &&other) {
 RspPacket::~RspPacket() { delete[] data; }
 
 RspPacket &RspPacket::operator=(RspPacket &&other) {
+  if (data)
+    delete[] data;
+
   bufSize = other.bufSize;
   data = other.data;
 
