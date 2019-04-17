@@ -1,0 +1,7 @@
+/// \mainpage Embdebug
+///
+/// \section intro Introduction
+/// Welcome to Gdbserver.
+///
+/// This documentation describes the internals of the gdbserver interface,
+/// tutorial information can be found as part of the reference manual.

@@ -39,8 +39,9 @@ enable_clang_format()
 option(EMBDEBUG_ENABLE_DOXYGEN "Enable building of doxygen documentation" OFF)
 if (EMBDEBUG_ENABLE_DOXYGEN)
   find_package(Doxygen)
+  set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen")
   doxygen_add_docs(doxygen
-                   include server)
+                   include server docs)
 endif()
 
 message("
