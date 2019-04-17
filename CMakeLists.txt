@@ -44,6 +44,19 @@ if (EMBDEBUG_ENABLE_DOXYGEN)
                    include server docs)
 endif()
 
+# Generate documentation
+option(EMBDEBUG_ENABLE_DOCS "Enable building of documentation" OFF)
+if (EMBDEBUG_ENABLE_DOCS)
+  find_program(SPHINX_BUILD "sphinx-build")
+  if (NOT SPHINX_BUILD)
+    message(STATUS "sphinx-build not found")
+  else()
+    add_custom_target(docs
+                      COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/docs"
+                      COMMAND ${SPHINX_BUILD} -M html "${CMAKE_SOURCE_DIR}/docs" "${CMAKE_BINARY_DIR}/docs/_build")
+  endif()
+endif()
+
 message("
   " ${CMAKE_PROJECT_NAME} " version " ${embdebug_VERSION} "
   Prefix.....................: " ${CMAKE_INSTALL_PREFIX} "
