@@ -114,18 +114,21 @@ int main(int argc, char *argv[]) {
 
   cxxopts::Options options("embdebug", "GDBServer");
   options.add_options()("q,silent",
-                        "Don't emit informational messages on stdout")(
-      "h,help", "Display help message")(
-      "t,trace", "Trace item", cxxopts::value<std::vector<std::string>>(),
-      "<flag>")("s,stdin",
-                "Communicate with GDB via pipe instead of TCP socket",
-                cxxopts::value<bool>(from_stdin)->default_value("false"))(
-      "v,version", "Show version information")(
+                        "Don't emit informational messages on stdout");
+  options.add_options()("h,help", "Display help message");
+  options.add_options()("t,trace", "Trace item",
+                        cxxopts::value<std::vector<std::string>>(), "<flag>");
+  options.add_options()(
+      "s,stdin", "Communicate with GDB via pipe instead of TCP socket",
+      cxxopts::value<bool>(from_stdin)->default_value("false"));
+  options.add_options()("v,version", "Show version information");
+  options.add_options()(
       "l,lockstep", "Enable lockstep debugging",
-      cxxopts::value<bool>(withLockstep)->default_value("false"))(
-      "soname", "Shared object containing model",
-      cxxopts::value<string>(soName), "<shared object>")(
-      "rsp-port", "Port to listen on", cxxopts::value<string>(), "<num>");
+      cxxopts::value<bool>(withLockstep)->default_value("false"));
+  options.add_options()("soname", "Shared object containing model",
+                        cxxopts::value<string>(soName), "<shared object>");
+  options.add_options()("rsp-port", "Port to listen on",
+                        cxxopts::value<string>(), "<num>");
 
   options.positional_help("[rsp-port]");
   options.parse_positional({"rsp-port"});
