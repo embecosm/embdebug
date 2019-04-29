@@ -12,16 +12,7 @@
 
 using namespace EmbDebug;
 
-//! Constructor
-
-//! Placeholder for now.
-
 MemMap::MemMap() {}
-
-//! Destructor
-
-//! Placeholder for now.
-
 MemMap::~MemMap() {}
 
 void MemMap::addRegion(const uint64_t base, const uint64_t start,
@@ -33,16 +24,11 @@ void MemMap::addRegion(const uint64_t base, const uint64_t start,
 
   MemMapEntry m = {base | start, base | end, type};
 
+  // FIXME: Check to ensure that an added region does not overlap an already
+  // existing region.
+
   mMemMap.push_back(m);
 }
-
-//! Helper function to identify address space
-
-//! In the event of an error, a warning is printed.
-
-//! @param[in]  addr    Address to access
-//! @param[in]  size    Number of bytes to access
-//! @return  The memory type, which will be UNKNOWN if there was an error.
 
 MemMap::Type MemMap::findRegion(const uint64_t addr,
                                 const std::size_t size) const {
@@ -55,6 +41,11 @@ MemMap::Type MemMap::findRegion(const uint64_t addr,
       break;
     }
   }
+
+  // FIXME: Should it be required that the start and end are in the same
+  // region? If not, it would be prudent to at least check that all addresses
+  // between the start and end are covered by a contiguous set of regions of a
+  // uniform type.
 
   if (size > 0)
     for (auto it = mMemMap.begin(); it != mMemMap.end(); it++) {

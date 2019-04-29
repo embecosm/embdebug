@@ -14,33 +14,46 @@
 
 namespace EmbDebug {
 
-//! A memory map class
-
-//! A convenience class for describing memory maps
-
+//! \brief Convenience class for describing memory layout
 class MemMap final {
 public:
-  //! Enumeration for memory map.
-
+  //! Types of memory that region represents
   enum class Type {
     UNKNOWN, //!< Unknown memory type
     IMEM,    //!< Instruction memory
     DMEM,    //!< Data memory
-    PERS,    //!< peripheral space
-    ALIAS,   //!< alias space
-    EMEM,    //!< ethernet memory
+    PERS,    //!< Peripheral space
+    ALIAS,   //!< Alias space
+    EMEM,    //!< Ethernet memory
     PCIMEM   //!< PCI memory space
   };
 
-  // Constructor and destructor.
-
   MemMap();
   ~MemMap();
+  MemMap(const MemMap &) = delete;
 
-  // Public methods
-
+  //! \brief Add a new region to the memory map
+  //!
+  //! The base address bits should not overlap the start or end addresses.
+  //! A region should not overlap another region already in the map.
+  //!
+  //! \param[in] base  The base address of the region.
+  //! \param[in] start The start address of the region.
+  //! \param[in] end   The end address of the region.
+  //! \param[in] type  Type of the memory region
   void addRegion(const uint64_t base, const uint64_t start, const uint64_t end,
                  const Type type);
+
+  //! \brief Helper function identifying the type of memory of an address
+  //!
+  //! In the event of an error, a warning is printed.
+  //!
+  //! \param[in] addr Start of the memory whose type is to be determined
+  //! \param[in] size The size of the memory block, this may be zero.
+  //! \return The type of the range of memory, or UNKNOWN if there was an error.
+  //!         An error may occur if the address does not belong to a memory
+  //!         region, or if the memory range straddles multiple regions of
+  //!         different types.
   Type findRegion(const uint64_t addr, const std::size_t size) const;
 
 private:
@@ -50,13 +63,7 @@ private:
     Type type;
   };
 
-  //! The memory map
-
   std::vector<MemMapEntry> mMemMap;
-
-  // No public default copy constructor.
-
-  MemMap(const MemMap &){};
 };
 
 } // namespace EmbDebug
