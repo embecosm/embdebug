@@ -17,6 +17,9 @@ using namespace EmbDebug;
 
 int EmbDebug::init(ITarget *target, TraceFlags *traceFlags,
                    bool useStreamConnection, int rspPort, bool writePort) {
+  assert(target);
+  assert(traceFlags);
+
   AbstractConnection *conn;
   KillBehaviour killBehaviour;
   if (useStreamConnection) {
