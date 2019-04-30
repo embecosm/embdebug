@@ -108,6 +108,8 @@ public:
       ITarget::WaitRes outWaitResult;
     } waitState;
 
+    ITargetCall(const ReadRegisterState &other) : readRegisterState(other) {}
+    ITargetCall(const WriteRegisterState &other) : writeRegisterState(other) {}
     ITargetCall(const ReadState &other) : readState(other) {}
     ITargetCall(const WriteState &other) : writeState(other) {}
     ITargetCall(const PrepareState &other) : prepareState(other) {}
@@ -308,6 +310,40 @@ GdbServerTestCase testVContContinue2 = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
+GdbServerTestCase testSyscallClose = {
+    "$vCont;c#a8+$F0#76+$vKill;1#6e+",
+    "+$Fclose,15#ee+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::SYSCALL,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+
+        // Read syscall argument registers
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0x15, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 11, 0x1, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 12, 0x2, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fclose*/ 57, 4}),
+
+        // Write result
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 10, 0, 4}),
+
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
 GdbServerTestCase testMemoryRead = {
     "$m124,2#62+$vKill;1#6e+",
     "+$beef#92+$OK#9a",
@@ -337,5 +373,5 @@ INSTANTIATE_TEST_CASE_P(GdbServer, GdbServerTest,
                         ::testing::Values(testVKill, testVContQuery,
                                           testVContStep1, testVContStep2,
                                           testVContContinue1,
-                                          testVContContinue2, testMemoryRead,
-                                          testMemoryWrite));
+                                          testVContContinue2, testSyscallClose,
+                                          testMemoryRead, testMemoryWrite));
