@@ -54,6 +54,9 @@ public:
     WRITE_REGISTER,
     READ,
     WRITE,
+    PREPARE,
+    RESUME,
+    WAIT,
   };
   union ITargetCall {
     ITargetFunc func;
@@ -88,10 +91,28 @@ public:
       std::size_t outSize;
     } writeState;
 
-    ITargetCall(const ITargetCall::ReadState &readState)
-        : readState(readState) {}
-    ITargetCall(const ITargetCall::WriteState &writeState)
-        : writeState(writeState) {}
+    struct PrepareState {
+      ITargetFunc func;
+      ITarget::ResumeType inAction;
+      bool outSuccess;
+    } prepareState;
+
+    struct ResumeState {
+      ITargetFunc func;
+      bool outSuccess;
+    } resumeState;
+
+    struct WaitState {
+      ITargetFunc func;
+      ITarget::ResumeRes outResumeResult;
+      ITarget::WaitRes outWaitResult;
+    } waitState;
+
+    ITargetCall(const ReadState &other) : readState(other) {}
+    ITargetCall(const WriteState &other) : writeState(other) {}
+    ITargetCall(const PrepareState &other) : prepareState(other) {}
+    ITargetCall(const ResumeState &other) : resumeState(other) {}
+    ITargetCall(const WaitState &other) : waitState(other) {}
   };
 
   TraceTarget(const TraceFlags *traceFlags,
@@ -159,6 +180,32 @@ public:
 
     return call.writeState.outSize;
   }
+
+  uint64_t getCycleCount() const override { return 0; }
+
+  void setCurrentCpu(unsigned int EMBDEBUG_ATTR_UNUSED index) override {}
+
+  bool prepare(const std::vector<ResumeType> &actions) override {
+    auto &call = popAndVerifyCall(ITargetFunc::PREPARE);
+    if (actions.size() != 1 || actions[0] != call.prepareState.inAction) {
+      throw std::runtime_error("Argument mismatch");
+    }
+    return call.prepareState.outSuccess;
+  }
+
+  bool resume(void) override {
+    auto &call = popAndVerifyCall(ITargetFunc::RESUME);
+    return call.resumeState.outSuccess;
+  }
+
+  WaitRes wait(std::vector<ResumeRes> &results) override {
+    auto &call = popAndVerifyCall(ITargetFunc::WAIT);
+
+    results.clear();
+    results.resize(1);
+    results[0] = call.waitState.outResumeResult;
+    return call.waitState.outWaitResult;
+  }
 };
 
 struct GdbServerTestCase {
@@ -179,7 +226,7 @@ protected:
     server = new GdbServer(conn, target, flags, EXIT_ON_KILL);
   }
   void TearDown() override {
-    delete flags;
+    delete server;
     delete target;
     delete conn;
     delete flags;
@@ -202,6 +249,65 @@ TEST_P(GdbServerTest, GdbServerTest) {
   EXPECT_EQ(OutStream, testCase.ExpectedOutStream);
 }
 
+GdbServerTestCase testVKill = {"$vKill;1#6e+", "+$OK#9a", {}};
+GdbServerTestCase testVContQuery = {
+    "$vCont?#49+$vKill;1#6e+", "+$vCont;c;C;s;S#62+$OK#9a", {}};
+GdbServerTestCase testVContStep1 = {
+    "$vCont:s#b7+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::STEP,
+             true}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
+GdbServerTestCase testVContStep2 = {
+    "$vCont;S#98+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::STEP,
+             true}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
+GdbServerTestCase testVContContinue1 = {
+    "$vCont;c#a8+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
+GdbServerTestCase testVContContinue2 = {
+    "$vCont;C#88+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
 GdbServerTestCase testMemoryRead = {
     "$m124,2#62+$vKill;1#6e+",
     "+$beef#92+$OK#9a",
@@ -228,4 +334,8 @@ GdbServerTestCase testMemoryWrite = {
     },
 };
 INSTANTIATE_TEST_CASE_P(GdbServer, GdbServerTest,
-                        ::testing::Values(testMemoryRead, testMemoryWrite));
+                        ::testing::Values(testVKill, testVContQuery,
+                                          testVContStep1, testVContStep2,
+                                          testVContContinue1,
+                                          testVContContinue2, testMemoryRead,
+                                          testMemoryWrite));
