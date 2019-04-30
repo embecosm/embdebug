@@ -45,5 +45,4 @@ set_target_properties(embdebug-static PROPERTIES
 target_link_libraries(embdebug-shared ${EMBDEBUG_LIBS})
 target_link_libraries(embdebug-static ${EMBDEBUG_LIBS})
 install(TARGETS embdebug-shared embdebug-static
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+        DESTINATION lib)
