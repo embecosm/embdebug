@@ -13,12 +13,14 @@
 #include <csignal>
 #include <cstring>
 
-#if WIN32
+#if _WIN32
 #include <io.h>
 #include <winsock.h>
-typedef __int64 ssize_t;
+typedef ptrdiff_t ssize_t;
+#if !defined(STDIN_FILENO)
 #define STDIN_FILENO _fileno(stdin)
 #define STDOUT_FILENO _fileno(stdout)
+#endif
 #else
 #include <sys/select.h>
 #include <unistd.h>
