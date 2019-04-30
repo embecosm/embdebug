@@ -264,7 +264,7 @@ GdbServerTestCase testVContStep1 = {
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
-                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::ResumeRes::STEPPED,
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
@@ -278,7 +278,7 @@ GdbServerTestCase testVContStep2 = {
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
-                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::ResumeRes::STEPPED,
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
@@ -324,6 +324,8 @@ GdbServerTestCase testSyscallClose = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
 
         // Read syscall argument registers
+        // FIXME: These register numbers are all hardcoded for RISC-V. They'll
+        // be generic eventually.
         TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0x15, 4}),
         TraceTarget::ITargetCall::ReadRegisterState(
