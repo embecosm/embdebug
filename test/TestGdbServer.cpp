@@ -346,6 +346,59 @@ GdbServerTestCase testSyscallClose = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
+GdbServerTestCase testSyscallOpen = {
+    "$vCont;c#a8+$F0#76+$vKill;1#6e+",
+    "+$Fopen,beef/5,0,0#d2+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::SYSCALL,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+
+        // Read syscall argument registers
+        // FIXME: These register numbers are all hardcoded for RISC-V. They'll
+        // be generic eventually.
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0xbeef, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 11, 0x0, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 12, 0x0, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fopen*/ 1024, 4}),
+
+        // Read the path string "neat" from target memory (to get its length)
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0xbeef, 1, (const uint8_t *)"n",
+                                             1}),
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0xbef0, 1, (const uint8_t *)"e",
+                                             1}),
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0xbef1, 1, (const uint8_t *)"a",
+                                             1}),
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0xbef2, 1, (const uint8_t *)"t",
+                                             1}),
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0xbef3, 1, (const uint8_t *)"\0",
+                                             1}),
+
+        // Write result
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 10, 0, 4}),
+
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
 GdbServerTestCase testMemoryRead = {
     "$m124,2#62+$vKill;1#6e+",
     "+$beef#92+$OK#9a",
@@ -371,9 +424,8 @@ GdbServerTestCase testMemoryWrite = {
         }),
     },
 };
-INSTANTIATE_TEST_CASE_P(GdbServer, GdbServerTest,
-                        ::testing::Values(testVKill, testVContQuery,
-                                          testVContStep1, testVContStep2,
-                                          testVContContinue1,
-                                          testVContContinue2, testSyscallClose,
-                                          testMemoryRead, testMemoryWrite));
+INSTANTIATE_TEST_CASE_P(
+    GdbServer, GdbServerTest,
+    ::testing::Values(testVKill, testVContQuery, testVContStep1, testVContStep2,
+                      testVContContinue1, testVContContinue2, testSyscallClose,
+                      testSyscallOpen, testMemoryRead, testMemoryWrite));
