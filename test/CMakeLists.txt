@@ -5,7 +5,8 @@ set(TESTS TestAbstractConnection
           TestPtid
           TestRspPacket
           TestUtils
-          TestGdbServerRSP)
+          TestGdbServerRSP
+          TestGdbServer)
 
 # Supress a warning tripped in gtest
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
