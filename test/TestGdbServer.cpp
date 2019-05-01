@@ -54,6 +54,9 @@ public:
     WRITE_REGISTER,
     READ,
     WRITE,
+    RESET,
+    CYCLE_COUNT,
+    INSTR_COUNT,
     PREPARE,
     RESUME,
     WAIT,
@@ -91,6 +94,22 @@ public:
       std::size_t outSize;
     } writeState;
 
+    struct ResetState {
+      ITargetFunc func;
+      ITarget::ResetType inType;
+      ITarget::ResumeRes outRes;
+    } resetState;
+
+    struct CycleCountState {
+      ITargetFunc func;
+      uint64_t outValue;
+    } cycleCountState;
+
+    struct InstrCountState {
+      ITargetFunc func;
+      uint64_t outValue;
+    } instrCountState;
+
     struct PrepareState {
       ITargetFunc func;
       ITarget::ResumeType inAction;
@@ -112,6 +131,9 @@ public:
     ITargetCall(const WriteRegisterState &other) : writeRegisterState(other) {}
     ITargetCall(const ReadState &other) : readState(other) {}
     ITargetCall(const WriteState &other) : writeState(other) {}
+    ITargetCall(const ResetState &other) : resetState(other) {}
+    ITargetCall(const CycleCountState &other) : cycleCountState(other) {}
+    ITargetCall(const InstrCountState &other) : instrCountState(other) {}
     ITargetCall(const PrepareState &other) : prepareState(other) {}
     ITargetCall(const ResumeState &other) : resumeState(other) {}
     ITargetCall(const WaitState &other) : waitState(other) {}
@@ -139,6 +161,10 @@ private:
   }
 
 public:
+  bool command(const std::string EMBDEBUG_ATTR_UNUSED cmd,
+               std::ostream EMBDEBUG_ATTR_UNUSED &stream) override {
+    return false;
+  }
   unsigned int getCpuCount() override { return 1; }
   int getRegisterCount() const override { return 1; }
 
@@ -183,7 +209,28 @@ public:
     return call.writeState.outSize;
   }
 
-  uint64_t getCycleCount() const override { return 0; }
+  ResumeRes reset(ResetType type) override {
+    auto &call = popAndVerifyCall(ITargetFunc::RESET);
+    if (type != call.resetState.inType)
+      throw std::runtime_error("Argument mismatch");
+    return call.resetState.outRes;
+  }
+
+  uint64_t getCycleCount() const override {
+    // Clumsy workaround - this is fine provided the underlying TraceTarget
+    // is not declared constant.
+    auto &call = const_cast<TraceTarget *>(this)->popAndVerifyCall(
+        ITargetFunc::CYCLE_COUNT);
+    return call.cycleCountState.outValue;
+  }
+
+  uint64_t getInstrCount() const override {
+    // Clumsy workaround - this is fine provided the underlying TraceTarget
+    // is not declared constant.
+    auto &call = const_cast<TraceTarget *>(this)->popAndVerifyCall(
+        ITargetFunc::INSTR_COUNT);
+    return call.instrCountState.outValue;
+  }
 
   void setCurrentCpu(unsigned int EMBDEBUG_ATTR_UNUSED index) override {}
 
@@ -261,6 +308,8 @@ GdbServerTestCase testVContStep1 = {
         TraceTarget::ITargetCall::PrepareState(
             {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::STEP,
              true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -275,6 +324,8 @@ GdbServerTestCase testVContStep2 = {
         TraceTarget::ITargetCall::PrepareState(
             {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::STEP,
              true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -289,6 +340,8 @@ GdbServerTestCase testVContContinue1 = {
         TraceTarget::ITargetCall::PrepareState(
             {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
              true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -303,6 +356,8 @@ GdbServerTestCase testVContContinue2 = {
         TraceTarget::ITargetCall::PrepareState(
             {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
              true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -317,6 +372,8 @@ GdbServerTestCase testSyscallClose = {
         TraceTarget::ITargetCall::PrepareState(
             {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
              true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -339,6 +396,8 @@ GdbServerTestCase testSyscallClose = {
         TraceTarget::ITargetCall::WriteRegisterState(
             {TraceTarget::ITargetFunc::WRITE_REGISTER, 10, 0, 4}),
 
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -353,6 +412,8 @@ GdbServerTestCase testSyscallOpen = {
         TraceTarget::ITargetCall::PrepareState(
             {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
              true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -392,6 +453,8 @@ GdbServerTestCase testSyscallOpen = {
         TraceTarget::ITargetCall::WriteRegisterState(
             {TraceTarget::ITargetFunc::WRITE_REGISTER, 10, 0, 4}),
 
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
         TraceTarget::ITargetCall::ResumeState(
             {TraceTarget::ITargetFunc::RESUME, true}),
         TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
@@ -424,8 +487,131 @@ GdbServerTestCase testMemoryWrite = {
         }),
     },
 };
+GdbServerTestCase testCmdResetWarm = {
+    "$qRcmd,7265736574#37+$vKill;1#6e+", // qRcmd,reset
+    "+$OK#9a+$OK#9a",
+    {
+        TraceTarget::ITargetCall::ResetState({TraceTarget::ITargetFunc::RESET,
+                                              ITarget::ResetType::WARM,
+                                              ITarget::ResumeRes::SUCCESS}),
+    },
+};
+GdbServerTestCase testCmdResetCold = {
+    "$qRcmd,726573657420636f6c64#a1+$vKill;1#6e+", // qRcmd,reset cold
+    "+$OK#9a+$OK#9a",
+    {
+        TraceTarget::ITargetCall::ResetState({TraceTarget::ITargetFunc::RESET,
+                                              ITarget::ResetType::COLD,
+                                              ITarget::ResumeRes::SUCCESS}),
+    },
+};
+GdbServerTestCase testCmdExit = {
+    "$qRcmd,65786974#d7", // qRcmd,exit
+    "+",
+    {},
+};
+GdbServerTestCase testCmdCycleCount = {
+    "$qRcmd,6379636c65636f756e74#e0++$vKill;1#6e+", // cyclecount
+    "+$O343636300a#7c$OK#9a+$OK#9a",                // 4660\n
+    {
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 4660}),
+    },
+};
+GdbServerTestCase testCmdInstrCount = {
+    "$qRcmd,696e737472636f756e74#e2++$vKill;1#6e+", // instrcount
+    "+$O3433393239383838380a#96$OK#9a+$OK#9a",      // 439298888\n
+    {
+        TraceTarget::ITargetCall::InstrCountState(
+            {TraceTarget::ITargetFunc::INSTR_COUNT, 439298888}),
+    },
+};
+GdbServerTestCase testCmdEcho = {
+    "$qRcmd,6563686f2048656c6c6f20576f726c640a#6f+$vKill;1#6e+", // echo Hello
+                                                                 // World\n
+    "+$OK#9a+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetDebugInvalidFlag = {
+    "$qRcmd,7365742064656275672062616e612031#d4+$vKill;1#6e+", // set debug
+                                                               // banana 1
+    "+$E01#a6+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdShowDebugInvalidFlag = {
+    "$qRcmd,73686f772064656275672062616e61#b0+$vKill;1#6e+", // show debug
+                                                             // banana
+    "+$E01#a6+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetDebugFlagInvalidLevel = {
+    "$qRcmd,73657420646562756720727370206c656d6f6e#ae+$vKill;1#6e+", // set
+                                                                     // debug
+                                                                     // rsp
+                                                                     // lemon
+    "+$E02#a7+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetAndShowDebugRspFlag = {
+    "$qRcmd,736574206465627567207273702031#3d" // set debug rsp 1
+    "+$qRcmd,73686f7720646562756720727370#19"  // show debug rsp
+    "++$vKill;1#6e+",
+    "+$OK#9a"
+    "+$O7273703a204f4e0a#43$OK#9a" // rsp: ON\n
+    "+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetAndShowDebugConnFlag = {
+    "$qRcmd,73657420646562756720636f6e6e206f6e#11" // set debug conn on
+    "+$qRcmd,73686f7720646562756720636f6e6e#1a"    // show debug conn
+    "++$vKill;1#6e+",
+    "+$OK#9a"
+    "+$O636f6e6e3a204f4e0a#44$OK#9a" // conn: ON\n
+    "+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetAndShowDebugDisasFlag = {
+    "$qRcmd,7365742064656275672064697361732046616c5345#ee" // set debug disas
+                                                           // FalSE
+    "+$qRcmd,73686f77206465627567206469736173#f3"          // show debug disas
+    "++$vKill;1#6e+",
+    "+$OK#9a"
+    "+$O64697361733a204f46460a#58$OK#9a" // disas: OFF\n
+    "+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetAndShowKillCoreOnExit = {
+    "$qRcmd,736574206b696c6c2d636f72652d6f6e2d65786974#84" // set
+                                                           // kill-core-on-exit
+    "+$qRcmd,73686f77206b696c6c2d636f72652d6f6e2d65786974#26" // show
+                                                              // kill-core-on-exit
+    "++$vKill;1#6e+",
+    "+$OK#9a"
+    "+$O6b696c6c2d636f72652d6f6e2d657869743a204f4e0a#c8$OK#9a" // kill-core-on-exit:
+                                                               // ON\n
+    "+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdSetUnknownCommand = {
+    "$qRcmd,73657420756e6b6e6f776e#a4+$vKill;1#6e+", // set unknown
+    "+$E04#a9+$OK#9a",
+    {},
+};
+GdbServerTestCase testCmdShowUnknownCommand = {
+    "$qRcmd,73686f7720756e6b6e6f776e#46+$vKill;1#6e+", // show unknown
+    "+$E04#a9+$OK#9a",
+    {},
+};
+
 INSTANTIATE_TEST_CASE_P(
     GdbServer, GdbServerTest,
-    ::testing::Values(testVKill, testVContQuery, testVContStep1, testVContStep2,
-                      testVContContinue1, testVContContinue2, testSyscallClose,
-                      testSyscallOpen, testMemoryRead, testMemoryWrite));
+    ::testing::Values(
+        testVKill, testVContQuery, testVContStep1, testVContStep2,
+        testVContContinue1, testVContContinue2, testSyscallClose,
+        testSyscallOpen, testMemoryRead, testMemoryWrite, testCmdResetWarm,
+        testCmdResetCold, testCmdExit, testCmdCycleCount, testCmdInstrCount,
+        testCmdEcho, testCmdSetDebugInvalidFlag, testCmdShowDebugInvalidFlag,
+        testCmdSetDebugFlagInvalidLevel, testCmdSetAndShowDebugRspFlag,
+        testCmdSetAndShowDebugConnFlag, testCmdSetAndShowDebugDisasFlag,
+        testCmdSetAndShowKillCoreOnExit, testCmdSetUnknownCommand,
+        testCmdShowUnknownCommand));
