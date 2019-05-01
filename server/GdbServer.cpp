@@ -1344,19 +1344,23 @@ void GdbServer::rspSetCommand(const char *cmd) {
   } else if (string("kill-core-on-exit") == tokens[0]) {
     // Valid state?
 
-    if ((0 == strcasecmp(tokens[1].c_str(), "0")) ||
-        (0 == strcasecmp(tokens[1].c_str(), "off")) ||
-        (0 == strcasecmp(tokens[1].c_str(), "false")))
-      mKillCoreOnExit = false;
-    else if ((0 == strcasecmp(tokens[1].c_str(), "1")) ||
-             (0 == strcasecmp(tokens[1].c_str(), "on")) ||
-             (0 == strcasecmp(tokens[1].c_str(), "true")))
+    if (numTok == 1) {
       mKillCoreOnExit = true;
-    else {
-      // Not a valid level
-      pkt.packStr("E02");
-      rsp->putPkt(pkt);
-      return;
+    } else {
+      if ((0 == strcasecmp(tokens[1].c_str(), "0")) ||
+          (0 == strcasecmp(tokens[1].c_str(), "off")) ||
+          (0 == strcasecmp(tokens[1].c_str(), "false")))
+        mKillCoreOnExit = false;
+      else if ((0 == strcasecmp(tokens[1].c_str(), "1")) ||
+               (0 == strcasecmp(tokens[1].c_str(), "on")) ||
+               (0 == strcasecmp(tokens[1].c_str(), "true")))
+        mKillCoreOnExit = true;
+      else {
+        // Not a valid level
+        pkt.packStr("E02");
+        rsp->putPkt(pkt);
+        return;
+      }
     }
 
     pkt.packStr("OK");
@@ -1426,6 +1430,16 @@ void GdbServer::rspShowCommand(const char *cmd) {
 
     oss << " (associated val = \"" << traceFlags->flagVal(flagName) << "\")";
 
+    oss << endl;
+
+    pkt.packRcmdStr(oss.str().c_str(), true);
+    rsp->putPkt(pkt);
+    pkt.packStr("OK");
+    rsp->putPkt(pkt);
+  } else if (string("kill-core-on-exit") == tokens[0]) {
+
+    ostringstream oss;
+    oss << "kill-core-on-exit: " << (mKillCoreOnExit ? "ON" : "OFF");
     oss << endl;
 
     pkt.packRcmdStr(oss.str().c_str(), true);
