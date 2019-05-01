@@ -1428,7 +1428,8 @@ void GdbServer::rspShowCommand(const char *cmd) {
 
     oss << flagName << ": " << (traceFlags->flagState(flagName) ? "ON" : "OFF");
 
-    oss << " (associated val = \"" << traceFlags->flagVal(flagName) << "\")";
+    if (traceFlags->flagVal(flagName).size())
+      oss << " (associated val = \"" << traceFlags->flagVal(flagName) << "\")";
 
     oss << endl;
 

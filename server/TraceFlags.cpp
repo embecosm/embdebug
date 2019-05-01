@@ -237,11 +237,8 @@ string TraceFlags::flagVal(const string &flagName) const {
   if (isFlag(flagName)) {
     if (sFlagInfo[flagName].val != nullptr)
       return *(sFlagInfo[flagName].val);
-    else {
-      cerr << "*** ERROR *** Attempt to get value of flag with no value"
-           << endl;
-      exit(EXIT_FAILURE);
-    }
+    else
+      return string();
   } else {
     cerr << "*** ERROR *** Attempt to get value of bad trace flag" << endl;
     exit(EXIT_FAILURE);
