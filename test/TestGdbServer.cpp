@@ -139,13 +139,17 @@ public:
     ITargetCall(const WaitState &other) : waitState(other) {}
   };
 
-  TraceTarget(const TraceFlags *traceFlags,
+  TraceTarget(const TraceFlags *traceFlags, int regCount, int regSize,
               std::vector<ITargetCall> targetTrace)
-      : StubTarget(traceFlags), mITargetTrace(targetTrace),
+      : StubTarget(traceFlags), mRegisterCount(regCount),
+        mRegisterSize(regSize), mITargetTrace(targetTrace),
         mITargetTracePos(mITargetTrace.begin()) {}
   ~TraceTarget() override {}
 
 private:
+  int mRegisterCount;
+  int mRegisterSize;
+
   std::vector<ITargetCall> mITargetTrace;
   std::vector<ITargetCall>::iterator mITargetTracePos;
 
@@ -166,7 +170,9 @@ public:
     return false;
   }
   unsigned int getCpuCount() override { return 1; }
-  int getRegisterCount() const override { return 1; }
+
+  int getRegisterCount() const override { return mRegisterCount; }
+  int getRegisterSize() const override { return mRegisterSize; }
 
   std::size_t readRegister(const int reg, uint_reg_t &value) override {
     auto &call = popAndVerifyCall(ITargetFunc::READ_REGISTER);
@@ -258,9 +264,11 @@ public:
 };
 
 struct GdbServerTestCase {
+  int TargetRegisterSize;
+  int TargetRegisterCount;
+
   std::string InStream;
   std::string ExpectedOutStream;
-
   std::vector<TraceTarget::ITargetCall> ITargetTrace;
 };
 
@@ -271,7 +279,9 @@ protected:
 
     flags = new TraceFlags();
     conn = new TraceConnection(flags);
-    target = new TraceTarget(flags, testCase.ITargetTrace);
+    target =
+        new TraceTarget(flags, testCase.TargetRegisterSize,
+                        testCase.TargetRegisterCount, testCase.ITargetTrace);
     server = new GdbServer(conn, target, flags, EXIT_ON_KILL);
   }
   void TearDown() override {
@@ -298,10 +308,149 @@ TEST_P(GdbServerTest, GdbServerTest) {
   EXPECT_EQ(OutStream, testCase.ExpectedOutStream);
 }
 
-GdbServerTestCase testVKill = {"$vKill;1#6e+", "+$OK#9a", {}};
+// Tests of basic RSP packets with simple behavior.
+GdbServerTestCase testBasicRSPPackets[] = {
+    {1, 1, "$vKill;1#6e+", "+$OK#9a", {}},
+    {1, 1, "$!#21+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
+    {1, 1, "$A#41+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}},
+    {1, 1, "$b#62$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$B#42$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$c#63$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$C#43$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$d#64$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$k#6b$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$R#52$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$s#73$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$S#53$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$t#74$vKill;1#6e+", "++$OK#9a", {}},
+    {1, 1, "$T#54+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
+    {1, 1, "$L#4c$vKill;1#6e+", "++$OK#9a", {}},
+};
+
+INSTANTIATE_TEST_CASE_P(BasicRSPTest, GdbServerTest,
+                        ::testing::ValuesIn(testBasicRSPPackets));
+
+// Test of register reads and writes
+GdbServerTestCase testRegisterRead = {
+    /*reg count*/ 16,
+    /*reg size*/ 4,
+    "$pa#d1+$vKill;1#6e+",
+    "+$efbe0000#52+$OK#9a",
+    {
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0xbeef, 4}),
+    },
+};
+GdbServerTestCase testRegisterWrite = {
+    /*reg count*/ 32,
+    /*reg size*/ 4,
+    "$P1f=091d00ac#46+$vKill;1#6e+",
+    "+$OK#9a+$OK#9a",
+    {
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 31, 0xac001d09, 4}),
+    },
+};
+GdbServerTestCase testRegisterReadAll = {
+    /*reg count*/ 4,
+    /*reg size*/ 2,
+    "$g#67+$vKill;1#6e+",
+    "+$bbcae5a901c00710#78+$OK#9a",
+    {
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 0, 0xcabb, 2}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 1, 0xa9e5, 2}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 2, 0xc001, 2}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 3, 0x1007, 2}),
+    }};
+GdbServerTestCase testRegisterWriteAll = {
+    /*reg count*/ 6,
+    /*reg size*/ 1,
+    "$G000102030405#96+$vKill;1#6e+",
+    "+$OK#9a+$OK#9a",
+    {
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 0, 0x00, 1}),
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 1, 0x01, 1}),
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 2, 0x02, 1}),
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 3, 0x03, 1}),
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 4, 0x04, 1}),
+        TraceTarget::ITargetCall::WriteRegisterState(
+            {TraceTarget::ITargetFunc::WRITE_REGISTER, 5, 0x05, 1}),
+    }};
+
+INSTANTIATE_TEST_CASE_P(RegisterReadWriteRSPTest, GdbServerTest,
+                        ::testing::Values(testRegisterRead, testRegisterWrite,
+                                          testRegisterReadAll,
+                                          testRegisterWriteAll));
+
+// Tests of memory reads and writes
+GdbServerTestCase testMemoryRead = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
+    "$m124,2#62+$vKill;1#6e+",
+    "+$beef#92+$OK#9a",
+    {
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0x124, 1, (const uint8_t *)"\xbe",
+                                             1}),
+        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
+                                             0x125, 1, (const uint8_t *)"\xef",
+                                             1}),
+    },
+};
+GdbServerTestCase testMemoryWrite = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
+    "$M9a7,1:4e#4e+$vKill;1#6e+",
+    "+$OK#9a+$OK#9a",
+    {
+        TraceTarget::ITargetCall::WriteState({
+            TraceTarget::ITargetFunc::WRITE,
+            0x9a7,
+            (const uint8_t *)"\x4e",
+            1,
+            1,
+        }),
+    },
+};
+GdbServerTestCase testMemoryBinaryWrite = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
+    "$X88,4:\x11\x22\x33\x44#0c+$vKill;1#6e+",
+    "+$OK#9a+$OK#9a",
+    {
+        TraceTarget::ITargetCall::WriteState({
+            TraceTarget::ITargetFunc::WRITE,
+            0x88,
+            (const uint8_t *)"\x11\x22\x33\x44",
+            4,
+            4,
+        }),
+    },
+};
+
+INSTANTIATE_TEST_CASE_P(MemoryReadWriteRSPTest, GdbServerTest,
+                        ::testing::Values(testMemoryRead, testMemoryWrite,
+                                          testMemoryBinaryWrite));
+
+// Tests of vCont packets - stepping and continuing the target
 GdbServerTestCase testVContQuery = {
-    "$vCont?#49+$vKill;1#6e+", "+$vCont;c;C;s;S#62+$OK#9a", {}};
+    /*reg count*/ 1,
+    /*reg size*/ 1,
+    "$vCont?#49+$vKill;1#6e+",
+    "+$vCont;c;C;s;S#62+$OK#9a",
+    {}};
 GdbServerTestCase testVContStep1 = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$vCont:s#b7+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -318,6 +467,8 @@ GdbServerTestCase testVContStep1 = {
     },
 };
 GdbServerTestCase testVContStep2 = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$vCont;S#98+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -334,6 +485,8 @@ GdbServerTestCase testVContStep2 = {
     },
 };
 GdbServerTestCase testVContContinue1 = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$vCont;c#a8+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -350,6 +503,8 @@ GdbServerTestCase testVContContinue1 = {
     },
 };
 GdbServerTestCase testVContContinue2 = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$vCont;C#88+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -365,7 +520,16 @@ GdbServerTestCase testVContContinue2 = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
+
+INSTANTIATE_TEST_CASE_P(RSPVContTest, GdbServerTest,
+                        ::testing::Values(testVContQuery, testVContStep1,
+                                          testVContStep2, testVContContinue1,
+                                          testVContContinue2));
+
+// Tests of syscall handling and the associated RSP communication
 GdbServerTestCase testSyscallClose = {
+    /*reg count*/ 32,
+    /*reg size*/ 4,
     "$vCont;c#a8+$F0#76+$vKill;1#6e+",
     "+$Fclose,15#ee+$S05#b8+$OK#9a",
     {
@@ -406,6 +570,8 @@ GdbServerTestCase testSyscallClose = {
     },
 };
 GdbServerTestCase testSyscallOpen = {
+    /*reg count*/ 32,
+    /*reg size*/ 4,
     "$vCont;c#a8+$F0#76+$vKill;1#6e+",
     "+$Fopen,beef/5,0,0#d2+$S05#b8+$OK#9a",
     {
@@ -462,32 +628,14 @@ GdbServerTestCase testSyscallOpen = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
-GdbServerTestCase testMemoryRead = {
-    "$m124,2#62+$vKill;1#6e+",
-    "+$beef#92+$OK#9a",
-    {
-        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
-                                             0x124, 1, (const uint8_t *)"\xbe",
-                                             1}),
-        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
-                                             0x125, 1, (const uint8_t *)"\xef",
-                                             1}),
-    },
-};
-GdbServerTestCase testMemoryWrite = {
-    "$M9a7,1:4e#4e+$vKill;1#6e+",
-    "+$OK#9a+$OK#9a",
-    {
-        TraceTarget::ITargetCall::WriteState({
-            TraceTarget::ITargetFunc::WRITE,
-            0x9a7,
-            (const uint8_t *)"\x4e",
-            1,
-            1,
-        }),
-    },
-};
+
+INSTANTIATE_TEST_CASE_P(RSPSysCallTest, GdbServerTest,
+                        ::testing::Values(testSyscallClose, testSyscallOpen));
+
+// Tests of various qRcmd packets
 GdbServerTestCase testCmdResetWarm = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$qRcmd,7265736574#37+$vKill;1#6e+", // qRcmd,reset
     "+$OK#9a+$OK#9a",
     {
@@ -497,6 +645,8 @@ GdbServerTestCase testCmdResetWarm = {
     },
 };
 GdbServerTestCase testCmdResetCold = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$qRcmd,726573657420636f6c64#a1+$vKill;1#6e+", // qRcmd,reset cold
     "+$OK#9a+$OK#9a",
     {
@@ -506,11 +656,15 @@ GdbServerTestCase testCmdResetCold = {
     },
 };
 GdbServerTestCase testCmdExit = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$qRcmd,65786974#d7", // qRcmd,exit
     "+",
     {},
 };
 GdbServerTestCase testCmdCycleCount = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$qRcmd,6379636c65636f756e74#e0++$vKill;1#6e+", // cyclecount
     "+$O343636300a#7c$OK#9a+$OK#9a",                // 4660\n
     {
@@ -519,6 +673,8 @@ GdbServerTestCase testCmdCycleCount = {
     },
 };
 GdbServerTestCase testCmdInstrCount = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     "$qRcmd,696e737472636f756e74#e2++$vKill;1#6e+", // instrcount
     "+$O3433393239383838380a#96$OK#9a+$OK#9a",      // 439298888\n
     {
@@ -527,30 +683,40 @@ GdbServerTestCase testCmdInstrCount = {
     },
 };
 GdbServerTestCase testCmdEcho = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,echo Hello World\n
     "$qRcmd,6563686f2048656c6c6f20576f726c640a#6f+$vKill;1#6e+",
     "+$OK#9a+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetDebugInvalidFlag = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set debug banana 1
     "$qRcmd,7365742064656275672062616e612031#d4+$vKill;1#6e+",
     "+$E01#a6+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdShowDebugInvalidFlag = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,show debug banana
     "$qRcmd,73686f772064656275672062616e61#b0+$vKill;1#6e+",
     "+$E01#a6+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetDebugFlagInvalidLevel = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set debug rsp lemon
     "$qRcmd,73657420646562756720727370206c656d6f6e#ae+$vKill;1#6e+",
     "+$E02#a7+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugRspFlag = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set debug rsp 1
     "$qRcmd,736574206465627567207273702031#3d"
     // qRcmd,show debug rsp
@@ -563,6 +729,8 @@ GdbServerTestCase testCmdSetAndShowDebugRspFlag = {
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugConnFlag = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set debug conn on
     "$qRcmd,73657420646562756720636f6e6e206f6e#11"
     // qRcmd,show debug conn
@@ -575,6 +743,8 @@ GdbServerTestCase testCmdSetAndShowDebugConnFlag = {
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugDisasFlag = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set debug disas FalSE
     "$qRcmd,7365742064656275672064697361732046616c5345#ee"
     // qRcmd,show debug disas
@@ -588,6 +758,8 @@ GdbServerTestCase testCmdSetAndShowDebugDisasFlag = {
     {},
 };
 GdbServerTestCase testCmdSetAndShowKillCoreOnExit = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set kill-core-on-exit
     "$qRcmd,736574206b696c6c2d636f72652d6f6e2d65786974#84"
     // qRcmd,show kill-core-on-exit
@@ -601,12 +773,16 @@ GdbServerTestCase testCmdSetAndShowKillCoreOnExit = {
     {},
 };
 GdbServerTestCase testCmdSetUnknownCommand = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,set unknown
     "$qRcmd,73657420756e6b6e6f776e#a4+$vKill;1#6e+",
     "+$E04#a9+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdShowUnknownCommand = {
+    /*reg count*/ 1,
+    /*reg size*/ 1,
     // qRcmd,show unknown
     "$qRcmd,73686f7720756e6b6e6f776e#46+$vKill;1#6e+",
     "+$E04#a9+$OK#9a",
@@ -614,14 +790,11 @@ GdbServerTestCase testCmdShowUnknownCommand = {
 };
 
 INSTANTIATE_TEST_CASE_P(
-    GdbServer, GdbServerTest,
+    RSPCmdPacketTest, GdbServerTest,
     ::testing::Values(
-        testVKill, testVContQuery, testVContStep1, testVContStep2,
-        testVContContinue1, testVContContinue2, testSyscallClose,
-        testSyscallOpen, testMemoryRead, testMemoryWrite, testCmdResetWarm,
-        testCmdResetCold, testCmdExit, testCmdCycleCount, testCmdInstrCount,
-        testCmdEcho, testCmdSetDebugInvalidFlag, testCmdShowDebugInvalidFlag,
-        testCmdSetDebugFlagInvalidLevel, testCmdSetAndShowDebugRspFlag,
-        testCmdSetAndShowDebugConnFlag, testCmdSetAndShowDebugDisasFlag,
-        testCmdSetAndShowKillCoreOnExit, testCmdSetUnknownCommand,
-        testCmdShowUnknownCommand));
+        testCmdResetWarm, testCmdResetCold, testCmdExit, testCmdCycleCount,
+        testCmdInstrCount, testCmdEcho, testCmdSetDebugInvalidFlag,
+        testCmdShowDebugInvalidFlag, testCmdSetDebugFlagInvalidLevel,
+        testCmdSetAndShowDebugRspFlag, testCmdSetAndShowDebugConnFlag,
+        testCmdSetAndShowDebugDisasFlag, testCmdSetAndShowKillCoreOnExit,
+        testCmdSetUnknownCommand, testCmdShowUnknownCommand));
