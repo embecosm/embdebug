@@ -5,7 +5,6 @@ set(TESTS TestAbstractConnection
           TestPtid
           TestRspPacket
           TestUtils
-          TestGdbServerRSP
           TestGdbServer)
 
 # Supress a warning tripped in gtest
