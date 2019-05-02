@@ -392,6 +392,29 @@ INSTANTIATE_TEST_CASE_P(RegisterReadWriteRSPTest, GdbServerTest,
                                           testRegisterWriteAll));
 
 // Tests of memory reads and writes
+GdbServerTestCase testMemoryInvalidRead1 = {
+    1, 1, "$m1234#37+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryInvalidRead2 = {
+    1, 1, "$m1234,#63+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryInvalidRead3 = {
+    1, 1, "$mhello,32:#4c+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryInvalidRead4 = {
+    1, 1, "$m0095,world:#c9+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+
+GdbServerTestCase testMemoryInvalidWrite1 = {
+    1, 1, "$M777#f2+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryInvalidWrite2 = {
+    1, 1, "$Mbb00,#9d+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryInvalidWrite3 = {
+    1, 1, "$Mfail,32:#b4+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryInvalidWrite4 = {
+    1, 1, "$M1000,fail:#10+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+
+GdbServerTestCase testMemoryWriteBufferTooLong = {
+    1, 1, "$M2000,4:1122334455667788#f1+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+GdbServerTestCase testMemoryWriteBufferTooShort = {
+    1, 1, "$M800,4:112233#ab+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+
 GdbServerTestCase testMemoryRead = {
     /*reg count*/ 1,
     /*reg size*/ 1,
@@ -437,9 +460,15 @@ GdbServerTestCase testMemoryBinaryWrite = {
     },
 };
 
-INSTANTIATE_TEST_CASE_P(MemoryReadWriteRSPTest, GdbServerTest,
-                        ::testing::Values(testMemoryRead, testMemoryWrite,
-                                          testMemoryBinaryWrite));
+INSTANTIATE_TEST_CASE_P(
+    MemoryReadWriteRSPTest, GdbServerTest,
+    ::testing::Values(testMemoryInvalidRead1, testMemoryInvalidRead2,
+                      testMemoryInvalidRead3, testMemoryInvalidRead4,
+                      testMemoryInvalidWrite1, testMemoryInvalidWrite2,
+                      testMemoryInvalidWrite3, testMemoryInvalidWrite4,
+                      testMemoryWriteBufferTooLong,
+                      testMemoryWriteBufferTooShort, testMemoryRead,
+                      testMemoryWrite, testMemoryBinaryWrite));
 
 // Tests of vCont packets - stepping and continuing the target
 GdbServerTestCase testVContQuery = {
