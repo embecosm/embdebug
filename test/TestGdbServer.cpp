@@ -527,78 +527,88 @@ GdbServerTestCase testCmdInstrCount = {
     },
 };
 GdbServerTestCase testCmdEcho = {
-    "$qRcmd,6563686f2048656c6c6f20576f726c640a#6f+$vKill;1#6e+", // echo Hello
-                                                                 // World\n
+    // qRcmd,echo Hello World\n
+    "$qRcmd,6563686f2048656c6c6f20576f726c640a#6f+$vKill;1#6e+",
     "+$OK#9a+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetDebugInvalidFlag = {
-    "$qRcmd,7365742064656275672062616e612031#d4+$vKill;1#6e+", // set debug
-                                                               // banana 1
+    // qRcmd,set debug banana 1
+    "$qRcmd,7365742064656275672062616e612031#d4+$vKill;1#6e+",
     "+$E01#a6+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdShowDebugInvalidFlag = {
-    "$qRcmd,73686f772064656275672062616e61#b0+$vKill;1#6e+", // show debug
-                                                             // banana
+    // qRcmd,show debug banana
+    "$qRcmd,73686f772064656275672062616e61#b0+$vKill;1#6e+",
     "+$E01#a6+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetDebugFlagInvalidLevel = {
-    "$qRcmd,73657420646562756720727370206c656d6f6e#ae+$vKill;1#6e+", // set
-                                                                     // debug
-                                                                     // rsp
-                                                                     // lemon
+    // qRcmd,set debug rsp lemon
+    "$qRcmd,73657420646562756720727370206c656d6f6e#ae+$vKill;1#6e+",
     "+$E02#a7+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugRspFlag = {
-    "$qRcmd,736574206465627567207273702031#3d" // set debug rsp 1
-    "+$qRcmd,73686f7720646562756720727370#19"  // show debug rsp
+    // qRcmd,set debug rsp 1
+    "$qRcmd,736574206465627567207273702031#3d"
+    // qRcmd,show debug rsp
+    "+$qRcmd,73686f7720646562756720727370#19"
     "++$vKill;1#6e+",
+    // expected output rsp
     "+$OK#9a"
     "+$O7273703a204f4e0a#43$OK#9a" // rsp: ON\n
     "+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugConnFlag = {
-    "$qRcmd,73657420646562756720636f6e6e206f6e#11" // set debug conn on
-    "+$qRcmd,73686f7720646562756720636f6e6e#1a"    // show debug conn
+    // qRcmd,set debug conn on
+    "$qRcmd,73657420646562756720636f6e6e206f6e#11"
+    // qRcmd,show debug conn
+    "+$qRcmd,73686f7720646562756720636f6e6e#1a"
     "++$vKill;1#6e+",
+    // expected output rsp
     "+$OK#9a"
     "+$O636f6e6e3a204f4e0a#44$OK#9a" // conn: ON\n
     "+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugDisasFlag = {
-    "$qRcmd,7365742064656275672064697361732046616c5345#ee" // set debug disas
-                                                           // FalSE
-    "+$qRcmd,73686f77206465627567206469736173#f3"          // show debug disas
+    // qRcmd,set debug disas FalSE
+    "$qRcmd,7365742064656275672064697361732046616c5345#ee"
+    // qRcmd,show debug disas
+    "+$qRcmd,73686f77206465627567206469736173#f3"
     "++$vKill;1#6e+",
+    // expected output rsp
     "+$OK#9a"
-    "+$O64697361733a204f46460a#58$OK#9a" // disas: OFF\n
+    // disas: OFF\n
+    "+$O64697361733a204f46460a#58$OK#9a"
     "+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetAndShowKillCoreOnExit = {
-    "$qRcmd,736574206b696c6c2d636f72652d6f6e2d65786974#84" // set
-                                                           // kill-core-on-exit
-    "+$qRcmd,73686f77206b696c6c2d636f72652d6f6e2d65786974#26" // show
-                                                              // kill-core-on-exit
+    // qRcmd,set kill-core-on-exit
+    "$qRcmd,736574206b696c6c2d636f72652d6f6e2d65786974#84"
+    // qRcmd,show kill-core-on-exit
+    "+$qRcmd,73686f77206b696c6c2d636f72652d6f6e2d65786974#26"
     "++$vKill;1#6e+",
+    // expected output rsp
     "+$OK#9a"
-    "+$O6b696c6c2d636f72652d6f6e2d657869743a204f4e0a#c8$OK#9a" // kill-core-on-exit:
-                                                               // ON\n
+    // kill-core-on-exit: ON\n
+    "+$O6b696c6c2d636f72652d6f6e2d657869743a204f4e0a#c8$OK#9a"
     "+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetUnknownCommand = {
-    "$qRcmd,73657420756e6b6e6f776e#a4+$vKill;1#6e+", // set unknown
+    // qRcmd,set unknown
+    "$qRcmd,73657420756e6b6e6f776e#a4+$vKill;1#6e+",
     "+$E04#a9+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdShowUnknownCommand = {
-    "$qRcmd,73686f7720756e6b6e6f776e#46+$vKill;1#6e+", // show unknown
+    // qRcmd,show unknown
+    "$qRcmd,73686f7720756e6b6e6f776e#46+$vKill;1#6e+",
     "+$E04#a9+$OK#9a",
     {},
 };
