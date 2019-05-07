@@ -138,7 +138,7 @@ public:
   virtual int getRegisterSize() const = 0;
 
   virtual bool getSyscallArgLocs(SyscallArgLoc &syscallIDLoc,
-                                 std::vector<SyscallArgLoc> &syscallRegLocs,
+                                 std::vector<SyscallArgLoc> &syscallArgLocs,
                                  SyscallArgLoc &syscallReturnLoc) const = 0;
 
   //! \brief Read contents of a target register.
