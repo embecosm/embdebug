@@ -142,13 +142,29 @@ public:
   TraceTarget(const TraceFlags *traceFlags, int regCount, int regSize,
               std::vector<ITargetCall> targetTrace)
       : StubTarget(traceFlags), mRegisterCount(regCount),
-        mRegisterSize(regSize), mITargetTrace(targetTrace),
+        mRegisterSize(regSize), mHaveSyscallSupport(false),
+        mITargetTrace(targetTrace), mITargetTracePos(mITargetTrace.begin()) {}
+
+  TraceTarget(const TraceFlags *traceFlags, int regCount, int regSize,
+              SyscallArgLoc syscallIDLoc,
+              const std::vector<SyscallArgLoc> &syscallArgLocs,
+              SyscallArgLoc syscallRetLoc, std::vector<ITargetCall> targetTrace)
+      : StubTarget(traceFlags), mRegisterCount(regCount),
+        mRegisterSize(regSize), mHaveSyscallSupport(true),
+        mSyscallIDLoc(syscallIDLoc), mSyscallArgLocs(syscallArgLocs),
+        mSyscallReturnLoc(syscallRetLoc), mITargetTrace(targetTrace),
         mITargetTracePos(mITargetTrace.begin()) {}
+
   ~TraceTarget() override {}
 
 private:
   int mRegisterCount;
   int mRegisterSize;
+
+  bool mHaveSyscallSupport;
+  SyscallArgLoc mSyscallIDLoc;
+  std::vector<SyscallArgLoc> mSyscallArgLocs;
+  SyscallArgLoc mSyscallReturnLoc;
 
   std::vector<ITargetCall> mITargetTrace;
   std::vector<ITargetCall>::iterator mITargetTracePos;
@@ -175,22 +191,17 @@ public:
   int getRegisterSize() const override { return mRegisterSize; }
 
   bool getSyscallArgLocs(SyscallArgLoc &syscallIDLoc,
-                         std::vector<SyscallArgLoc> &syscallRegLocs,
+                         std::vector<SyscallArgLoc> &syscallArgLocs,
                          SyscallArgLoc &syscallReturnLoc) const override {
-    syscallIDLoc = ITarget::SyscallArgLoc::RegisterLoc(
-        {ITarget::SyscallArgLocType::REGISTER, 17});
-
-    syscallRegLocs.push_back(ITarget::SyscallArgLoc::RegisterLoc(
-        {ITarget::SyscallArgLocType::REGISTER, 10}));
-    syscallRegLocs.push_back(ITarget::SyscallArgLoc::RegisterLoc(
-        {ITarget::SyscallArgLocType::REGISTER, 11}));
-    syscallRegLocs.push_back(ITarget::SyscallArgLoc::RegisterLoc(
-        {ITarget::SyscallArgLocType::REGISTER, 12}));
-
-    syscallReturnLoc = ITarget::SyscallArgLoc::RegisterLoc(
-        {ITarget::SyscallArgLocType::REGISTER, 10});
-
-    return true;
+    auto *mutable_this = const_cast<TraceTarget *>(this);
+    if (mHaveSyscallSupport) {
+      syscallIDLoc = mutable_this->mSyscallIDLoc;
+      syscallArgLocs = mutable_this->mSyscallArgLocs;
+      syscallReturnLoc = mutable_this->mSyscallReturnLoc;
+      return true;
+    } else {
+      return false;
+    }
   }
 
   std::size_t readRegister(const int reg, uint_reg_t &value) override {
@@ -286,19 +297,37 @@ struct GdbServerTestCase {
   int TargetRegisterSize;
   int TargetRegisterCount;
 
+  bool HaveSyscallSupport;
+  ITarget::SyscallArgLoc SyscallIDLoc;
+  std::vector<ITarget::SyscallArgLoc> SyscallArgLocs;
+  ITarget::SyscallArgLoc SyscallReturnLoc;
+
   std::string InStream;
   std::string ExpectedOutStream;
   std::vector<TraceTarget::ITargetCall> ITargetTrace;
 
   GdbServerTestCase(std::string inStream, std::string expectedOutStream,
                     const std::vector<TraceTarget::ITargetCall> &targetTrace)
-      : TargetRegisterSize(1), TargetRegisterCount(1), InStream(inStream),
+      : TargetRegisterSize(1), TargetRegisterCount(1),
+        HaveSyscallSupport(false), InStream(inStream),
         ExpectedOutStream(expectedOutStream), ITargetTrace(targetTrace) {}
 
   GdbServerTestCase(int targetRegSize, int targetRegCount, std::string inStream,
                     std::string expectedOutStream,
                     const std::vector<TraceTarget::ITargetCall> &targetTrace)
       : TargetRegisterSize(targetRegSize), TargetRegisterCount(targetRegCount),
+        HaveSyscallSupport(false), InStream(inStream),
+        ExpectedOutStream(expectedOutStream), ITargetTrace(targetTrace) {}
+
+  GdbServerTestCase(int targetRegSize, int targetRegCount,
+                    ITarget::SyscallArgLoc syscallIDLoc,
+                    const std::vector<ITarget::SyscallArgLoc> &syscallArgLocs,
+                    ITarget::SyscallArgLoc syscallReturnLoc,
+                    std::string inStream, std::string expectedOutStream,
+                    const std::vector<TraceTarget::ITargetCall> &targetTrace)
+      : TargetRegisterSize(targetRegSize), TargetRegisterCount(targetRegCount),
+        HaveSyscallSupport(true), SyscallIDLoc(syscallIDLoc),
+        SyscallArgLocs(syscallArgLocs), SyscallReturnLoc(syscallReturnLoc),
         InStream(inStream), ExpectedOutStream(expectedOutStream),
         ITargetTrace(targetTrace) {}
 };
@@ -310,9 +339,16 @@ protected:
 
     flags = new TraceFlags();
     conn = new TraceConnection(flags);
-    target =
-        new TraceTarget(flags, testCase.TargetRegisterSize,
-                        testCase.TargetRegisterCount, testCase.ITargetTrace);
+    if (testCase.HaveSyscallSupport) {
+      target = new TraceTarget(
+          flags, testCase.TargetRegisterSize, testCase.TargetRegisterCount,
+          testCase.SyscallIDLoc, testCase.SyscallArgLocs,
+          testCase.SyscallReturnLoc, testCase.ITargetTrace);
+    } else {
+      target =
+          new TraceTarget(flags, testCase.TargetRegisterSize,
+                          testCase.TargetRegisterCount, testCase.ITargetTrace);
+    }
     server = new GdbServer(conn, target, flags, EXIT_ON_KILL);
   }
   void TearDown() override {
@@ -572,6 +608,22 @@ INSTANTIATE_TEST_CASE_P(RSPVContTest, GdbServerTest,
 GdbServerTestCase testSyscallClose = {
     /*reg count*/ 32,
     /*reg size*/ 4,
+    /* syscall id location */
+    ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 17}),
+    /* syscall argument locations */
+    {
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 10}),
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 11}),
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 12}),
+    },
+    /* syscall return location */
+    ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 10}),
+    /* test case */
     "$vCont;c#a8+$F0#76+$vKill;1#6e+",
     "+$Fclose,15#ee+$S05#b8+$OK#9a",
     {
@@ -586,9 +638,6 @@ GdbServerTestCase testSyscallClose = {
                                              ITarget::ResumeRes::SYSCALL,
                                              ITarget::WaitRes::EVENT_OCCURRED}),
 
-        // Read syscall argument registers
-        // FIXME: These register numbers are all hardcoded for RISC-V. They'll
-        // be generic eventually.
         TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fclose*/ 57, 4}),
         TraceTarget::ITargetCall::ReadRegisterState(
@@ -610,6 +659,22 @@ GdbServerTestCase testSyscallClose = {
 GdbServerTestCase testSyscallOpen = {
     /*reg count*/ 32,
     /*reg size*/ 4,
+    /* syscall id location */
+    ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 17}),
+    /* syscall argument locations */
+    {
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 10}),
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 11}),
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 12}),
+    },
+    /* syscall return location */
+    ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 10}),
+    /* test case */
     "$vCont;c#a8+$F0#76+$vKill;1#6e+",
     "+$Fopen,beef/5,0,0#d2+$S05#b8+$OK#9a",
     {
@@ -624,9 +689,6 @@ GdbServerTestCase testSyscallOpen = {
                                              ITarget::ResumeRes::SYSCALL,
                                              ITarget::WaitRes::EVENT_OCCURRED}),
 
-        // Read syscall argument registers
-        // FIXME: These register numbers are all hardcoded for RISC-V. They'll
-        // be generic eventually.
         TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fopen*/ 1024, 4}),
         TraceTarget::ITargetCall::ReadRegisterState(
