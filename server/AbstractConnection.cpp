@@ -41,14 +41,16 @@ using namespace EmbDebug;
 
 //! @param[in] pkt  The packet for storing the result.
 
-//! @return  TRUE to indicate success, FALSE otherwise (means a communications
-//!          failure)
-bool AbstractConnection::getPkt(RspPacket &pkt) {
+//! @return  bool:      TRUE to indicate success, FALSE otherwise (means a
+//!                     communications failure)
+//!          RspPacket: Valid packet if first return value is TRUE, empty packet
+//!                     otherwise
+std::pair<bool, RspPacket> AbstractConnection::getPkt() {
+  RspPacketBuilder newPkt;
+
   // Keep getting packets, until one is found with a valid checksum
   while (true) {
-    std::size_t bufSize = pkt.getBufSize();
     unsigned char checksum; // The checksum we have computed
-    std::size_t count;      // Index into the buffer
     int ch;                 // Current character
 
     // Wait around for the start character ('$'). Ignore all other
@@ -56,7 +58,7 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
     ch = getRspChar();
     while (ch != '$') {
       if (-1 == ch) {
-        return false; // Connection failed
+        return {false, RspPacket()}; // Connection failed
       } else {
         ch = getRspChar();
       }
@@ -64,18 +66,17 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
 
     // Read until a '#' or end of buffer is found
     checksum = 0;
-    count = 0;
-    while (count < bufSize - 1) {
+    while (newPkt.getRemaining()) {
       ch = getRspChar();
 
       if (-1 == ch) {
-        return false; // Connection failed
+        return {false, RspPacket()}; // Connection failed
       }
 
       // If we hit a start of line char begin all over again
       if ('$' == ch) {
         checksum = 0;
-        count = 0;
+        newPkt.erase();
 
         continue;
       }
@@ -87,14 +88,8 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
 
       // Update the checksum and add the char to the buffer
       checksum = checksum + (unsigned char)ch;
-      pkt.data[count] = (char)ch;
-      count++;
+      newPkt += (char)ch;
     }
-
-    // Mark the end of the buffer with EOS - it's convenient for non-binary
-    // data to be valid strings.
-    pkt.data[count] = 0;
-    pkt.setLen(count);
 
     // If we have a valid end of packet char, validate the checksum. If we
     // don't it's because we ran out of buffer in the previous loop.
@@ -103,13 +98,13 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
 
       ch = getRspChar();
       if (-1 == ch) {
-        return false; // Connection failed
+        return {false, RspPacket()}; // Connection failed
       }
       xmitcsum = Utils::char2Hex(ch) << 4;
 
       ch = getRspChar();
       if (-1 == ch) {
-        return false; // Connection failed
+        return {false, RspPacket()}; // Connection failed
       }
 
       xmitcsum += Utils::char2Hex(ch);
@@ -122,18 +117,19 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
              << setfill(' ') << dec << endl;
         if (!putRspChar('-')) // Failed checksum
         {
-          return false; // Comms failure
+          return {false, RspPacket()}; // Comms failure
         }
       } else {
         if (!putRspChar('+')) // successful transfer
         {
-          return false; // Comms failure
+          return {false, RspPacket()}; // Comms failure
         } else {
+          RspPacket pkt(newPkt);
           if (traceFlags->traceRsp()) {
             cout << "RSP trace: getPkt: " << pkt << endl;
           }
 
-          return true; // Success
+          return {true, pkt}; // Success
         }
       }
     } else {
@@ -153,7 +149,7 @@ bool AbstractConnection::getPkt(RspPacket &pkt) {
 
 //! @return  TRUE to indicate success, FALSE otherwise (means a communications
 //!          failure).
-bool AbstractConnection::putPkt(RspPacket &pkt) {
+bool AbstractConnection::putPkt(const RspPacket &pkt) {
   std::size_t len = pkt.getLen();
   int ch; // Ack char
 
@@ -170,7 +166,7 @@ bool AbstractConnection::putPkt(RspPacket &pkt) {
 
     // Body of the packet
     for (count = 0; count < len; count++) {
-      unsigned char ch = pkt.data[count];
+      unsigned char ch = pkt.getData()[count];
 
       // Check for escaped chars
       if (('$' == ch) || ('#' == ch) || ('*' == ch) || ('}' == ch)) {

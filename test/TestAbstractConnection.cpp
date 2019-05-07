@@ -51,7 +51,7 @@ protected:
   void SetUp() override {
     flags = new TraceFlags();
     tc = new TestConnection(flags);
-    pkt = new RspPacket(256);
+    pkt = new RspPacket();
   }
   void TearDown() override {
     delete tc;
@@ -71,8 +71,10 @@ std::string packetData(std::string buf) {
 TEST_P(AbstractConnectionTest, GetPkt) {
   std::string buf = GetParam();
   tc->setBuf(buf.c_str());
-  EXPECT_TRUE(tc->getPkt(*pkt));
-  EXPECT_EQ(packetData(buf), pkt->data);
+  bool success;
+  std::tie(success, *pkt) = tc->getPkt();
+  EXPECT_TRUE(success);
+  EXPECT_EQ(packetData(buf), pkt->getRawData());
 }
 
 // Problem: the AbstractConnection keeps reading until it gets a good checksum.
@@ -89,9 +91,11 @@ TEST_P(AbstractConnectionTest, BadChecksum) {
 // FIXME: Presently disabled, causes a segfault due to bad read of buffer.
 TEST_P(AbstractConnectionTest, DISABLED_BufferOverrun) {
   std::string buf = GetParam();
-  RspPacket tiny_pkt(4);
+  RspPacket tiny_pkt;
   tc->setBuf(buf.c_str());
-  EXPECT_FALSE(tc->getPkt(tiny_pkt));
+  bool success;
+  std::tie(success, tiny_pkt) = tc->getPkt();
+  EXPECT_FALSE(success);
 }
 
 // PutPkt test is a work in progress.

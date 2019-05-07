@@ -34,8 +34,8 @@ public:
 
   // Public interface: get packets from the stream and put them out
 
-  virtual bool getPkt(RspPacket &pkt);
-  virtual bool putPkt(RspPacket &pkt);
+  virtual std::pair<bool, RspPacket> getPkt();
+  virtual bool putPkt(const RspPacket &pkt);
 
   // Check for a break (ctrl-C)
 

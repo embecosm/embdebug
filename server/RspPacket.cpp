@@ -25,69 +25,23 @@ using std::setw;
 
 using namespace EmbDebug;
 
-//! Constructor
-
-//! Allocate the new data buffer
-
-//! @param[in]  _rspConnection  The RSP connection we will use
-//! @param[in]  _bufSize        Size of data buffer to allocate
-RspPacket::RspPacket(std::size_t _bufSize) : bufSize(_bufSize) {
-  data = new char[_bufSize];
-}
-
 RspPacket::RspPacket(RspPacket &&other) {
-  bufSize = other.bufSize;
-  data = other.data;
-
-  other.bufSize = 0;
-  other.data = nullptr;
+  ::memcpy(data, other.data, bufSize);
+  len = other.len;
 }
 
-//! Destructor
-
-//! Give back the data buffer
-RspPacket::~RspPacket() { delete[] data; }
-
-RspPacket &RspPacket::operator=(RspPacket &&other) {
-  if (data)
-    delete[] data;
-
-  bufSize = other.bufSize;
-  data = other.data;
-
-  other.bufSize = 0;
-  other.data = nullptr;
-  return *this;
+RspPacket::RspPacket(const RspPacketBuilder &builder) {
+  ::memcpy(data, builder.data, bufSize);
+  len = builder.len;
 }
 
-//! Pack a string into a packet.
-
-//! A convenience version of this method.
-
-//! @param  str  The string to copy into the data packet before sending
-void RspPacket::packStr(const char *str) {
-  std::size_t slen = strlen(str);
-
-  // Construct the packet to send, so long as string is not too big, otherwise
-  // truncate. Add EOS at the end for convenient debug printout
-  if (slen >= bufSize) {
-    cerr << "Warning: String \"" << str
-         << "\" too large for RSP packet: truncated\n"
-         << endl;
-    slen = bufSize - 1;
-  }
-
-  strncpy(data, str, slen);
-  data[slen] = 0;
-  len = slen;
-}
-
-//! Pack a const string as a hex encoded string into a packet for qRcmd.
+//! Create a new packet from a const string as a hex encoded string for qRcmd.
 
 //! The reply to qRcmd packets can be O followed by hex encoded ASCII.
 
 //! @param  str  The string to copy into the data packet before sending
-void RspPacket::packHexstr(const char *str) {
+RspPacket RspPacket::CreateHexStr(const char *str) {
+  RspPacket response;
   std::size_t slen = strlen(str);
 
   // Construct the packet to send, so long as string is not too big, otherwise
@@ -100,19 +54,21 @@ void RspPacket::packHexstr(const char *str) {
   }
 
   // Construct the string the hard way
-  data[0] = 'O';
+  response.data[0] = 'O';
   for (std::size_t i = 0; i < slen; i++) {
     int nybble_hi = str[i] >> 4;
     int nybble_lo = str[i] & 0x0f;
 
-    data[i * 2 + 1] = nybble_hi + (nybble_hi > 9 ? 'a' - 10 : '0');
-    data[i * 2 + 2] = nybble_lo + (nybble_lo > 9 ? 'a' - 10 : '0');
+    response.data[i * 2 + 1] = nybble_hi + (nybble_hi > 9 ? 'a' - 10 : '0');
+    response.data[i * 2 + 2] = nybble_lo + (nybble_lo > 9 ? 'a' - 10 : '0');
   }
-  len = slen * 2 + 1;
-  data[len] = 0;
+  response.len = slen * 2 + 1;
+  response.data[response.len] = 0;
+
+  return response;
 }
 
-//! Pack a const string as a hex encoded string into a packet for qRcmd.
+//! Create a packet from a const string as a hex encoded string for qRcmd.
 
 //! The reply to qRcmd packets can be O followed by hex encoded ASCII and the
 //! client will print them on standard output. If there is no initial O, then
@@ -121,8 +77,8 @@ void RspPacket::packHexstr(const char *str) {
 //! @param  str        The string to copy into the data packet before sending
 //! @param  toStdoutP  TRUE if the client should send to stdout, FALSE if the
 //!                    result should silently go into a buffer.
-
-void RspPacket::packRcmdStr(const char *str, const bool toStdoutP) {
+RspPacket RspPacket::CreateRcmdStr(const char *str, const bool toStdoutP) {
+  RspPacket response;
   std::size_t slen = strlen(str);
 
   // Construct the packet to send, so long as string is not too big, otherwise
@@ -137,7 +93,7 @@ void RspPacket::packRcmdStr(const char *str, const bool toStdoutP) {
   // Construct the string the hard way
   int offset;
   if (toStdoutP) {
-    data[0] = 'O';
+    response.data[0] = 'O';
     offset = 1;
   } else {
     offset = 0;
@@ -147,29 +103,64 @@ void RspPacket::packRcmdStr(const char *str, const bool toStdoutP) {
     uint8_t nybble_hi = str[i] >> 4;
     uint8_t nybble_lo = str[i] & 0x0f;
 
-    data[i * 2 + offset + 0] =
+    response.data[i * 2 + offset + 0] =
         static_cast<char>(nybble_hi + (nybble_hi > 9 ? 'a' - 10 : '0'));
-    data[i * 2 + offset + 1] =
+    response.data[i * 2 + offset + 1] =
         static_cast<char>(nybble_lo + (nybble_lo > 9 ? 'a' - 10 : '0'));
   }
-  len = slen * 2 + offset;
-  data[len] = 0;
+  response.len = slen * 2 + offset;
+  response.data[response.len] = 0;
+
+  return response;
 }
 
-//! Get the data buffer size
+//! Create a packet from a printf-style call
 
-//! @return  The data buffer size
-std::size_t RspPacket::getBufSize() { return bufSize; }
+//! @return a packet with the printf-formatted string
+RspPacket RspPacket::CreateFormatted(const char *format, ...) {
+  RspPacket response;
+  va_list args;
+  va_start(args, format);
+  response.len = vsnprintf(response.data, 10000, format, args);
+  va_end(args);
+  return response;
+}
 
-//! Get the current number of chars in the data buffer
+//! Add a C string to the current packet
+RspPacketBuilder &RspPacketBuilder::operator+=(const char *str) {
+  std::size_t _len = ::strlen(str);
+  addData(str, _len);
+  return *this;
+}
 
-//! @return  The number of chars in the data buffer
-std::size_t RspPacket::getLen() { return len; }
+//! Add a char to the current packet
+RspPacketBuilder &RspPacketBuilder::operator+=(const char c) {
+  if (len == RspPacket::getMaxPacketSize()) {
+    std::cerr << "Warning: RspPacketBuilder length exceeded, ignoring "
+              << EMBDEBUG_PRETTY_FUNCTION << std::endl;
+    return *this;
+  }
+  data[len] = c;
+  len++;
+  return *this;
+}
 
-//! Set the number of chars in the data buffer
+//! Add a C string to the current packet
+void RspPacketBuilder::addData(const char *str) {
+  std::size_t _len = ::strlen(str);
+  addData(str, _len);
+}
 
-//! @param[in] _len  The number of chars to be set
-void RspPacket::setLen(std::size_t _len) { len = _len; }
+//! Add a byte buffer to the current packet
+void RspPacketBuilder::addData(const char *str, std::size_t _len) {
+  if ((len + _len) > RspPacket::getMaxPacketSize()) {
+    std::cerr << "Warning: RspPacketBuilder length exceeded, ignoring "
+              << EMBDEBUG_PRETTY_FUNCTION << std::endl;
+    return;
+  }
+  ::memcpy(&data[len], str, _len);
+  len += _len;
+}
 
 namespace EmbDebug {
 
@@ -177,9 +168,9 @@ namespace EmbDebug {
 
 //! @param[out] s  Stream to output to
 //! @param[in]  p  Packet to output
-ostream &operator<<(ostream &s, RspPacket &p) {
+ostream &operator<<(ostream &s, const RspPacket &p) {
   return s << "RSP packet: " << std::dec << std::setw(3) << p.getLen()
-           << std::setw(0) << " chars, \"" << p.data << "\"";
+           << std::setw(0) << " chars, \"" << p.getRawData() << "\"";
 }
 
 } // namespace EmbDebug

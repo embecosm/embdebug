@@ -207,7 +207,7 @@ uint64_t Utils::hex2Val(const char *buf, std::size_t len) {
 
 //! @param[out] dest  Buffer to store the hex digit pairs (null terminated)
 //! @param[in]  src   The ASCII string (null terminated)                      */
-void Utils::ascii2Hex(char *dest, char *src) {
+void Utils::ascii2Hex(char *dest, const char *src) {
   int i;
 
   // Step through converting the source string
@@ -227,7 +227,7 @@ void Utils::ascii2Hex(char *dest, char *src) {
 
 //! @param[out] dest  The ASCII string (null terminated)
 //! @param[in]  src   Buffer holding the hex digit pairs (null terminated)
-void Utils::hex2Ascii(char *dest, char *src) {
+void Utils::hex2Ascii(char *dest, const char *src) {
   int i;
 
   // Step through convering the source hex digit pairs

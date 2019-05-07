@@ -29,8 +29,8 @@ public:
                              bool isLittleEndianP);
   static std::size_t val2Hex(uint64_t val, char *buf);
   static uint64_t hex2Val(const char *buf, std::size_t len);
-  static void ascii2Hex(char *dest, char *src);
-  static void hex2Ascii(char *dest, char *src);
+  static void ascii2Hex(char *dest, const char *src);
+  static void hex2Ascii(char *dest, const char *src);
   static std::size_t rspUnescape(char *buf, std::size_t len);
   static std::vector<std::string> &split(const std::string &s,
                                          const std::string &delim,

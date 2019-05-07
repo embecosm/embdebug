@@ -17,6 +17,8 @@
 //
 // EMBDEBUG_ATTR_UNUSED - Note that a paramater/variable is unused
 // EMBDEBUG_VISIBLE_API - Exports a symbol for shared objects
+// EMBDEBUG_PRETTY_FUNCTION - Function name to use for debug messages
+// EMBDEBUG_WARN_DEPRECATED - Developer method for warning about use of function
 
 // EMBDEBUG_ATTR_UNUSED
 #if defined(__GNUC__)
@@ -37,5 +39,16 @@
 #else
 #define EMBDEBUG_VISIBLE_API
 #endif
+
+// EMBDEBUG_PRETTY_FUNCTION
+#ifdef _MSC_VER
+#define EMBDEBUG_PRETTY_FUNCTION __FUNCSIG__
+#else
+#define EMBDEBUG_PRETTY_FUNCTION __PRETTY_FUNCTION__
+#endif
+
+// EMBDEBUG_WARN_DEPRECATED
+#define EMBDEBUG_WARN_DEPRECATED()                                             \
+  std::cerr << "WARNING: Use of " << EMBDEBUG_PRETTY_FUNCTION << std::endl
 
 #endif

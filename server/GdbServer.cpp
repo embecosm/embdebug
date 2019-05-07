@@ -56,16 +56,11 @@ using namespace EmbDebug;
 GdbServer::GdbServer(AbstractConnection *_conn, ITarget *_cpu,
                      TraceFlags *traceFlags, KillBehaviour _killBehaviour)
     : cpu(_cpu), traceFlags(traceFlags), rsp(_conn),
-      mNumRegs(cpu->getRegisterCount()), pkt(0), mMatchpointMap(),
+      mNumRegs(cpu->getRegisterCount()), pkt(), mMatchpointMap(),
       killBehaviour(_killBehaviour), mExitServer(false), mHaveMultiProc(false),
       mStopMode(StopMode::ALL_STOP), mPtid(PID_DEFAULT, TID_DEFAULT),
       mNextProcess(1), mHandlingSyscall(false), mKillCoreOnExit(false),
-      mCoreManager(cpu->getCpuCount()) {
-  // The packet size needs to be big enough to transmit all of the registers
-  // as ASCII encoded hex digits, plus an end of string marker.
-  pkt = RspPacket(std::max(static_cast<std::size_t>(256),
-                           mNumRegs * sizeof(uint_reg_t) * 2 + 1));
-}
+      mCoreManager(cpu->getCpuCount()) {}
 
 //! Destructor
 
@@ -140,59 +135,64 @@ void GdbServer::rspSyscallRequest() {
   // Work out which syscall we've got
   switch (a7) {
   case 57:
-    sprintf(pkt.data, "Fclose,%" PRIxREG, a0);
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted("Fclose,%" PRIxREG, a0));
+    return;
   case 62:
-    sprintf(pkt.data, "Flseek,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2);
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "Flseek,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2));
+    return;
   case 63:
-    sprintf(pkt.data, "Fread,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2);
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "Fread,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2));
+    return;
   case 64:
-    sprintf(pkt.data, "Fwrite,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2);
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "Fwrite,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2));
+    return;
   case 80:
-    sprintf(pkt.data, "Ffstat,%" PRIxREG ",%" PRIxREG, a0, a1);
-    break;
+    rsp->putPkt(
+        RspPacket::CreateFormatted("Ffstat,%" PRIxREG ",%" PRIxREG, a0, a1));
+    return;
   case 93: {
     if (traceFlags->traceExec())
       cerr << "EXIT syscall on core " << cpu->getCurrentCpu()
            << " halting all other cores." << endl;
     (void)cpu->halt();
     if (mHaveMultiProc)
-      sprintf(pkt.data, "W%" PRIxREG ";process:%x", a0,
-              CoreManager::coreNum2Pid(cpu->getCurrentCpu()));
+      rsp->putPkt(RspPacket::CreateFormatted(
+          "W%" PRIxREG ";process:%x", a0,
+          CoreManager::coreNum2Pid(cpu->getCurrentCpu())));
     else
-      sprintf(pkt.data, "W%" PRIxREG, a0);
+      rsp->putPkt(RspPacket::CreateFormatted("W%" PRIxREG, a0));
     /* We never get a reply from an exit syscall, so don't
        store a continuation state.  */
     mHandlingSyscall = false;
     /* Mark the core as dead.  */
     mCoreManager.killCoreNum(cpu->getCurrentCpu());
-  } break;
+    return;
+  }
   case 169:
-    sprintf(pkt.data, "Fgettimeofday,%" PRIxREG ",%" PRIxREG, a0, a1);
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "Fgettimeofday,%" PRIxREG ",%" PRIxREG, a0, a1));
+    return;
   case 1024:
-    sprintf(pkt.data, "Fopen,%" PRIxREG "/%x,%" PRIxREG ",%" PRIxREG, a0,
-            stringLength(a0), a1, a2);
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted("Fopen,%" PRIxREG "/%x,%" PRIxREG
+                                           ",%" PRIxREG,
+                                           a0, stringLength(a0), a1, a2));
+    return;
   case 1026:
-    sprintf(pkt.data, "Funlink,%" PRIxREG "/%x", a0, stringLength(a0));
-    break;
+    rsp->putPkt(RspPacket::CreateFormatted("Funlink,%" PRIxREG "/%x", a0,
+                                           stringLength(a0)));
+    return;
   case 1038:
-    sprintf(pkt.data, "Fstat,%" PRIxREG "/%x,%" PRIxREG, a0, stringLength(a0),
-            a1);
+    rsp->putPkt(RspPacket::CreateFormatted("Fstat,%" PRIxREG "/%x,%" PRIxREG,
+                                           a0, stringLength(a0), a1));
     break;
 
   default:
     rspReportException(TargetSignal::TRAP);
     return;
   }
-
-  // Send the packet
-  pkt.setLen(strlen(pkt.data));
-  rsp->putPkt(pkt);
 }
 
 //! The F reply is sent by the GDB client to us after a syscall has been
@@ -204,7 +204,7 @@ void GdbServer::rspSyscallReply() {
   // We've finished with the syscall.
   mHandlingSyscall = false;
 
-  p.parse(pkt.data);
+  p.parse(pkt.getRawData());
 
   if (p.valid()) {
     int retcode = p.retcode();
@@ -424,16 +424,17 @@ bool GdbServer::processStopEvents(void) {
 //! @param[in] pkt  The received RSP packet
 
 void GdbServer::rspClientRequest() {
-  if (!rsp->getPkt(pkt)) {
+  bool success;
+  std::tie(success, pkt) = rsp->getPkt();
+  if (!success) {
     rsp->rspClose(); // Comms failure
     return;
   }
 
-  switch (pkt.data[0]) {
+  switch (pkt.getData()[0]) {
   case '!':
     // Request for extended remote mode
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
 
   case '?':
@@ -457,8 +458,7 @@ void GdbServer::rspClientRequest() {
   case 'A':
     // Initialization of argv not supported
     cerr << "Warning: RSP 'A' packet not supported: ignored" << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
 
   case 'b':
@@ -481,7 +481,7 @@ void GdbServer::rspClientRequest() {
   case 'c':
   case 'C':
     // We now expect vCont instead of these packets.
-    cerr << "Warning: RSP '" << pkt.data[1]
+    cerr << "Warning: RSP '" << pkt.getData()[0]
          << "' packet is not supported: ignored" << endl;
     return;
 
@@ -494,8 +494,7 @@ void GdbServer::rspClientRequest() {
   case 'D':
     // Detach GDB. Do this by closing the client. The rules say that
     // execution should continue, so unstall the processor.
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     rsp->rspClose();
     return;
 
@@ -516,13 +515,12 @@ void GdbServer::rspClientRequest() {
     // 'g' for all other ops. However 'c' is deprecated in favor of
     // supporting vCont.
 
-    switch (pkt.data[1]) {
+    switch (pkt.getData()[1]) {
     case 'c':
 
       // Hc is dprecated - ignore it.
 
-      pkt.packStr("");
-      rsp->putPkt(pkt);
+      rsp->putPkt("");
       return;
 
     case 'g':
@@ -530,22 +528,20 @@ void GdbServer::rspClientRequest() {
       // If we are told to choose any process, we choose the default
       // process. Not clear that ALL processes is valid here.
 
-      if (mPtid.decode(&(pkt.data[strlen("Hg")])) &&
+      if (mPtid.decode(&(pkt.getRawData()[strlen("Hg")])) &&
           mPtid.crystalize(PID_DEFAULT, TID_DEFAULT)) {
         // Convert process number to core number (using - 1).
         // @todo method for pid to core mapping.
         cpu->setCurrentCpu(mPtid.pid() - 1);
-        pkt.packStr("OK");
+        rsp->putPkt("OK");
       } else
-        pkt.packStr("E01");
+        rsp->putPkt("E01");
 
-      rsp->putPkt(pkt);
       return;
 
     default:
 
-      pkt.packStr("E02");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E02");
       return;
     }
 
@@ -609,7 +605,7 @@ void GdbServer::rspClientRequest() {
   case 's':
   case 'S':
     // We now expect vCont instead of these packets.
-    cerr << "Warning: RSP '" << pkt.data[1]
+    cerr << "Warning: RSP '" << pkt.getRawData()
          << "' packet is not supported: ignored" << endl;
     return;
 
@@ -622,8 +618,7 @@ void GdbServer::rspClientRequest() {
   case 'T':
     // Is the thread alive. We are bare metal, so don't have a thread
     // context. The answer is always "OK".
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
 
   case 'v':
@@ -648,7 +643,7 @@ void GdbServer::rspClientRequest() {
 
   default:
     // Unknown commands are ignored
-    cerr << "Warning: Unknown RSP request" << pkt.data << endl;
+    cerr << "Warning: Unknown RSP request" << pkt.getRawData() << endl;
     return;
   }
 }
@@ -660,13 +655,12 @@ void GdbServer::rspClientRequest() {
 void GdbServer::rspReportException(TargetSignal sig) {
   // Construct a signal received packet
   if (mHaveMultiProc)
-    sprintf(pkt.data, "T%02xthread:p%x.1;", (static_cast<int>(sig) & 0xff),
-            CoreManager::coreNum2Pid(cpu->getCurrentCpu()));
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "T%02xthread:p%x.1;", (static_cast<int>(sig) & 0xff),
+        CoreManager::coreNum2Pid(cpu->getCurrentCpu())));
   else
-    sprintf(pkt.data, "S%02x", (static_cast<int>(sig) & 0xff));
-  pkt.setLen(strlen(pkt.data));
-
-  rsp->putPkt(pkt);
+    rsp->putPkt(
+        RspPacket::CreateFormatted("S%02x", (static_cast<int>(sig) & 0xff)));
 }
 
 //! Handle a RSP read all registers request
@@ -677,24 +671,21 @@ void GdbServer::rspReportException(TargetSignal sig) {
 //! Each byte is packed as a pair of hex digits.
 
 void GdbServer::rspReadAllRegs() {
-  std::size_t pktSize = 0;
-
   // The registers. GDB client expects them to be packed according to target
   // endianness.
+  RspPacketBuilder response;
   for (int regNum = 0; regNum < mNumRegs; regNum++) {
     uint_reg_t val;       // Enough for even the PC
     std::size_t byteSize; // Size of reg in bytes
+    char result[32];      // Temporary buffer
 
     byteSize = cpu->readRegister(regNum, val);
-    Utils::regVal2Hex(val, &(pkt.data[pktSize]), byteSize,
-                      true /* Little Endian */);
-    pktSize += byteSize * 2; // 2 chars per hex digit
+    Utils::regVal2Hex(val, result, byteSize, true /* Little Endian */);
+    response.addData(result, byteSize * 2); // 2 chars per hex digit
   }
 
   // Finalize the packet and send it
-  pkt.data[pktSize] = 0;
-  pkt.setLen(pktSize);
-  rsp->putPkt(pkt);
+  rsp->putPkt(response);
 }
 
 //! Handle a RSP write all registers request
@@ -707,7 +698,7 @@ void GdbServer::rspWriteAllRegs() {
   // The registers
   std::size_t byteSize = cpu->getRegisterSize();
   for (int regNum = 0; regNum < mNumRegs; regNum++) {
-    uint64_t val = Utils::hex2RegVal(&(pkt.data[pktPos]), byteSize,
+    uint64_t val = Utils::hex2RegVal(&(pkt.getRawData()[pktPos]), byteSize,
                                      true /* little endian */);
     pktPos += byteSize * 2; // 2 chars per hex digit
 
@@ -716,8 +707,7 @@ void GdbServer::rspWriteAllRegs() {
            << "." << endl;
   }
 
-  pkt.packStr("OK");
-  rsp->putPkt(pkt);
+  rsp->putPkt("OK");
 }
 
 //! Handle a RSP read memory (symbolic) request
@@ -731,23 +721,24 @@ void GdbServer::rspWriteAllRegs() {
 //! The length given is the number of bytes to be read.
 
 void GdbServer::rspReadMem() {
-  uint_reg_t addr; // Where to read the memory
-  uint_addr_t len; // Number of bytes to read
-  uint_addr_t off; // Offset into the memory
+  uint_reg_t addr;           // Where to read the memory
+  uint_addr_t len;           // Number of bytes to read
+  uint_addr_t off;           // Offset into the memory
+  RspPacketBuilder response; // Response to memory request
 
-  if (2 != sscanf(pkt.data, "m%" PRIxREG ",%" PRIxADDR ":", &addr, &len)) {
-    cerr << "Warning: Failed to recognize RSP read memory command: " << pkt.data
-         << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+  if (2 !=
+      sscanf(pkt.getRawData(), "m%" PRIxREG ",%" PRIxADDR ":", &addr, &len)) {
+    cerr << "Warning: Failed to recognize RSP read memory command: "
+         << pkt.getRawData() << endl;
+    rsp->putPkt("E01");
     return;
   }
 
   // Make sure we won't overflow the buffer (2 chars per byte)
-  if ((len * 2) >= pkt.getBufSize()) {
-    cerr << "Warning: Memory read " << pkt.data
+  if ((len * 2) >= pkt.getMaxPacketSize()) {
+    cerr << "Warning: Memory read " << pkt.getRawData()
          << " too large for RSP packet: truncated" << endl;
-    len = (pkt.getBufSize() - 1) / 2;
+    len = (pkt.getMaxPacketSize() - 1) / 2;
   }
 
   // Refill the buffer with the reply
@@ -758,15 +749,13 @@ void GdbServer::rspReadMem() {
     ret = cpu->read(addr + off, &ch, 1);
 
     if (1 == ret) {
-      pkt.data[off * 2] = Utils::hex2Char(ch >> 4);
-      pkt.data[off * 2 + 1] = Utils::hex2Char(ch & 0xf);
+      response += Utils::hex2Char(ch >> 4);
+      response += Utils::hex2Char(ch & 0xf);
     } else
       cerr << "Warning: failed to read char" << endl;
   }
 
-  pkt.data[off * 2] = '\0'; // End of string
-  pkt.setLen(strlen(pkt.data));
-  rsp->putPkt(pkt);
+  rsp->putPkt(response);
 }
 
 //! Handle a RSP write memory (symbolic) request
@@ -784,24 +773,24 @@ void GdbServer::rspWriteMem() {
   uint_addr_t addr; // Where to write the memory
   uint_addr_t len;  // Number of bytes to write
 
-  if (2 != sscanf(pkt.data, "M%" PRIxADDR ",%" PRIxADDR ":", &addr, &len)) {
-    cerr << "Warning: Failed to recognize RSP write memory " << pkt.data
+  if (2 !=
+      sscanf(pkt.getRawData(), "M%" PRIxADDR ",%" PRIxADDR ":", &addr, &len)) {
+    cerr << "Warning: Failed to recognize RSP write memory " << pkt.getRawData()
          << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
   // Find the start of the data and check there is the amount we expect.
-  char *symDat = (char *)(memchr(pkt.data, ':', pkt.getBufSize())) + 1;
-  std::size_t datLen = pkt.getLen() - (symDat - pkt.data);
+  char *symDat =
+      (char *)(memchr(pkt.getRawData(), ':', pkt.getMaxPacketSize())) + 1;
+  std::size_t datLen = pkt.getLen() - (symDat - pkt.getRawData());
 
   // Sanity check
   if (len * 2 != datLen) {
     cerr << "Warning: Write of " << len * 2 << "digits requested, but "
          << datLen << " digits supplied: packet ignored" << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
@@ -815,8 +804,7 @@ void GdbServer::rspWriteMem() {
       cerr << "Warning: Failed to write character" << endl;
   }
 
-  pkt.packStr("OK");
-  rsp->putPkt(pkt);
+  rsp->putPkt("OK");
 }
 
 //! Read a single register
@@ -830,11 +818,10 @@ void GdbServer::rspReadReg() {
   unsigned int regNum;
 
   // Break out the fields from the data
-  if (1 != sscanf(pkt.data, "p%x", &regNum)) {
+  if (1 != sscanf(pkt.getRawData(), "p%x", &regNum)) {
     cerr << "Warning: Failed to recognize RSP read register command: "
-         << pkt.data << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+         << pkt.getRawData() << endl;
+    rsp->putPkt("E01");
     return;
   }
 
@@ -842,12 +829,12 @@ void GdbServer::rspReadReg() {
   // to target endianness.
   uint_reg_t val;
   std::size_t byteSize;
+  char regData[32];
 
   byteSize = cpu->readRegister(regNum, val);
-  Utils::regVal2Hex(val, pkt.data, byteSize, true /* little endian */);
+  Utils::regVal2Hex(val, regData, byteSize, true /* little endian */);
 
-  pkt.setLen(strlen(pkt.data));
-  rsp->putPkt(pkt);
+  rsp->putPkt(RspPacket(regData, byteSize * 2));
 }
 
 //! Write a single register
@@ -868,11 +855,10 @@ void GdbServer::rspWriteReg() {
   std::ostringstream fmt_stream;
   fmt_stream << "P%x=%" << valstr_len << "s";
   string fmt = fmt_stream.str();
-  if (2 != sscanf(pkt.data, fmt.c_str(), &regNum, valstr)) {
+  if (2 != sscanf(pkt.getRawData(), fmt.c_str(), &regNum, valstr)) {
     cerr << "Warning: Failed to recognize RSP write register command "
-         << pkt.data << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+         << pkt.getRawData() << endl;
+    rsp->putPkt("E01");
     return;
   }
   valstr[valstr_len] = '\0';
@@ -884,8 +870,7 @@ void GdbServer::rspWriteReg() {
     cerr << "Warning: Size != " << regByteSize << " when writing reg " << regNum
          << "." << endl;
 
-  pkt.packStr("OK");
-  rsp->putPkt(pkt);
+  rsp->putPkt("OK");
 }
 
 //! Send out a single thread info reply packet
@@ -907,17 +892,18 @@ void GdbServer::rspWriteNextThreadInfo() {
            (mKillCoreOnExit && !mCoreManager.isCoreLive(coreNum)));
 
   if (coreNum < mCoreManager.getCpuCount()) {
-    pkt.packStr("m");
+    char ptid_str[32];
+    RspPacketBuilder response;
+    response += "m";
     Ptid ptid(CoreManager::coreNum2Pid(coreNum), TID_DEFAULT);
 
-    if (ptid.encode(&(pkt.data[pkt.getLen()])))
-      pkt.setLen(strlen(pkt.data));
-    else
-      pkt.packStr("E01");
+    if (ptid.encode(ptid_str)) {
+      response += ptid_str;
+      rsp->putPkt(response);
+    } else
+      rsp->putPkt("E01");
   } else
-    pkt.packStr("l"); // All done
-
-  rsp->putPkt(pkt);
+    rsp->putPkt("l"); // All done
 }
 
 //! Handle a RSP query request
@@ -927,19 +913,20 @@ void GdbServer::rspWriteNextThreadInfo() {
 //! flexible to future GDB releases with as yet undefined packets.
 
 void GdbServer::rspQuery() {
-  if (0 == strcmp("qC", pkt.data)) {
+  if (pkt.getData() == "qC") {
     // Return the current thread ID (unsigned hex). A null response
     // indicates to use the previously selected thread.
 
-    pkt.packStr("QC");
+    RspPacketBuilder response;
+    response += "QC";
+    char ptid_str[32];
 
-    if (mPtid.encode(&(pkt.data[strlen("QC")])))
-      pkt.setLen(strlen(pkt.data));
-    else
-      pkt.packStr("E01");
-
-    rsp->putPkt(pkt);
-  } else if (0 == strcmp("qfThreadInfo", pkt.data)) {
+    if (mPtid.encode(ptid_str)) {
+      response += ptid_str;
+      rsp->putPkt(response);
+    } else
+      rsp->putPkt("E01");
+  } else if (pkt.getData() == "qfThreadInfo") {
     // Send information about the first process.  After we send this
     // reply GDB will send additional 'qsThreadInfo' packets to get
     // information about all the other threads on the system.
@@ -949,19 +936,18 @@ void GdbServer::rspQuery() {
     // are numbered 1 -> (X + 1).
     mNextProcess = 1;
     rspWriteNextThreadInfo();
-  } else if (0 == strcmp("qsThreadInfo", pkt.data)) {
+  } else if (pkt.getData() == "qsThreadInfo") {
     // Send information about the "next" thread continuing from wherever
     // the last thread info request left off.
     rspWriteNextThreadInfo();
-  } else if (0 == strncmp("qL", pkt.data, strlen("qL"))) {
+  } else if (pkt.getData().starts_with("qL")) {
     // Deprecated and replaced by 'qfThreadInfo'
     cerr << "Warning: RSP qL deprecated: no info returned" << endl;
-    pkt.packStr("qM001");
-    rsp->putPkt(pkt);
-  } else if (0 == strncmp("qRcmd,", pkt.data, strlen("qRcmd,"))) {
+    rsp->putPkt("qM001");
+  } else if (pkt.getData().starts_with("qRcmd,")) {
     // This is used to interface to commands to do "stuff"
     rspCommand();
-  } else if (0 == strncmp("qSupported", pkt.data, strlen("qSupported"))) {
+  } else if (pkt.getData().starts_with("qSupported")) {
     // Report a list of the features we support. For now we just ignore any
     // supplied specific feature queries, but in the future these may be
     // supported as well. Note that the packet size allows for 'G' + all the
@@ -969,7 +955,7 @@ void GdbServer::rspQuery() {
     // EOS so the buffer is a well formed string.
 
     vector<string> tokens;
-    Utils::split(&(pkt.data[strlen("qSupported:")]), ";", tokens);
+    Utils::split(&(pkt.getRawData()[strlen("qSupported:")]), ";", tokens);
     const char *multiProcStr = "";
     const char *xmlRegsStr = "";
 
@@ -980,7 +966,7 @@ void GdbServer::rspQuery() {
     mHaveMultiProc = false;
 
     for (auto it = tokens.begin(); it != tokens.end(); it++)
-      if (0 == strncmp("multiprocess+", it->c_str(), strlen("multiprocess+"))) {
+      if (*it == "multiprocess+") {
         mHaveMultiProc = true;
         multiProcStr = ";multiprocess+";
       } else if (0 == strncmp("xmlRegisters=", it->c_str(),
@@ -992,35 +978,27 @@ void GdbServer::rspQuery() {
         xmlRegsStr = ";qXfer:features:read+";
       }
 
-    sprintf(pkt.data, "PacketSize=%" PRIxPTR ";QNonStop+;VContSupported+%s%s",
-            pkt.getBufSize(), multiProcStr, xmlRegsStr);
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "PacketSize=%" PRIxPTR ";QNonStop+;VContSupported+%s%s",
+        pkt.getMaxPacketSize(), multiProcStr, xmlRegsStr));
 
-    pkt.setLen(strlen(pkt.data));
-    rsp->putPkt(pkt);
-  } else if (0 == strncmp("qSymbol:", pkt.data, strlen("qSymbol:"))) {
+  } else if (pkt.getData().starts_with("qSymbol:")) {
     // Offer to look up symbols. Nothing we want (for now). TODO. This just
     // ignores any replies to symbols we looked up, but we didn't want to
     // do that anyway!
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
-  } else if (0 == strncmp("qThreadExtraInfo,", pkt.data,
-                          strlen("qThreadExtraInfo,"))) {
+    rsp->putPkt("OK");
+  } else if (pkt.getData().starts_with("qThreadExtraInfo,")) {
     // Report that we are runnable, but the text must be hex ASCI
-    // digits. For now do this by steam, reusing the original packet
-    sprintf(pkt.data, "%02x%02x%02x%02x%02x%02x%02x%02x%02x", 'R', 'u', 'n',
-            'n', 'a', 'b', 'l', 'e', 0);
-    pkt.setLen(strlen(pkt.data));
-    rsp->putPkt(pkt);
-  } else if (0 == strncmp("qXfer:features:read:target.xml:", pkt.data,
-                          strlen("qXfer:features:read:target.xml:"))) {
+    // digits. Send "Runnable"
+    rsp->putPkt("52756e6e61626c65");
+  } else if (pkt.getData().starts_with("qXfer:features:read:target.xml:")) {
     // Report back our target description
 
     unsigned int firstChar, lastChar;
 
-    if (2 != sscanf(pkt.data, "qXfer:features:read:target.xml:%x,%x",
+    if (2 != sscanf(pkt.getRawData(), "qXfer:features:read:target.xml:%x,%x",
                     &firstChar, &lastChar)) {
-      pkt.packStr("E00");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E00");
       return;
     }
 
@@ -1053,14 +1031,11 @@ void GdbServer::rspQuery() {
       len = xmlString.size() - firstChar + 1;
     }
 
-    sprintf(pkt.data, "%c%s", pktChar,
-            xmlString.substr(firstChar, len).c_str());
-    pkt.setLen(len + 1); // Allow for 'm'/'l'
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "%c%s", pktChar, xmlString.substr(firstChar, len).c_str()));
   } else {
     // We don't support this feature
-    pkt.packStr("");
-    rsp->putPkt(pkt);
+    rsp->putPkt("");
   }
 }
 
@@ -1069,10 +1044,10 @@ void GdbServer::rspQuery() {
 //! The actual command follows the "qRcmd," in ASCII encoded to hex
 
 void GdbServer::rspCommand() {
-  char *cmd = new char[pkt.getBufSize()];
+  char *cmd = new char[pkt.getMaxPacketSize() / 2];
   uint64_t timeout;
 
-  Utils::hex2Ascii(cmd, &(pkt.data[strlen("qRcmd,")]));
+  Utils::hex2Ascii(cmd, &(pkt.getRawData()[strlen("qRcmd,")]));
 
   if (traceFlags->traceRsp()) {
     cout << "RSP trace: qRcmd," << cmd << endl;
@@ -1106,8 +1081,7 @@ void GdbServer::rspCommand() {
         nullptr};
 
     for (int i = 0; nullptr != mess[i]; i++) {
-      pkt.packRcmdStr(mess[i], true);
-      rsp->putPkt(pkt);
+      rsp->putPkt(RspPacket::CreateRcmdStr(mess[i], true));
     }
 
     // Now get any help from the target
@@ -1116,26 +1090,23 @@ void GdbServer::rspCommand() {
     if (cpu->command(string("help"), ss)) {
       string line;
 
-      pkt.packRcmdStr(
+      rsp->putPkt(RspPacket::CreateRcmdStr(
           "The following target specific monitor commands are supported:\n",
-          true);
-      rsp->putPkt(pkt);
+          true));
       while (getline(ss, line, '\n')) {
         line.append("\n");
-        pkt.packRcmdStr(line.c_str(), true);
-        rsp->putPkt(pkt);
+        rsp->putPkt(RspPacket::CreateRcmdStr(line.c_str(), true));
       }
     } else {
       // No target specific help
 
-      pkt.packRcmdStr("There are no target specific monitor commands\n", true);
-      rsp->putPkt(pkt);
+      rsp->putPkt(RspPacket::CreateRcmdStr(
+          "There are no target specific monitor commands\n", true));
     }
 
     // Not silent, so acknowledge OK
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if ((0 == strcmp(cmd, "reset")) || (0 == strcmp(cmd, "reset warm"))) {
     // First, bring all the cores back to life.
     mCoreManager.reset();
@@ -1147,8 +1118,7 @@ void GdbServer::rspCommand() {
       abort();
     }
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "reset cold")) {
     // First, bring all the cores back to life.
     mCoreManager.reset();
@@ -1160,20 +1130,17 @@ void GdbServer::rspCommand() {
       abort();
     }
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "exit")) {
     mExitServer = true;
   } else if ((1 == sscanf(cmd, "timeout %" PRIx64, &timeout)) ||
              (1 == sscanf(cmd, "real-timeout %" PRIx64, &timeout))) {
     mTimeout.realTimeout(
         std::chrono::duration<double>(static_cast<double>(timeout)));
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (1 == sscanf(cmd, "cycle-timeout %" PRIx64, &timeout)) {
     mTimeout.cycleTimeout(timeout);
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "real-timestamp")) {
     // @todo Do this using std::put_time, which is not in pre 5.0 GCC. Not
     // thread safe.
@@ -1185,51 +1152,42 @@ void GdbServer::rspCommand() {
 
     strftime(buff, 20, "%F %T", timeinfo);
     oss << buff << endl;
-    pkt.packHexstr(oss.str().c_str());
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateHexStr(oss.str().c_str()));
 
     // Not silent, so acknowledge OK
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "timestamp")) {
     std::ostringstream oss;
     oss << cpu->timeStamp() << endl;
-    pkt.packHexstr(oss.str().c_str());
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateHexStr(oss.str().c_str()));
 
     // Not silent, so acknowledge OK
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "cyclecount")) {
     std::ostringstream oss;
     oss << cpu->getCycleCount() << endl;
-    pkt.packHexstr(oss.str().c_str());
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateHexStr(oss.str().c_str()));
 
     // Not silent, so acknowledge OK
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "instrcount")) {
     std::ostringstream oss;
     oss << cpu->getInstrCount() << endl;
-    pkt.packHexstr(oss.str().c_str());
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateHexStr(oss.str().c_str()));
 
     // Not silent, so acknowledge OK
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   } else if (0 == strncmp(cmd, "echo", 4)) {
     const char *tmp = cmd + 4;
     while (*tmp != '\0' && isspace(*tmp))
       ++tmp;
     cerr << std::flush;
     cout << tmp << std::endl << std::flush;
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
   }
   // Insert any new generic commands here.
   // Don't forget to document them.
@@ -1254,18 +1212,15 @@ void GdbServer::rspCommand() {
     ostringstream oss;
 
     if (cpu->command(string(cmd), oss)) {
-      pkt.packRcmdStr(oss.str().c_str(), true);
-      rsp->putPkt(pkt);
+      rsp->putPkt(RspPacket::CreateRcmdStr(oss.str().c_str(), true));
 
       // Not silent, so acknowledge OK
 
-      pkt.packStr("OK");
-      rsp->putPkt(pkt);
+      rsp->putPkt("OK");
     } else {
       // Command failed
 
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
     }
   }
 
@@ -1301,8 +1256,7 @@ void GdbServer::rspSetCommand(const char *cmd) {
     if (!traceFlags->isFlag(flagName)) {
       // Not a valid flag
 
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
       return;
     }
 
@@ -1324,8 +1278,7 @@ void GdbServer::rspSetCommand(const char *cmd) {
       else {
         // Not a valid level
 
-        pkt.packStr("E02");
-        rsp->putPkt(pkt);
+        rsp->putPkt("E02");
         return;
       }
     }
@@ -1338,8 +1291,7 @@ void GdbServer::rspSetCommand(const char *cmd) {
     else
       traceFlags->flagState(flagName, flagState);
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
   } else if (string("kill-core-on-exit") == tokens[0]) {
     // Valid state?
@@ -1357,14 +1309,12 @@ void GdbServer::rspSetCommand(const char *cmd) {
         mKillCoreOnExit = true;
       else {
         // Not a valid level
-        pkt.packStr("E02");
-        rsp->putPkt(pkt);
+        rsp->putPkt("E02");
         return;
       }
     }
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
   } else {
     // Not handled here, try the target
@@ -1373,18 +1323,15 @@ void GdbServer::rspSetCommand(const char *cmd) {
     string fullCmd = string("set ") + string(cmd);
 
     if (cpu->command(string(fullCmd), oss)) {
-      pkt.packRcmdStr(oss.str().c_str(), true);
-      rsp->putPkt(pkt);
+      rsp->putPkt(RspPacket::CreateRcmdStr(oss.str().c_str(), true));
 
       // Not silent, so acknowledge OK
 
-      pkt.packStr("OK");
-      rsp->putPkt(pkt);
+      rsp->putPkt("OK");
     } else {
       // Command failed
 
-      pkt.packStr("E04");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E04");
     }
   }
 }
@@ -1406,10 +1353,8 @@ void GdbServer::rspShowCommand(const char *cmd) {
   if ((numTok == 1) && (string("debug") == tokens[0])) {
     // monitor show debug
 
-    pkt.packRcmdStr(traceFlags->dump().c_str(), true);
-    rsp->putPkt(pkt);
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateRcmdStr(traceFlags->dump().c_str(), true));
+    rsp->putPkt("OK");
   } else if ((numTok == 2) && (string("debug") == tokens[0])) {
     // monitor show debug <flag>
 
@@ -1421,8 +1366,7 @@ void GdbServer::rspShowCommand(const char *cmd) {
     if (!traceFlags->isFlag(flagName)) {
       // Not a valid flag
 
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
       return;
     }
 
@@ -1433,20 +1377,16 @@ void GdbServer::rspShowCommand(const char *cmd) {
 
     oss << endl;
 
-    pkt.packRcmdStr(oss.str().c_str(), true);
-    rsp->putPkt(pkt);
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateRcmdStr(oss.str().c_str(), true));
+    rsp->putPkt("OK");
   } else if (string("kill-core-on-exit") == tokens[0]) {
 
     ostringstream oss;
     oss << "kill-core-on-exit: " << (mKillCoreOnExit ? "ON" : "OFF");
     oss << endl;
 
-    pkt.packRcmdStr(oss.str().c_str(), true);
-    rsp->putPkt(pkt);
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt(RspPacket::CreateRcmdStr(oss.str().c_str(), true));
+    rsp->putPkt("OK");
   } else {
     // Not handled here, try the target
 
@@ -1454,18 +1394,15 @@ void GdbServer::rspShowCommand(const char *cmd) {
     string fullCmd = string("show ") + string(cmd);
 
     if (cpu->command(string(fullCmd), oss)) {
-      pkt.packRcmdStr(oss.str().c_str(), true);
-      rsp->putPkt(pkt);
+      rsp->putPkt(RspPacket::CreateRcmdStr(oss.str().c_str(), true));
 
       // Not silent, so acknowledge OK
 
-      pkt.packStr("OK");
-      rsp->putPkt(pkt);
+      rsp->putPkt("OK");
     } else {
       // Command failed
 
-      pkt.packStr("E04");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E04");
     }
   }
 }
@@ -1473,8 +1410,8 @@ void GdbServer::rspShowCommand(const char *cmd) {
 //! Handle a RSP set request.
 
 void GdbServer::rspSet() {
-  if (0 == strncmp("QNonStop:", pkt.data, strlen("QNonStop:"))) {
-    switch (pkt.data[strlen("QNonStop:")]) {
+  if (pkt.getData().starts_with("QNonStop:")) {
+    switch (pkt.getData()[strlen("QNonStop:")]) {
     case '0':
       mStopMode = StopMode::ALL_STOP;
       break;
@@ -1483,18 +1420,15 @@ void GdbServer::rspSet() {
       break;
 
     default:
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
       return;
     }
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
   }
 
-  pkt.packStr("");
-  rsp->putPkt(pkt);
+  rsp->putPkt("");
 }
 
 //! Handle a 'vCont:' packet.  The actual list of things to do is after the
@@ -1505,10 +1439,9 @@ void GdbServer::rspSet() {
 
 void GdbServer::rspVCont() {
   vector<ITarget::ResumeType> coreActions;
-  VContActions actions(pkt.data);
+  VContActions actions(pkt.getRawData());
   if (!actions.valid()) {
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
@@ -1532,8 +1465,7 @@ void GdbServer::rspVCont() {
       break;
 
     default:
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
       return;
     }
 
@@ -1569,24 +1501,21 @@ void GdbServer::rspVCont() {
 void GdbServer::rspVKill() {
   Ptid ptid(PID_DEFAULT, TID_DEFAULT);
   unsigned int pid;
-  const char *str = &(pkt.data[strlen("vKill;")]);
+  const char *str = &(pkt.getRawData()[strlen("vKill;")]);
 
   if (!Utils::isHexStr(str, strlen(str))) {
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
   pid = (int)(Utils::hex2Val(str, strlen(str)));
 
   if (!mCoreManager.killCoreNum(CoreManager::pid2CoreNum(pid))) {
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
-  pkt.packStr("OK");
-  rsp->putPkt(pkt);
+  rsp->putPkt("OK");
 
   if (mCoreManager.getLiveCoreCount() == 0) {
     rsp->rspClose();
@@ -1600,24 +1529,21 @@ void GdbServer::rspVKill() {
 //! @todo for now we don't handle V packets.
 
 void GdbServer::rspVpkt() {
-  if (0 == strcmp("vCont?", pkt.data)) {
+  if (pkt.getData() == "vCont?") {
     // What actions are supported in vCont?  If we don't support 'c' and
     // 'C' then GDB will refuse to use vCont.  If we're going to claim
     // 'C' then we may as well claim 'S' too.  I don't claim 't' yet,
     // though we probably will want that in time.
-    pkt.packStr("vCont;c;C;s;S");
-    pkt.setLen(strlen(pkt.data));
-    rsp->putPkt(pkt);
-  } else if (0 == strncmp("vCont", pkt.data, strlen("vCont"))) {
+    rsp->putPkt("vCont;c;C;s;S");
+  } else if (pkt.getData().starts_with("vCont")) {
     rspVCont();
     return;
-  } else if (0 == strncmp("vKill;", pkt.data, strlen("vKill;"))) {
+  } else if (pkt.getData().starts_with("vKill;")) {
     rspVKill();
     return;
   } else {
     // Unsupported packet.
-    pkt.packStr("");
-    rsp->putPkt(pkt);
+    rsp->putPkt("");
   }
 }
 
@@ -1637,17 +1563,18 @@ void GdbServer::rspWriteMemBin() {
   uint32_t addr;   // Where to write the memory
   std::size_t len; // Number of bytes to write
 
-  if (2 != sscanf(pkt.data, "X%" PRIx32 ",%" PRIxPTR ":", &addr, &len)) {
+  if (2 !=
+      sscanf(pkt.getRawData(), "X%" PRIx32 ",%" PRIxPTR ":", &addr, &len)) {
     cerr << "Warning: Failed to recognize RSP write memory command: "
-         << pkt.data << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+         << pkt.getRawData() << endl;
+    rsp->putPkt("E01");
     return;
   }
 
   // Find the start of the data and "unescape" it.
-  uint8_t *bindat = (uint8_t *)(memchr(pkt.data, ':', pkt.getBufSize())) + 1;
-  std::size_t off = (char *)bindat - pkt.data;
+  uint8_t *bindat =
+      (uint8_t *)(memchr(pkt.getRawData(), ':', pkt.getMaxPacketSize())) + 1;
+  std::size_t off = (char *)bindat - pkt.getRawData();
   std::size_t newLen = Utils::rspUnescape((char *)bindat, pkt.getLen() - off);
 
   // Sanity check
@@ -1664,8 +1591,7 @@ void GdbServer::rspWriteMemBin() {
     cerr << "Warning: Failed to write " << len << " bytes to 0x" << hex << addr
          << dec << endl;
 
-  pkt.packStr("OK");
-  rsp->putPkt(pkt);
+  rsp->putPkt("OK");
 }
 
 //! Handle a RSP remove breakpoint or matchpoint request
@@ -1682,18 +1608,16 @@ void GdbServer::rspRemoveMatchpoint() {
   std::size_t len;     // Matchpoint length
   uint8_t *instrVec;   // Instruction as byte vector
 
-  pkt.packStr("");
-  rsp->putPkt(pkt);
+  rsp->putPkt("");
   return;
 
   // Break out the instruction
   string ui32Fmt = SCNx32;
   string fmt = "z%1d,%" + ui32Fmt + ",%1d";
-  if (3 != sscanf(pkt.data, fmt.c_str(), (int *)&type, &addr, &len)) {
+  if (3 != sscanf(pkt.getRawData(), fmt.c_str(), (int *)&type, &addr, &len)) {
     cerr << "Warning: RSP matchpoint deletion request not "
          << "recognized: ignored" << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
@@ -1701,8 +1625,7 @@ void GdbServer::rspRemoveMatchpoint() {
   if (len > sizeof(instr)) {
     cerr << "Warning: RSP remove breakpoint instruction length " << len
          << " exceeds maximum of " << sizeof(instr) << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
@@ -1721,8 +1644,7 @@ void GdbServer::rspRemoveMatchpoint() {
       cerr << "Warning: failed to remove software (memory) breakpoint "
               "from 0x"
            << hex << addr << dec << endl;
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
     }
 
     if (traceFlags->traceBreak())
@@ -1737,8 +1659,7 @@ void GdbServer::rspRemoveMatchpoint() {
     if (len != cpu->write(addr, instrVec, len))
       cerr << "Warning: Failed to write memory removing breakpoint" << endl;
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
   }
   case MatchpointType::BP_HARDWARE: {
@@ -1753,13 +1674,11 @@ void GdbServer::rspRemoveMatchpoint() {
       /*
           cpu->removeBreak(addr);
           */
-      pkt.packStr("OK");
-      rsp->putPkt(pkt);
+      rsp->putPkt("OK");
     } else {
       cerr << "Warning: failed to remove hardware breakpoint from 0x" << hex
            << addr << dec << endl;
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
     }
 
     return;
@@ -1774,13 +1693,11 @@ void GdbServer::rspRemoveMatchpoint() {
              << dec << endl;
       }
 
-      pkt.packStr(""); // TODO: Not yet implemented
-      rsp->putPkt(pkt);
+      rsp->putPkt(""); // TODO: Not yet implemented
     } else {
       cerr << "Warning: failed to remove write watchpoint from 0x" << hex
            << addr << dec << endl;
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
     }
 
     return;
@@ -1795,13 +1712,11 @@ void GdbServer::rspRemoveMatchpoint() {
              << dec << endl;
       }
 
-      pkt.packStr(""); // TODO: Not yet implemented
-      rsp->putPkt(pkt);
+      rsp->putPkt(""); // TODO: Not yet implemented
     } else {
       cerr << "Warning: failed to remove read watchpoint from 0x" << hex << addr
            << dec << endl;
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
     }
 
     return;
@@ -1817,14 +1732,12 @@ void GdbServer::rspRemoveMatchpoint() {
              << hex << addr << dec << endl;
       }
 
-      pkt.packStr(""); // TODO: Not yet implemented
-      rsp->putPkt(pkt);
+      rsp->putPkt(""); // TODO: Not yet implemented
     } else {
       cerr << "Warning: failed to remove access (read/write) watchpoint "
               "from 0x"
            << hex << addr << dec << endl;
-      pkt.packStr("E01");
-      rsp->putPkt(pkt);
+      rsp->putPkt("E01");
     }
 
     return;
@@ -1832,8 +1745,7 @@ void GdbServer::rspRemoveMatchpoint() {
   default:
     cerr << "Warning: RSP matchpoint type " << type
          << " not recognized: ignored" << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 }
@@ -1849,18 +1761,16 @@ void GdbServer::rspInsertMatchpoint() {
   std::size_t len;     // Matchpoint length
   uint8_t *instrVec;   // Instruction as byte vector
 
-  pkt.packStr("");
-  rsp->putPkt(pkt);
+  rsp->putPkt("");
   return;
 
   // Break out the instruction
   string ui32Fmt = SCNx32;
   string fmt = "Z%1d,%" + ui32Fmt + ",%1d";
-  if (3 != sscanf(pkt.data, fmt.c_str(), (int *)&type, &addr, &len)) {
+  if (3 != sscanf(pkt.getRawData(), fmt.c_str(), (int *)&type, &addr, &len)) {
     cerr << "Warning: RSP matchpoint insertion request not "
          << "recognized: ignored" << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
@@ -1868,8 +1778,7 @@ void GdbServer::rspInsertMatchpoint() {
   if (len > sizeof(instr)) {
     cerr << "Warning: RSP set breakpoint instruction length " << len
          << " exceeds maximum of " << sizeof(instr) << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 
@@ -1905,8 +1814,7 @@ void GdbServer::rspInsertMatchpoint() {
            << addr << dec << endl;
     }
 
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
     return;
 
   case MatchpointType::BP_HARDWARE:
@@ -1921,8 +1829,7 @@ void GdbServer::rspInsertMatchpoint() {
     /*
     cpu->insertBreak(addr);
     */
-    pkt.packStr("OK");
-    rsp->putPkt(pkt);
+    rsp->putPkt("OK");
 
     return;
 
@@ -1936,8 +1843,7 @@ void GdbServer::rspInsertMatchpoint() {
            << endl;
     }
 
-    pkt.packStr(""); // TODO: Not yet implemented
-    rsp->putPkt(pkt);
+    rsp->putPkt(""); // TODO: Not yet implemented
 
     return;
 
@@ -1951,8 +1857,7 @@ void GdbServer::rspInsertMatchpoint() {
            << endl;
     }
 
-    pkt.packStr(""); // TODO: Not yet implemented
-    rsp->putPkt(pkt);
+    rsp->putPkt(""); // TODO: Not yet implemented
 
     return;
 
@@ -1966,16 +1871,14 @@ void GdbServer::rspInsertMatchpoint() {
            << addr << dec << endl;
     }
 
-    pkt.packStr(""); // TODO: Not yet implemented
-    rsp->putPkt(pkt);
+    rsp->putPkt(""); // TODO: Not yet implemented
 
     return;
 
   default:
     cerr << "Warning: RSP matchpoint type " << type << "not recognized: ignored"
          << endl;
-    pkt.packStr("E01");
-    rsp->putPkt(pkt);
+    rsp->putPkt("E01");
     return;
   }
 }
