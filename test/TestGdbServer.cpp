@@ -289,6 +289,18 @@ struct GdbServerTestCase {
   std::string InStream;
   std::string ExpectedOutStream;
   std::vector<TraceTarget::ITargetCall> ITargetTrace;
+
+  GdbServerTestCase(std::string inStream, std::string expectedOutStream,
+                    const std::vector<TraceTarget::ITargetCall> &targetTrace)
+      : TargetRegisterSize(1), TargetRegisterCount(1), InStream(inStream),
+        ExpectedOutStream(expectedOutStream), ITargetTrace(targetTrace) {}
+
+  GdbServerTestCase(int targetRegSize, int targetRegCount, std::string inStream,
+                    std::string expectedOutStream,
+                    const std::vector<TraceTarget::ITargetCall> &targetTrace)
+      : TargetRegisterSize(targetRegSize), TargetRegisterCount(targetRegCount),
+        InStream(inStream), ExpectedOutStream(expectedOutStream),
+        ITargetTrace(targetTrace) {}
 };
 
 class GdbServerTest : public ::testing::TestWithParam<GdbServerTestCase> {
@@ -329,21 +341,21 @@ TEST_P(GdbServerTest, GdbServerTest) {
 
 // Tests of basic RSP packets with simple behavior.
 GdbServerTestCase testBasicRSPPackets[] = {
-    {1, 1, "$vKill;1#6e+", "+$OK#9a", {}},
-    {1, 1, "$!#21+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
-    {1, 1, "$A#41+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}},
-    {1, 1, "$b#62$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$B#42$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$c#63$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$C#43$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$d#64$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$k#6b$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$R#52$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$s#73$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$S#53$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$t#74$vKill;1#6e+", "++$OK#9a", {}},
-    {1, 1, "$T#54+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
-    {1, 1, "$L#4c$vKill;1#6e+", "++$OK#9a", {}},
+    {"$vKill;1#6e+", "+$OK#9a", {}},
+    {"$!#21+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
+    {"$A#41+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}},
+    {"$b#62$vKill;1#6e+", "++$OK#9a", {}},
+    {"$B#42$vKill;1#6e+", "++$OK#9a", {}},
+    {"$c#63$vKill;1#6e+", "++$OK#9a", {}},
+    {"$C#43$vKill;1#6e+", "++$OK#9a", {}},
+    {"$d#64$vKill;1#6e+", "++$OK#9a", {}},
+    {"$k#6b$vKill;1#6e+", "++$OK#9a", {}},
+    {"$R#52$vKill;1#6e+", "++$OK#9a", {}},
+    {"$s#73$vKill;1#6e+", "++$OK#9a", {}},
+    {"$S#53$vKill;1#6e+", "++$OK#9a", {}},
+    {"$t#74$vKill;1#6e+", "++$OK#9a", {}},
+    {"$T#54+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
+    {"$L#4c$vKill;1#6e+", "++$OK#9a", {}},
 };
 
 INSTANTIATE_TEST_CASE_P(BasicRSPTest, GdbServerTest,
@@ -412,31 +424,29 @@ INSTANTIATE_TEST_CASE_P(RegisterReadWriteRSPTest, GdbServerTest,
 
 // Tests of memory reads and writes
 GdbServerTestCase testMemoryInvalidRead1 = {
-    1, 1, "$m1234#37+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$m1234#37+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryInvalidRead2 = {
-    1, 1, "$m1234,#63+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$m1234,#63+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryInvalidRead3 = {
-    1, 1, "$mhello,32:#4c+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$mhello,32:#4c+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryInvalidRead4 = {
-    1, 1, "$m0095,world:#c9+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$m0095,world:#c9+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 
 GdbServerTestCase testMemoryInvalidWrite1 = {
-    1, 1, "$M777#f2+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$M777#f2+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryInvalidWrite2 = {
-    1, 1, "$Mbb00,#9d+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$Mbb00,#9d+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryInvalidWrite3 = {
-    1, 1, "$Mfail,32:#b4+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$Mfail,32:#b4+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryInvalidWrite4 = {
-    1, 1, "$M1000,fail:#10+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$M1000,fail:#10+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 
 GdbServerTestCase testMemoryWriteBufferTooLong = {
-    1, 1, "$M2000,4:1122334455667788#f1+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$M2000,4:1122334455667788#f1+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 GdbServerTestCase testMemoryWriteBufferTooShort = {
-    1, 1, "$M800,4:112233#ab+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
+    "$M800,4:112233#ab+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}};
 
 GdbServerTestCase testMemoryRead = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$m124,2#62+$vKill;1#6e+",
     "+$beef#92+$OK#9a",
     {
@@ -449,8 +459,6 @@ GdbServerTestCase testMemoryRead = {
     },
 };
 GdbServerTestCase testMemoryWrite = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$M9a7,1:4e#4e+$vKill;1#6e+",
     "+$OK#9a+$OK#9a",
     {
@@ -464,8 +472,6 @@ GdbServerTestCase testMemoryWrite = {
     },
 };
 GdbServerTestCase testMemoryBinaryWrite = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$X88,4:\x11\x22\x33\x44#0c+$vKill;1#6e+",
     "+$OK#9a+$OK#9a",
     {
@@ -491,14 +497,8 @@ INSTANTIATE_TEST_CASE_P(
 
 // Tests of vCont packets - stepping and continuing the target
 GdbServerTestCase testVContQuery = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
-    "$vCont?#49+$vKill;1#6e+",
-    "+$vCont;c;C;s;S#62+$OK#9a",
-    {}};
+    "$vCont?#49+$vKill;1#6e+", "+$vCont;c;C;s;S#62+$OK#9a", {}};
 GdbServerTestCase testVContStep1 = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$vCont:s#b7+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -515,8 +515,6 @@ GdbServerTestCase testVContStep1 = {
     },
 };
 GdbServerTestCase testVContStep2 = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$vCont;S#98+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -533,8 +531,6 @@ GdbServerTestCase testVContStep2 = {
     },
 };
 GdbServerTestCase testVContContinue1 = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$vCont;c#a8+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -551,8 +547,6 @@ GdbServerTestCase testVContContinue1 = {
     },
 };
 GdbServerTestCase testVContContinue2 = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$vCont;C#88+$vKill;1#6e+",
     "+$S05#b8+$OK#9a",
     {
@@ -678,8 +672,6 @@ INSTANTIATE_TEST_CASE_P(RSPSysCallTest, GdbServerTest,
 
 // Tests of various qRcmd packets
 GdbServerTestCase testCmdResetWarm = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$qRcmd,7265736574#37+$vKill;1#6e+", // qRcmd,reset
     "+$OK#9a+$OK#9a",
     {
@@ -689,8 +681,6 @@ GdbServerTestCase testCmdResetWarm = {
     },
 };
 GdbServerTestCase testCmdResetCold = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$qRcmd,726573657420636f6c64#a1+$vKill;1#6e+", // qRcmd,reset cold
     "+$OK#9a+$OK#9a",
     {
@@ -700,15 +690,11 @@ GdbServerTestCase testCmdResetCold = {
     },
 };
 GdbServerTestCase testCmdExit = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$qRcmd,65786974#d7", // qRcmd,exit
     "+",
     {},
 };
 GdbServerTestCase testCmdCycleCount = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$qRcmd,6379636c65636f756e74#e0++$vKill;1#6e+", // cyclecount
     "+$O343636300a#7c$OK#9a+$OK#9a",                // 4660\n
     {
@@ -717,8 +703,6 @@ GdbServerTestCase testCmdCycleCount = {
     },
 };
 GdbServerTestCase testCmdInstrCount = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     "$qRcmd,696e737472636f756e74#e2++$vKill;1#6e+", // instrcount
     "+$O3433393239383838380a#96$OK#9a+$OK#9a",      // 439298888\n
     {
@@ -727,40 +711,30 @@ GdbServerTestCase testCmdInstrCount = {
     },
 };
 GdbServerTestCase testCmdEcho = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,echo Hello World\n
     "$qRcmd,6563686f2048656c6c6f20576f726c640a#6f+$vKill;1#6e+",
     "+$OK#9a+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetDebugInvalidFlag = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set debug banana 1
     "$qRcmd,7365742064656275672062616e612031#d4+$vKill;1#6e+",
     "+$E01#a6+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdShowDebugInvalidFlag = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,show debug banana
     "$qRcmd,73686f772064656275672062616e61#b0+$vKill;1#6e+",
     "+$E01#a6+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetDebugFlagInvalidLevel = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set debug rsp lemon
     "$qRcmd,73657420646562756720727370206c656d6f6e#ae+$vKill;1#6e+",
     "+$E02#a7+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugRspFlag = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set debug rsp 1
     "$qRcmd,736574206465627567207273702031#3d"
     // qRcmd,show debug rsp
@@ -773,8 +747,6 @@ GdbServerTestCase testCmdSetAndShowDebugRspFlag = {
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugConnFlag = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set debug conn on
     "$qRcmd,73657420646562756720636f6e6e206f6e#11"
     // qRcmd,show debug conn
@@ -787,8 +759,6 @@ GdbServerTestCase testCmdSetAndShowDebugConnFlag = {
     {},
 };
 GdbServerTestCase testCmdSetAndShowDebugDisasFlag = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set debug disas FalSE
     "$qRcmd,7365742064656275672064697361732046616c5345#ee"
     // qRcmd,show debug disas
@@ -802,8 +772,6 @@ GdbServerTestCase testCmdSetAndShowDebugDisasFlag = {
     {},
 };
 GdbServerTestCase testCmdSetAndShowKillCoreOnExit = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set kill-core-on-exit
     "$qRcmd,736574206b696c6c2d636f72652d6f6e2d65786974#84"
     // qRcmd,show kill-core-on-exit
@@ -817,16 +785,12 @@ GdbServerTestCase testCmdSetAndShowKillCoreOnExit = {
     {},
 };
 GdbServerTestCase testCmdSetUnknownCommand = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,set unknown
     "$qRcmd,73657420756e6b6e6f776e#a4+$vKill;1#6e+",
     "+$E04#a9+$OK#9a",
     {},
 };
 GdbServerTestCase testCmdShowUnknownCommand = {
-    /*reg count*/ 1,
-    /*reg size*/ 1,
     // qRcmd,show unknown
     "$qRcmd,73686f7720756e6b6e6f776e#46+$vKill;1#6e+",
     "+$E04#a9+$OK#9a",
