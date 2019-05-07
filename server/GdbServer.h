@@ -275,6 +275,7 @@ protected:
 
 private:
   // Handle the various RSP requests
+  uint_reg_t readArgLoc(const ITarget::SyscallArgLoc &loc);
   int stringLength(uint_addr_t addr);
   void rspSyscallRequest();
   void rspSyscallReply();

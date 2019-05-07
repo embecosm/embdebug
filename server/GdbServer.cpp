@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <climits>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
@@ -109,6 +110,32 @@ int GdbServer::stringLength(uint_addr_t addr) {
   return count;
 }
 
+uint_reg_t GdbServer::readArgLoc(const ITarget::SyscallArgLoc &loc) {
+  if (loc.type == ITarget::SyscallArgLocType::REGISTER) {
+    uint_reg_t reg;
+    cpu->readRegister(loc.regLoc.reg, reg);
+    return reg;
+  } else {
+    assert(loc.type == ITarget::SyscallArgLocType::REGISTER_INDIRECT);
+
+    // read the register and add the offset
+    uint_reg_t reg;
+    cpu->readRegister(loc.regIndirectLoc.reg, reg);
+    uint_addr_t addr = (uint_addr_t)reg + loc.regIndirectLoc.offset;
+
+    // read and return the memory
+    uint8_t buf[sizeof(uint_reg_t)];
+    size_t ret = cpu->read(addr, buf, sizeof(uint_reg_t));
+    assert(ret == sizeof(uint_reg_t));
+
+    uint_reg_t value = 0;
+    for (size_t i = 0; i < sizeof(uint_reg_t); ++i)
+      value |= static_cast<uint_reg_t>(buf[i]) << i * CHAR_BIT;
+    return value;
+  }
+  return 0;
+}
+
 //! We achieve a syscall on the host by sending an F request packet to
 //! the GDB client. The arguments for the call will have already been
 //! put into registers via its newlib/libgloss implementation.
@@ -120,47 +147,78 @@ void GdbServer::rspSyscallRequest() {
          << endl;
   mHandlingSyscall = true;
 
-  // Get the args from the appropriate regs and send an F packet
-  uint_reg_t a0, a1, a2, a7;
-  // We don't need all the registers for every syscall, so we only read the
-  // common subset here.
-  cpu->readRegister(10, a0);
-  cpu->readRegister(11, a1);
-  cpu->readRegister(12, a2);
-  cpu->readRegister(17, a7);
+  // The first time a syscall is encountered we determine the target support
+  // for syscalls.
+  static bool haveSyscallArgLocs = false;
+  static bool haveSyscallSupport = false;
 
-  // Work out which syscall we've got
-  switch (a7) {
+  static ITarget::SyscallArgLoc syscallIDLoc;
+  static ITarget::SyscallArgLoc syscallReturnLoc;
+  static std::vector<ITarget::SyscallArgLoc> syscallArgLocs;
+
+  if (!haveSyscallArgLocs) {
+    haveSyscallSupport =
+        cpu->getSyscallArgLocs(syscallIDLoc, syscallArgLocs, syscallReturnLoc);
+    haveSyscallArgLocs = true;
+  }
+  if (!haveSyscallSupport) {
+    cerr << "Syscall encountered but no target support" << endl;
+    rspReportException(TargetSignal::TRAP);
+    return;
+  }
+  assert(haveSyscallArgLocs);
+  assert(haveSyscallSupport);
+  assert(syscallArgLocs.size() >= 3);
+
+  // Get the syscall id from the appropriate location
+  uint_reg_t syscallID = readArgLoc(syscallIDLoc);
+
+  // Store for the values of each argument in turn as they are read
+  std::vector<uint_reg_t> args;
+  switch (syscallID) {
   case 57:
-    rsp->putPkt(RspPacket::CreateFormatted("Fclose,%" PRIxREG, a0));
+    args.push_back(readArgLoc(syscallArgLocs[0]));
+    rsp->putPkt(RspPacket::CreateFormatted("Fclose,%" PRIxREG, args[0]));
     return;
   case 62:
-    rsp->putPkt(RspPacket::CreateFormatted(
-        "Flseek,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2));
+    for (int i = 0; i < 3; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
+    rsp->putPkt(RspPacket::CreateFormatted("Flseek,%" PRIxREG ",%" PRIxREG
+                                           ",%" PRIxREG,
+                                           args[0], args[1], args[2]));
     return;
   case 63:
-    rsp->putPkt(RspPacket::CreateFormatted(
-        "Fread,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2));
+    for (int i = 0; i < 3; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
+    rsp->putPkt(RspPacket::CreateFormatted("Fread,%" PRIxREG ",%" PRIxREG
+                                           ",%" PRIxREG,
+                                           args[0], args[1], args[2]));
     return;
   case 64:
-    rsp->putPkt(RspPacket::CreateFormatted(
-        "Fwrite,%" PRIxREG ",%" PRIxREG ",%" PRIxREG, a0, a1, a2));
+    for (int i = 0; i < 3; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
+    rsp->putPkt(RspPacket::CreateFormatted("Fwrite,%" PRIxREG ",%" PRIxREG
+                                           ",%" PRIxREG,
+                                           args[0], args[1], args[2]));
     return;
   case 80:
-    rsp->putPkt(
-        RspPacket::CreateFormatted("Ffstat,%" PRIxREG ",%" PRIxREG, a0, a1));
+    for (int i = 0; i < 2; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
+    rsp->putPkt(RspPacket::CreateFormatted("Ffstat,%" PRIxREG ",%" PRIxREG,
+                                           args[0], args[1]));
     return;
   case 93: {
     if (traceFlags->traceExec())
       cerr << "EXIT syscall on core " << cpu->getCurrentCpu()
            << " halting all other cores." << endl;
     (void)cpu->halt();
+    args.push_back(readArgLoc(syscallArgLocs[0]));
     if (mHaveMultiProc)
       rsp->putPkt(RspPacket::CreateFormatted(
-          "W%" PRIxREG ";process:%x", a0,
+          "W%" PRIxREG ";process:%x", args[0],
           CoreManager::coreNum2Pid(cpu->getCurrentCpu())));
     else
-      rsp->putPkt(RspPacket::CreateFormatted("W%" PRIxREG, a0));
+      rsp->putPkt(RspPacket::CreateFormatted("W%" PRIxREG, args[0]));
     /* We never get a reply from an exit syscall, so don't
        store a continuation state.  */
     mHandlingSyscall = false;
@@ -169,22 +227,30 @@ void GdbServer::rspSyscallRequest() {
     return;
   }
   case 169:
+    for (int i = 0; i < 2; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted(
-        "Fgettimeofday,%" PRIxREG ",%" PRIxREG, a0, a1));
+        "Fgettimeofday,%" PRIxREG ",%" PRIxREG, args[0], args[1]));
     return;
   case 1024:
-    rsp->putPkt(RspPacket::CreateFormatted("Fopen,%" PRIxREG "/%x,%" PRIxREG
-                                           ",%" PRIxREG,
-                                           a0, stringLength(a0), a1, a2));
+    for (int i = 0; i < 3; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
+    rsp->putPkt(RspPacket::CreateFormatted(
+        "Fopen,%" PRIxREG "/%x,%" PRIxREG ",%" PRIxREG, args[0],
+        stringLength(args[0]), args[1], args[2]));
     return;
   case 1026:
-    rsp->putPkt(RspPacket::CreateFormatted("Funlink,%" PRIxREG "/%x", a0,
-                                           stringLength(a0)));
+    args.push_back(readArgLoc(syscallArgLocs[0]));
+    rsp->putPkt(RspPacket::CreateFormatted("Funlink,%" PRIxREG "/%x", args[0],
+                                           stringLength(args[0])));
     return;
   case 1038:
+    for (int i = 0; i < 2; ++i)
+      args.push_back(readArgLoc(syscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted("Fstat,%" PRIxREG "/%x,%" PRIxREG,
-                                           a0, stringLength(a0), a1));
-    break;
+                                           args[0], stringLength(args[0]),
+                                           args[1]));
+    return;
 
   default:
     rspReportException(TargetSignal::TRAP);

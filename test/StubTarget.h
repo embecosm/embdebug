@@ -53,6 +53,13 @@ public:
     throw std::runtime_error("Unimplemented method called");
     return 0;
   }
+  bool getSyscallArgLocs(
+      SyscallArgLoc EMBDEBUG_ATTR_UNUSED &syscallIDLoc,
+      std::vector<SyscallArgLoc> EMBDEBUG_ATTR_UNUSED &syscallArgLocs,
+      SyscallArgLoc EMBDEBUG_ATTR_UNUSED &syscallReturnLoc) const override {
+    throw std::runtime_error("Unimplemented method called");
+    return 0;
+  }
   std::size_t readRegister(const int EMBDEBUG_ATTR_UNUSED reg,
                            uint_reg_t EMBDEBUG_ATTR_UNUSED &value) override {
     throw std::runtime_error("Unimplemented method called");

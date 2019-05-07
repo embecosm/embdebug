@@ -85,6 +85,34 @@ public:
     TIMEOUT = 2,
   };
 
+  //! The location that an argument to a syscall can be found
+  enum class SyscallArgLocType : int {
+    REGISTER,
+    REGISTER_INDIRECT,
+  };
+
+  union SyscallArgLoc {
+    SyscallArgLocType type;
+    struct RegisterLoc {
+      SyscallArgLocType type;
+      int reg;
+    } regLoc;
+
+    struct RegisterIndirectLoc {
+      SyscallArgLocType type;
+      int reg;
+      int64_t offset;
+    } regIndirectLoc;
+
+    SyscallArgLoc() {}
+    SyscallArgLoc(const RegisterLoc &other) : regLoc(other) {
+      regLoc.type = SyscallArgLocType::REGISTER;
+    }
+    SyscallArgLoc(const RegisterIndirectLoc &other) : regIndirectLoc(other) {
+      regLoc.type = SyscallArgLocType::REGISTER_INDIRECT;
+    }
+  };
+
   //! \brief Constant that can be used by multi-cpu targets to indicate that no
   //! valid cpu is currently selected.
   //!
@@ -108,6 +136,10 @@ public:
 
   //! \brief Get the size of registers in the CPU in bytes.
   virtual int getRegisterSize() const = 0;
+
+  virtual bool getSyscallArgLocs(SyscallArgLoc &syscallIDLoc,
+                                 std::vector<SyscallArgLoc> &syscallRegLocs,
+                                 SyscallArgLoc &syscallReturnLoc) const = 0;
 
   //! \brief Read contents of a target register.
   //!

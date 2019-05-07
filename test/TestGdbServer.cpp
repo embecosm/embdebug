@@ -174,6 +174,25 @@ public:
   int getRegisterCount() const override { return mRegisterCount; }
   int getRegisterSize() const override { return mRegisterSize; }
 
+  bool getSyscallArgLocs(SyscallArgLoc &syscallIDLoc,
+                         std::vector<SyscallArgLoc> &syscallRegLocs,
+                         SyscallArgLoc &syscallReturnLoc) const override {
+    syscallIDLoc = ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 17});
+
+    syscallRegLocs.push_back(ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 10}));
+    syscallRegLocs.push_back(ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 11}));
+    syscallRegLocs.push_back(ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 12}));
+
+    syscallReturnLoc = ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 10});
+
+    return true;
+  }
+
   std::size_t readRegister(const int reg, uint_reg_t &value) override {
     auto &call = popAndVerifyCall(ITargetFunc::READ_REGISTER);
     if (reg != call.readRegisterState.inReg)
@@ -577,13 +596,9 @@ GdbServerTestCase testSyscallClose = {
         // FIXME: These register numbers are all hardcoded for RISC-V. They'll
         // be generic eventually.
         TraceTarget::ITargetCall::ReadRegisterState(
-            {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0x15, 4}),
-        TraceTarget::ITargetCall::ReadRegisterState(
-            {TraceTarget::ITargetFunc::READ_REGISTER, 11, 0x1, 4}),
-        TraceTarget::ITargetCall::ReadRegisterState(
-            {TraceTarget::ITargetFunc::READ_REGISTER, 12, 0x2, 4}),
-        TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fclose*/ 57, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0x15, 4}),
 
         // Write result
         TraceTarget::ITargetCall::WriteRegisterState(
@@ -619,13 +634,13 @@ GdbServerTestCase testSyscallOpen = {
         // FIXME: These register numbers are all hardcoded for RISC-V. They'll
         // be generic eventually.
         TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fopen*/ 1024, 4}),
+        TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 10, 0xbeef, 4}),
         TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 11, 0x0, 4}),
         TraceTarget::ITargetCall::ReadRegisterState(
             {TraceTarget::ITargetFunc::READ_REGISTER, 12, 0x0, 4}),
-        TraceTarget::ITargetCall::ReadRegisterState(
-            {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*Fopen*/ 1024, 4}),
 
         // Read the path string "neat" from target memory (to get its length)
         TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,

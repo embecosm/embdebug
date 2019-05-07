@@ -50,6 +50,13 @@ public:
     PRINT_PLACEHOLDER();
     return 0;
   }
+  bool getSyscallArgLocs(
+      SyscallArgLoc &syscallIDLoc EMBDEBUG_ATTR_UNUSED,
+      std::vector<SyscallArgLoc> &syscallRegLocs EMBDEBUG_ATTR_UNUSED,
+      SyscallArgLoc &syscallReturnLoc EMBDEBUG_ATTR_UNUSED) const override {
+    PRINT_PLACEHOLDER();
+    return false;
+  }
   std::size_t readRegister(const int reg EMBDEBUG_ATTR_UNUSED,
                            uint_reg_t &value EMBDEBUG_ATTR_UNUSED) override {
     PRINT_PLACEHOLDER();
