@@ -27,6 +27,10 @@ class TraceFlags;
 //! by any targets to be driven by the GDB server.
 class ITarget {
 public:
+  //! The version number of the ITarget interface, used to verify that targets
+  //! and the library are kept in sync.
+  static const uint64_t CURRENT_API_VERSION = 0x1ULL;
+
   //! The type of action which will be performed when a core is resumed.
   enum class ResumeType : int {
     //! Perform a single instruction step and then stop.

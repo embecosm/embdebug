@@ -78,6 +78,19 @@ ITarget *load_target_so(string soname, TraceFlags *traceFlags) {
     cerr << "Failed to load " << soname << ": " << dlerror() << endl;
     exit(EXIT_FAILURE);
   }
+  // Before attempting to create a target, verify that the library is for this
+  // ITarget version
+  uint64_t (*api_version)() = (uint64_t(*)())dlsym(handle, "ITargetVersion");
+  if (!api_version) {
+    cerr << "Failed to look up ITargetVersion: " << dlerror() << endl;
+    exit(EXIT_FAILURE);
+  }
+  if (api_version() != ITarget::CURRENT_API_VERSION) {
+    cerr << "Incompatible ITarget versions: Target declared version "
+         << api_version() << ", expected " << ITarget::CURRENT_API_VERSION
+         << endl;
+    exit(EXIT_FAILURE);
+  }
   create_target_func create_target =
       (create_target_func)dlsym(handle, "create_target");
   if (!create_target) {
@@ -93,6 +106,20 @@ ITarget *load_target_dll(string dllname, TraceFlags *traceFlags) {
   HMODULE handle = LoadLibrary(dllname.c_str());
   if (!handle) {
     cerr << "Failed to load " << dllname << "." << endl;
+    exit(EXIT_FAILURE);
+  }
+  // Before attempting to create a target, verify that the library is for this
+  // ITarget version
+  uint64_t (*api_version)() =
+      (uint64_t(*)())GetProcAddress(handle, "ITargetVersion");
+  if (!api_version) {
+    cerr << "Failed to look up ITargetVersion." << endl;
+    exit(EXIT_FAILURE);
+  }
+  if (api_version() != ITarget::CURRENT_API_VERSION) {
+    cerr << "Incompatible ITarget versions: Target declared version "
+         << api_version() << ", expected " << ITarget::CURRENT_API_VERSION
+         << endl;
     exit(EXIT_FAILURE);
   }
   create_target_func create_target =

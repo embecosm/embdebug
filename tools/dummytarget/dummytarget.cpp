@@ -129,4 +129,7 @@ extern "C" {
 EMBDEBUG_VISIBLE_API ITarget *create_target(TraceFlags *traceFlags) {
   return new DummyTarget(traceFlags);
 }
+EMBDEBUG_VISIBLE_API uint64_t ITargetVersion(void) {
+  return ITarget::CURRENT_API_VERSION;
+}
 }
