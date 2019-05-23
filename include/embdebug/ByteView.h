@@ -9,6 +9,7 @@
 #ifndef EMBDEBUG_BYTEVIEW_H
 #define EMBDEBUG_BYTEVIEW_H
 
+#include <cassert>
 #include <cstddef>
 #include <cstring>
 
