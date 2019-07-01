@@ -157,6 +157,9 @@ bool RspConnection::rspConnect() {
          << endl;
   }
 
+  // Reset the initial connection state
+  setNoAckMode(false);
+
   return true;
 }
 

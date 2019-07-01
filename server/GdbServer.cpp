@@ -979,7 +979,8 @@ void GdbServer::rspQuery() {
       }
 
     rsp->putPkt(RspPacket::CreateFormatted(
-        "PacketSize=%" PRIxPTR ";QNonStop+;VContSupported+%s%s",
+        "PacketSize=%" PRIxPTR
+        ";QNonStop+;VContSupported+;QStartNoAckMode+%s%s",
         pkt.getMaxPacketSize(), multiProcStr, xmlRegsStr));
 
   } else if (pkt.getData().starts_with("qSymbol:")) {
@@ -1424,6 +1425,10 @@ void GdbServer::rspSet() {
       return;
     }
 
+    rsp->putPkt("OK");
+    return;
+  } else if (pkt.getData() == "QStartNoAckMode") {
+    rsp->setNoAckMode(true);
     rsp->putPkt("OK");
     return;
   }

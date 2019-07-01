@@ -41,6 +41,9 @@ public:
 
   virtual bool haveBreak();
 
+  // Disable packet acknowledgements
+  void setNoAckMode(bool ackMode) { mNoAckMode = ackMode; }
+
 protected:
   //! Trace flags
 
@@ -60,6 +63,10 @@ private:
 
   bool mHavePendingBreak;
 
+  //! Is the server in NoAckMode
+
+  bool mNoAckMode;
+
   //! The buffered char for get RspChar
   int mGetCharBuf;
 
@@ -77,7 +84,8 @@ private:
 inline AbstractConnection::~AbstractConnection() {}
 
 inline AbstractConnection::AbstractConnection(TraceFlags *_traceFlags)
-    : traceFlags(_traceFlags), mHavePendingBreak(false), mNumGetBufChars(0) {}
+    : traceFlags(_traceFlags), mHavePendingBreak(false), mNoAckMode(false),
+      mNumGetBufChars(0) {}
 
 } // namespace EmbDebug
 

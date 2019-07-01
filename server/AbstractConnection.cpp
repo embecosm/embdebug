@@ -111,6 +111,13 @@ std::pair<bool, RspPacket> AbstractConnection::getPkt() {
 
       // If the checksums don't match print a warning, and put the
       // negative ack back to the client. Otherwise put a positive ack.
+      if (mNoAckMode) {
+        RspPacket pkt(newPkt);
+        if (traceFlags->traceRsp()) {
+          cout << "RSP trace: getPkt: " << pkt << endl;
+        }
+        return {true, pkt};
+      }
       if (checksum != xmitcsum) {
         cerr << "Warning: Bad RSP checksum: Computed 0x" << setw(2)
              << setfill('0') << hex << checksum << ", received 0x" << xmitcsum
@@ -197,6 +204,8 @@ bool AbstractConnection::putPkt(const RspPacket &pkt) {
     }
 
     // Check for ack of connection failure
+    if (mNoAckMode)
+      break;
     ch = getRspChar();
     if (-1 == ch) {
       return false; // Comms failure

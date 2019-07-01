@@ -149,6 +149,9 @@ bool RspConnection::rspConnect() {
     cout << "Remote debugging from host " << inet_ntoa(sockAddr.sin_addr)
          << endl;
 
+  // Reset the initial connection state
+  setNoAckMode(false);
+
   return true;
 }
 
