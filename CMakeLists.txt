@@ -29,6 +29,7 @@ enable_testing()
 
 add_subdirectory(include/embdebug)
 add_subdirectory(server)
+add_subdirectory(targets)
 add_subdirectory(tools)
 add_subdirectory(test)
 add_subdirectory(vendor)
