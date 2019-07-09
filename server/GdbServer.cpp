@@ -31,12 +31,10 @@ using std::cout;
 using std::dec;
 using std::endl;
 using std::hex;
-using std::localtime;
 using std::ostringstream;
 using std::setfill;
 using std::setw;
 using std::string;
-using std::stringstream;
 using std::vector;
 using std::chrono::system_clock;
 
@@ -1086,7 +1084,7 @@ void GdbServer::rspCommand() {
 
     // Now get any help from the target
 
-    stringstream ss;
+    std::stringstream ss;
     if (cpu->command(string("help"), ss)) {
       string line;
 
@@ -1147,7 +1145,7 @@ void GdbServer::rspCommand() {
 
     std::ostringstream oss;
     time_t now_c = system_clock::to_time_t(system_clock::now());
-    struct tm *timeinfo = localtime(&(now_c));
+    struct tm *timeinfo = std::localtime(&(now_c));
     char buff[20];
 
     strftime(buff, 20, "%F %T", timeinfo);
