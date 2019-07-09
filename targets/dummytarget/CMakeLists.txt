@@ -2,11 +2,11 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(DUMMY_SRCS dummytarget.cpp)
-add_library (dummytarget SHARED ${DUMMY_SRCS})
-set_target_properties(dummytarget PROPERTIES
+add_library (embdebug-target-dummy SHARED ${DUMMY_SRCS})
+set_target_properties(embdebug-target-dummy PROPERTIES
                       VERSION 0.0.0
                       SOVERSION 0)
 
-install(TARGETS dummytarget
-        RUNTIME DESTINATION lib
+install(TARGETS embdebug-target-dummy
+        RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)

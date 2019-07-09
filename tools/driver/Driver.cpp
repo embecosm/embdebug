@@ -222,6 +222,15 @@ int main(int argc, char *argv[]) {
 
   ITarget *target;
 
+  // If a user provides just the target name, build the correct soname from it.
+#ifdef _WIN32
+  if (soName.rfind(".dll") == std::string::npos)
+    soName = "embdebug-target-" + soName + ".dll";
+#else
+  if (soName.rfind(".so") == std::string::npos)
+    soName = "libembdebug-target-" + soName + ".so";
+#endif
+
   cerr << "Loading ITarget interface from dynamic library: " << soName << endl;
 #ifdef _WIN32
   target = load_target_dll(soName, &traceFlags);
