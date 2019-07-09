@@ -7,14 +7,11 @@
 // ----------------------------------------------------------------------------
 
 #include <algorithm>
-#include <cassert>
-#include <cstdlib>
+#include <chrono>
 #include <cstring>
-#include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -22,9 +19,11 @@
 #define strcasecmp _stricmp
 #endif
 
+#include "AbstractConnection.h"
 #include "GdbServer.h"
 #include "SyscallReplyPacket.h"
 #include "VContActions.h"
+#include "embdebug/TraceFlags.h"
 #include "embdebug/Utils.h"
 
 using std::cerr;

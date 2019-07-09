@@ -9,28 +9,21 @@
 #ifndef GDB_SERVER_H
 #define GDB_SERVER_H
 
-#include <chrono>
-#include <cstdio>
 #define __STDC_FORMAT_MACROS
 #include <cassert>
-#include <inttypes.h>
+#include <cinttypes>
 #include <map>
-#include <string>
 #include <vector>
 
-// General interface to targets
-
-#include "embdebug/ITarget.h"
-
-// Class headers
-
 #include "Ptid.h"
-#include "RspConnection.h"
 #include "RspPacket.h"
+#include "embdebug/ITarget.h"
 #include "embdebug/Timeout.h"
 #include "embdebug/Types.h"
 
 namespace EmbDebug {
+
+class AbstractConnection;
 
 //! Module implementing a GDB RSP server.
 
