@@ -202,27 +202,6 @@ vector<string> &Utils::split(const string &s, const string &delim,
   return elems;
 }
 
-bool Utils::str2int(int &i, const std::string &str, int base) {
-  const char *s;
-  char *end;
-  long val;
-
-  s = str.c_str();
-  errno = 0;
-  val = strtol(s, &end, base);
-  if ((errno == ERANGE && val == LONG_MAX) || val > INT_MAX)
-    return false; /* Overflow.  */
-
-  if ((errno == ERANGE && val == LONG_MIN) || val < INT_MIN)
-    return false; /* Underflow.  */
-
-  if (*s == '\0' || *end != '\0')
-    return false; /* Conversion failed.  */
-
-  i = val;
-  return true;
-}
-
 void Utils::fatalError(std::string str) {
   std::cerr << "*** FATAL ERROR: " << str << std::endl;
   abort();

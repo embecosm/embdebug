@@ -139,16 +139,6 @@ std::size_t rspUnescape(char *buf, std::size_t len);
 std::vector<std::string> &split(const std::string &s, const std::string &delim,
                                 std::vector<std::string> &elems);
 
-//! \brief Convert a string to an integer.
-//!
-//! \param[out] i     The converted value, undefined if the conversion
-//!                   fails.
-//! \param[in]  str   The string to convert.
-//! \param[in]  base  The base for the conversion, defaults to 0, which
-//!                   means a suitable base is guessed from the string.
-//! \return Returns true if the conversion was successful, otherwise false.
-bool str2int(int &i, const std::string &str, int base = 0);
-
 //! \brief Report a fatal error to stderr and abort
 //!
 //! \param[in] error A plain-text error message to be reported
