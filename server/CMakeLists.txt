@@ -5,7 +5,6 @@ set(EMBDEBUG_SOURCES AbstractConnection.cpp
                      GdbServer.cpp
                      Init.cpp
                      ITarget.cpp
-                     MemMap.cpp
                      Ptid.cpp
                      RspPacket.cpp
                      StreamConnection.cpp

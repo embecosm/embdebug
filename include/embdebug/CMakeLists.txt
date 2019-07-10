@@ -1,7 +1,6 @@
 set(INSTALL_HEADERS Compat.h
                     Init.h
                     ITarget.h
-                    MemMap.h
                     Timeout.h
                     TraceFlags.h
                     Types.h
