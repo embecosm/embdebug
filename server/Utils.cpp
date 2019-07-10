@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
+#include <cassert>
 #include <cctype>
 #include <climits>
 #include <cstring>
@@ -22,6 +23,7 @@ using std::vector;
 using namespace EmbDebug;
 
 bool Utils::isHexStr(const char *buf, const std::size_t len) {
+  assert(buf);
   if (len < 1)
     return false;
 
@@ -33,6 +35,7 @@ bool Utils::isHexStr(const char *buf, const std::size_t len) {
 }
 
 uint8_t Utils::char2Hex(int c) {
+  assert(isHexStr((char *)&c, 1));
   return ((c >= 'a') && (c <= 'f'))
              ? c - 'a' + 10
              : ((c >= '0') && (c <= '9'))
@@ -41,28 +44,15 @@ uint8_t Utils::char2Hex(int c) {
 }
 
 char Utils::hex2Char(uint8_t d) {
-  static const char map[] = "0123456789abcdef"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-
+  assert(d <= 0xf);
+  static const char map[] = "0123456789abcdef";
   return map[d];
 }
 
 void Utils::regVal2Hex(uint64_t val, char *buf, std::size_t numBytes,
                        bool isLittleEndianP) {
+  assert(buf);
+  assert(numBytes <= sizeof(uint64_t));
   if (isLittleEndianP) {
     for (std::size_t n = 0; n < numBytes; n++) {
       unsigned char byte = val & 0xff;
@@ -88,6 +78,9 @@ void Utils::regVal2Hex(uint64_t val, char *buf, std::size_t numBytes,
 
 uint64_t Utils::hex2RegVal(const char *buf, std::size_t numBytes,
                            bool isLittleEndianP) {
+  assert(buf);
+  assert(numBytes <= sizeof(uint64_t));
+  assert(isHexStr(buf, numBytes));
   uint64_t val = 0; // The result
 
   if (isLittleEndianP) {
@@ -106,6 +99,7 @@ uint64_t Utils::hex2RegVal(const char *buf, std::size_t numBytes,
 }
 
 std::size_t Utils::val2Hex(uint64_t val, char *buf) {
+  assert(buf);
   int numChars = 0;
 
   // This will do it back to front
@@ -129,6 +123,9 @@ std::size_t Utils::val2Hex(uint64_t val, char *buf) {
 }
 
 uint64_t Utils::hex2Val(const char *buf, std::size_t len) {
+  assert(buf);
+  assert(len <= sizeof(uint64_t));
+  assert(isHexStr(buf, len));
   uint64_t val = 0; // The result
 
   for (std::size_t i = 0; i < len; i++)
@@ -156,6 +153,7 @@ void Utils::hex2Ascii(char *dest, const char *src) {
 
   // Step through convering the source hex digit pairs
   for (i = 0; src[i * 2] != '\0' && src[i * 2 + 1] != '\0'; i++) {
+    assert(isHexStr(&src[i * 2], 2));
     dest[i] =
         ((char2Hex(src[i * 2]) & 0xf) << 4) | (char2Hex(src[i * 2 + 1]) & 0xf);
   }

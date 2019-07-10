@@ -80,5 +80,5 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST(hex2CharMultipleDigits, ReturnsNullChar) {
   for (uint8_t d = 0; d <= 239; d++)
-    EXPECT_EQ('\0', Utils::hex2Char(d + 16));
+    EXPECT_DEATH(Utils::hex2Char(d + 16), "d <= 0xf");
 }

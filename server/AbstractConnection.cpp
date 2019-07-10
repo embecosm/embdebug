@@ -100,6 +100,7 @@ std::pair<bool, RspPacket> AbstractConnection::getPkt() {
       if (-1 == ch) {
         return {false, RspPacket()}; // Connection failed
       }
+      assert(Utils::isHexStr((char *)&ch, 1));
       xmitcsum = Utils::char2Hex(ch) << 4;
 
       ch = getRspChar();
@@ -107,6 +108,7 @@ std::pair<bool, RspPacket> AbstractConnection::getPkt() {
         return {false, RspPacket()}; // Connection failed
       }
 
+      assert(Utils::isHexStr((char *)&ch, 1));
       xmitcsum += Utils::char2Hex(ch);
 
       // If the checksums don't match print a warning, and put the

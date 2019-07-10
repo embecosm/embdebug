@@ -858,6 +858,7 @@ void GdbServer::rspWriteMem() {
 
   // Write the bytes to memory (no check the address is OK here)
   for (std::size_t off = 0; off < len; off++) {
+    assert(Utils::isHexStr(&symDat[off * 2], 2));
     uint8_t nyb1 = Utils::char2Hex(symDat[off * 2]);
     uint8_t nyb2 = Utils::char2Hex(symDat[off * 2 + 1]);
     uint8_t val = static_cast<unsigned int>((nyb1 << 4) | nyb2);
