@@ -141,10 +141,8 @@ uint_reg_t GdbServer::readArgLoc(const ITarget::SyscallArgLoc &loc) {
 //! put into registers via its newlib/libgloss implementation.
 
 void GdbServer::rspSyscallRequest() {
-  // Keep track of whether we were in the middle of a Continue or Step
-  if (mHandlingSyscall)
-    cerr << "Warning: There's already a syscall pending, first one lost?"
-         << endl;
+  assert(!mHandlingSyscall &&
+         "There's already a syscall pending, first one lost?");
   mHandlingSyscall = true;
 
   // The first time a syscall is encountered we determine the target support
@@ -264,7 +262,7 @@ void GdbServer::rspSyscallRequest() {
 void GdbServer::rspSyscallReply() {
   SyscallReplyPacket p;
 
-  // We've finished with the syscall.
+  assert(mHandlingSyscall);
   mHandlingSyscall = false;
 
   p.parse(pkt.getRawData());
@@ -308,7 +306,8 @@ void GdbServer::doCoreActions(void) {
   if (rsp->haveBreak()) {
     if (traceFlags->traceExec())
       cerr << "Break detected in gdbserver, halting all cores" << endl;
-    (void)cpu->halt();
+    if (!cpu->halt())
+      Utils::fatalError("Failed to halt cores");
     rspReportException(TargetSignal::INT);
     return;
   }
@@ -323,10 +322,8 @@ void GdbServer::doCoreActions(void) {
 
   mTimeout.timeStamp(cpu);
 
-  if (!cpu->resume()) {
-    cerr << "*** ABORT: Error while resuming target" << endl;
-    abort();
-  }
+  if (!cpu->resume())
+    Utils::fatalError("Failed to resume target");
 
   // Tell the target to resume this set of actions.
   std::vector<ITarget::ResumeRes> results;
@@ -344,42 +341,41 @@ void GdbServer::doCoreActions(void) {
 
       if (traceFlags->traceExec())
         cerr << "Break detected in gdbserver, halting all cores" << endl;
-      (void)cpu->halt();
+      if (!cpu->halt())
+        Utils::fatalError("Failed to halt cores");
       sig = haveBreak ? TargetSignal::INT : TargetSignal::XCPU;
       rspReportException(sig);
       return;
     }
   }
 
-  if (waitres == ITarget::WaitRes::ERROR) {
-    cerr << "*** ABORT: Error returned from call to wait" << endl;
-    abort();
-  }
+  if (waitres == ITarget::WaitRes::ERROR)
+    Utils::fatalError("Error returned from call to wait()");
 
   // The target has halted for some reason.
   if (results.size() != mCoreManager.getCpuCount()) {
-    cerr << "*** ABORT: wait returned incorrect number of results, got " << dec
-         << results.size() << " expected " << mCoreManager.getCpuCount()
-         << endl;
-    abort();
+    std::ostringstream fmt_stream;
+    fmt_stream << "wait() returned incorrect number of results, got "
+               << results.size() << " results, but expected "
+               << mCoreManager.getCpuCount();
+    Utils::fatalError(fmt_stream.str());
   }
 
   for (unsigned int i = 0; i < mCoreManager.getCpuCount(); ++i) {
     if (mCoreManager[i].isRunning()) {
       if (mCoreManager[i].hasUnreportedStop()) {
-        cerr << "*** ABORT: Core" << dec << i << " stopped, but "
-             << "already has a stop event pending" << endl;
-        abort();
+        std::ostringstream fmt_stream;
+        fmt_stream << "Core " << dec << i
+                   << " stopped, but already had a stop "
+                      "event pending";
+        Utils::fatalError(fmt_stream.str());
       }
       mCoreManager[i].setStopReason(results[i]);
     }
   }
 
-  if (processStopEvents())
-    return;
-
-  cerr << "*** ABORT: Error no stop event found" << endl;
-  abort();
+  if (!processStopEvents())
+    Utils::fatalError("No stop event processed");
 }
 
 //! Extracts the next stop event that we should process by looking
@@ -466,9 +462,11 @@ bool GdbServer::processStopEvents(void) {
       rspReportException(TargetSignal::USR1);
       return true;
 
-    default:
-      cerr << "*** ABORT: Unknown stop event type " << res << endl;
-      abort();
+    default: {
+      std::ostringstream fmt_stream;
+      fmt_stream << "Unknown stop event type " << res;
+      Utils::fatalError(fmt_stream.str());
+    }
     }
   }
 
@@ -510,10 +508,11 @@ void GdbServer::rspClientRequest() {
       case ITarget::ResumeRes::INTERRUPTED:
         rspReportException();
         break;
-      default:
-        cerr << "*** ABORT: Unexpected stop reason: " << stopReason << endl;
-        abort();
-        break;
+      default: {
+        std::ostringstream fmt_stream;
+        fmt_stream << "Unexpected stop reason: " << stopReason;
+        Utils::fatalError(fmt_stream.str());
+      }
       }
     }
     return;
@@ -1177,10 +1176,8 @@ void GdbServer::rspCommand() {
 
     // Warm reset the CPU.  Failure to reset causes us to blow up.
 
-    if (ITarget::ResumeRes::SUCCESS != cpu->reset(ITarget::ResetType::WARM)) {
-      cerr << "*** ABORT *** Failed to reset: Terminating." << endl;
-      abort();
-    }
+    if (ITarget::ResumeRes::SUCCESS != cpu->reset(ITarget::ResetType::WARM))
+      Utils::fatalError("Failed to reset");
 
     rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "reset cold")) {
@@ -1189,10 +1186,8 @@ void GdbServer::rspCommand() {
 
     // Cold reset the CPU.  Failure to reset causes us to blow up.
 
-    if (ITarget::ResumeRes::SUCCESS != cpu->reset(ITarget::ResetType::COLD)) {
-      cerr << "*** ABORT *** Failed to cold reset: Terminating." << endl;
-      abort();
-    }
+    if (ITarget::ResumeRes::SUCCESS != cpu->reset(ITarget::ResetType::COLD))
+      Utils::fatalError("Failed to cold reset");
 
     rsp->putPkt("OK");
   } else if (0 == strcmp(cmd, "exit")) {
@@ -1550,10 +1545,11 @@ void GdbServer::rspVCont() {
   }
 
   if (coreActions.size() != mCoreManager.getCpuCount()) {
-    cerr << "*** ABORT ***: missmatch between action and core count (" << dec
-         << coreActions.size() << " vs " << mCoreManager.getCpuCount() << ")"
-         << endl;
-    abort();
+    std::ostringstream fmt_stream;
+    fmt_stream << "Mimatch between number of actions and core (" << dec
+               << coreActions.size() << " vs " << mCoreManager.getCpuCount()
+               << ")";
+    Utils::fatalError(fmt_stream.str());
   }
 
   /* Setup all the cores ready to carry out the prescribed actions.  */
