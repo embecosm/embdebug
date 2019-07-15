@@ -161,6 +161,12 @@ private:
 
   bool mHandlingSyscall;
 
+  bool mHaveSyscallArgLocs;
+  bool mHaveSyscallSupport;
+  ITarget::SyscallArgLoc mSyscallIDLoc;
+  ITarget::SyscallArgLoc mSyscallReturnLoc;
+  std::vector<ITarget::SyscallArgLoc> mSyscallArgLocs;
+
   //! When this is true, cores are marked as killed when they perform an
   //! exit syscall.  When it is false, the core remains alive, in which
   //! case it looks (to GDB) like a new inferior has immediately spawned to

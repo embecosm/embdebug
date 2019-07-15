@@ -57,7 +57,8 @@ GdbServer::GdbServer(AbstractConnection *_conn, ITarget *_cpu,
       mNumRegs(cpu->getRegisterCount()), pkt(), mMatchpointMap(),
       killBehaviour(_killBehaviour), mExitServer(false), mHaveMultiProc(false),
       mStopMode(StopMode::ALL_STOP), mPtid(PID_DEFAULT, TID_DEFAULT),
-      mNextProcess(1), mHandlingSyscall(false), mKillCoreOnExit(false),
+      mNextProcess(1), mHandlingSyscall(false), mHaveSyscallArgLocs(false),
+      mHaveSyscallSupport(false), mKillCoreOnExit(false),
       mCoreManager(cpu->getCpuCount()) {}
 
 //! Destructor
@@ -124,12 +125,13 @@ uint_reg_t GdbServer::readArgLoc(const ITarget::SyscallArgLoc &loc) {
     uint_addr_t addr = (uint_addr_t)reg + loc.regIndirectLoc.offset;
 
     // read and return the memory
+    std::size_t byteSize = cpu->getRegisterSize();
     uint8_t buf[sizeof(uint_reg_t)];
-    size_t ret = cpu->read(addr, buf, sizeof(uint_reg_t));
-    assert(ret == sizeof(uint_reg_t));
+    size_t ret = cpu->read(addr, buf, byteSize);
+    assert(ret == byteSize);
 
     uint_reg_t value = 0;
-    for (size_t i = 0; i < sizeof(uint_reg_t); ++i)
+    for (size_t i = 0; i < byteSize; ++i)
       value |= static_cast<uint_reg_t>(buf[i]) << i * CHAR_BIT;
     return value;
   }
@@ -147,61 +149,54 @@ void GdbServer::rspSyscallRequest() {
 
   // The first time a syscall is encountered we determine the target support
   // for syscalls.
-  static bool haveSyscallArgLocs = false;
-  static bool haveSyscallSupport = false;
-
-  static ITarget::SyscallArgLoc syscallIDLoc;
-  static ITarget::SyscallArgLoc syscallReturnLoc;
-  static std::vector<ITarget::SyscallArgLoc> syscallArgLocs;
-
-  if (!haveSyscallArgLocs) {
-    haveSyscallSupport =
-        cpu->getSyscallArgLocs(syscallIDLoc, syscallArgLocs, syscallReturnLoc);
-    haveSyscallArgLocs = true;
+  if (!mHaveSyscallArgLocs) {
+    mHaveSyscallSupport = cpu->getSyscallArgLocs(mSyscallIDLoc, mSyscallArgLocs,
+                                                 mSyscallReturnLoc);
+    mHaveSyscallArgLocs = true;
   }
-  if (!haveSyscallSupport) {
+  if (!mHaveSyscallSupport) {
     cerr << "Syscall encountered but no target support" << endl;
     rspReportException(TargetSignal::TRAP);
     return;
   }
-  assert(haveSyscallArgLocs);
-  assert(haveSyscallSupport);
-  assert(syscallArgLocs.size() >= 3);
+  assert(mHaveSyscallArgLocs);
+  assert(mHaveSyscallSupport);
+  assert(mSyscallArgLocs.size() >= 3);
 
   // Get the syscall id from the appropriate location
-  uint_reg_t syscallID = readArgLoc(syscallIDLoc);
+  uint_reg_t syscallID = readArgLoc(mSyscallIDLoc);
 
   // Store for the values of each argument in turn as they are read
   std::vector<uint_reg_t> args;
   switch (syscallID) {
   case 57:
-    args.push_back(readArgLoc(syscallArgLocs[0]));
+    args.push_back(readArgLoc(mSyscallArgLocs[0]));
     rsp->putPkt(RspPacket::CreateFormatted("Fclose,%" PRIxREG, args[0]));
     return;
   case 62:
     for (int i = 0; i < 3; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted("Flseek,%" PRIxREG ",%" PRIxREG
                                            ",%" PRIxREG,
                                            args[0], args[1], args[2]));
     return;
   case 63:
     for (int i = 0; i < 3; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted("Fread,%" PRIxREG ",%" PRIxREG
                                            ",%" PRIxREG,
                                            args[0], args[1], args[2]));
     return;
   case 64:
     for (int i = 0; i < 3; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted("Fwrite,%" PRIxREG ",%" PRIxREG
                                            ",%" PRIxREG,
                                            args[0], args[1], args[2]));
     return;
   case 80:
     for (int i = 0; i < 2; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted("Ffstat,%" PRIxREG ",%" PRIxREG,
                                            args[0], args[1]));
     return;
@@ -210,7 +205,7 @@ void GdbServer::rspSyscallRequest() {
       cerr << "EXIT syscall on core " << cpu->getCurrentCpu()
            << " halting all other cores." << endl;
     (void)cpu->halt();
-    args.push_back(readArgLoc(syscallArgLocs[0]));
+    args.push_back(readArgLoc(mSyscallArgLocs[0]));
     if (mHaveMultiProc)
       rsp->putPkt(RspPacket::CreateFormatted(
           "W%" PRIxREG ";process:%x", args[0],
@@ -226,25 +221,25 @@ void GdbServer::rspSyscallRequest() {
   }
   case 169:
     for (int i = 0; i < 2; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted(
         "Fgettimeofday,%" PRIxREG ",%" PRIxREG, args[0], args[1]));
     return;
   case 1024:
     for (int i = 0; i < 3; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted(
         "Fopen,%" PRIxREG "/%x,%" PRIxREG ",%" PRIxREG, args[0],
         stringLength(args[0]), args[1], args[2]));
     return;
   case 1026:
-    args.push_back(readArgLoc(syscallArgLocs[0]));
+    args.push_back(readArgLoc(mSyscallArgLocs[0]));
     rsp->putPkt(RspPacket::CreateFormatted("Funlink,%" PRIxREG "/%x", args[0],
                                            stringLength(args[0])));
     return;
   case 1038:
     for (int i = 0; i < 2; ++i)
-      args.push_back(readArgLoc(syscallArgLocs[i]));
+      args.push_back(readArgLoc(mSyscallArgLocs[i]));
     rsp->putPkt(RspPacket::CreateFormatted("Fstat,%" PRIxREG "/%x,%" PRIxREG,
                                            args[0], stringLength(args[0]),
                                            args[1]));
