@@ -137,6 +137,14 @@ public:
   //! \brief Get the size of registers in the CPU in bytes.
   virtual int getRegisterSize() const = 0;
 
+  //! \brief Get the locations of arguments to syscalls
+  //!
+  //! \param[out] syscallIDLoc     The location containing the syscall number
+  //!                              being called.
+  //! \param[out] syscallArgLocs   Location of each successive argument to
+  //!                              syscalls.
+  //! \param[out] syscallReturnLoc Location of the return value
+  //! \return True if syscall emulation is supported, false otherwise.
   virtual bool getSyscallArgLocs(SyscallArgLoc &syscallIDLoc,
                                  std::vector<SyscallArgLoc> &syscallArgLocs,
                                  SyscallArgLoc &syscallReturnLoc) const = 0;
