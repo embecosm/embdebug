@@ -14,6 +14,7 @@
 #include <cstring>
 
 #if _WIN32
+#define NOMINMAX
 #include <io.h>
 #include <winsock.h>
 typedef ptrdiff_t ssize_t;

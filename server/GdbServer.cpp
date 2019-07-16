@@ -1050,48 +1050,47 @@ void GdbServer::rspQuery() {
     // Report that we are runnable, but the text must be hex ASCI
     // digits. Send "Runnable"
     rsp->putPkt("52756e6e61626c65");
-  } else if (pkt.getData().starts_with("qXfer:features:read:target.xml:")) {
-    // Report back our target description
-
-    unsigned int firstChar, lastChar;
-
-    if (2 != sscanf(pkt.getRawData(), "qXfer:features:read:target.xml:%x,%x",
-                    &firstChar, &lastChar)) {
+  } else if (pkt.getData().starts_with("qXfer:features:read:")) {
+    // Extract XML file name and offsets
+    std::vector<ByteView> operands;
+    Utils::split(pkt.getData(), ':', operands);
+    if (operands.size() != 5) {
+      rsp->putPkt("E00");
+      return;
+    }
+    std::vector<ByteView> offsets;
+    Utils::split(operands[4], ',', offsets);
+    if (offsets.size() != 2) {
+      rsp->putPkt("E00");
+      return;
+    }
+    uint64_t start, len;
+    if (!offsets[0].fromHex(start)) {
+      rsp->putPkt("E00");
+      return;
+    }
+    if (!offsets[1].fromHex(len)) {
       rsp->putPkt("E00");
       return;
     }
 
-    std::ostringstream xmlStream;
-
-    int regWidth = cpu->getRegisterSize();
-    xmlStream << "<?xml version=\"1.0\"?>" << endl;
-    xmlStream << "<!DOCTYPE target SYSTEM \"gdb-target.dtd\">" << endl;
-    xmlStream << "<target version=\"1.0\">" << endl;
-    xmlStream << "<architecture>riscv:rv" << 8 * regWidth << "</architecture>"
-              << endl;
-    xmlStream << "</target>" << endl;
-
-    std::string xmlString = xmlStream.str();
-
-    // Constuct the packet
-
-    char pktChar;
-    size_t len;
-
-    if (xmlString.size() > lastChar) {
-      // Middle packet
-
-      pktChar = 'm';
-      len = lastChar - firstChar + 1;
-    } else {
-      // Last packet
-
-      pktChar = 'l';
-      len = xmlString.size() - firstChar + 1;
+    // Get file, pack and send
+    const char *file = cpu->getTargetXML(operands[3]);
+    if (!file) {
+      rsp->putPkt("E00");
+      return;
     }
+    ByteView fileView = ByteView(file).lstrip(static_cast<std::size_t>(start));
 
-    rsp->putPkt(RspPacket::CreateFormatted(
-        "%c%s", pktChar, xmlString.substr(firstChar, len).c_str()));
+    // If this is the last snippet, respond with 'l', else 'm'
+    RspPacketBuilder response;
+    if (fileView.getLen() <= len)
+      response += 'l';
+    else
+      response += 'm';
+    response.addData(fileView.first(static_cast<std::size_t>(len)));
+    rsp->putPkt(response);
+    return;
   } else {
     // We don't support this feature
     rsp->putPkt("");

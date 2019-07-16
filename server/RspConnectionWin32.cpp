@@ -14,6 +14,7 @@
 #include <csignal>
 #include <cstring>
 
+#define NOMINMAX
 #include <WS2tcpip.h>
 #include <io.h>
 #include <winsock2.h>

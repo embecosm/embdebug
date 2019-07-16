@@ -14,6 +14,7 @@
 #include <iostream>
 #include <vector>
 
+#include "ByteView.h"
 #include "Compat.h"
 #include "Types.h"
 
@@ -289,6 +290,13 @@ public:
   //! \return True if all cores were successfully halted, false otherwise.
   //!         Failure to halt will generally be a fatal error.
   virtual bool halt(void) = 0;
+
+  //! \brief Get the Target XML file with the given name
+  //!
+  //! \return C string containing XML file, nullptr otherwise.
+  virtual const char *getTargetXML(ByteView name EMBDEBUG_ATTR_UNUSED) const {
+    return nullptr;
+  }
 
 private:
   // Don't allow the default constructors

@@ -200,6 +200,23 @@ vector<string> &Utils::split(const string &s, const string &delim,
   return elems;
 }
 
+vector<ByteView> &Utils::split(ByteView view, char delim,
+                               vector<ByteView> &elems) {
+  elems.clear();
+
+  while (view.getLen()) {
+    std::size_t offset = view.find(delim);
+    if (offset == ByteView::n_pos) {
+      elems.push_back(view);
+      break;
+    }
+    elems.push_back(view.first(offset));
+    view = view.lstrip(offset + 1);
+  }
+
+  return elems;
+}
+
 void Utils::fatalError(std::string str) {
   std::cerr << "*** FATAL ERROR: " << str << std::endl;
   abort();

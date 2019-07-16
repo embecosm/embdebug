@@ -13,6 +13,8 @@
 #include <string>
 #include <vector>
 
+#include "ByteView.h"
+
 namespace EmbDebug {
 
 namespace Utils {
@@ -138,6 +140,15 @@ std::size_t rspUnescape(char *buf, std::size_t len);
 //! \return  The vector of tokens
 std::vector<std::string> &split(const std::string &s, const std::string &delim,
                                 std::vector<std::string> &elems);
+
+//! \brief Split a string into delimited tokens
+//!
+//! \param[in]  view   The view of tokes
+//! \param[in]  delim  The delimiter characters
+//! \param[out] elems  Vector the individual tokens
+//! \return  The vector of tokens
+std::vector<ByteView> &split(ByteView view, char delim,
+                             std::vector<ByteView> &elems);
 
 //! \brief Report a fatal error to stderr and abort
 //!

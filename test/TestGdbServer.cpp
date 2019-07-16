@@ -291,6 +291,13 @@ public:
     results[0] = call.waitState.outResumeResult;
     return call.waitState.outWaitResult;
   }
+
+  const char *getTargetXML(ByteView name) const override {
+    if (name == "target.xml")
+      return "abcdefghijklmnopqrstuvwxyz";
+    else
+      return nullptr;
+  }
 };
 
 struct GdbServerTestCase {
@@ -868,3 +875,24 @@ INSTANTIATE_TEST_CASE_P(
         testCmdSetAndShowDebugRspFlag, testCmdSetAndShowDebugConnFlag,
         testCmdSetAndShowDebugDisasFlag, testCmdSetAndShowKillCoreOnExit,
         testCmdSetUnknownCommand, testCmdShowUnknownCommand));
+
+// Test of Target XML loading through ITarget
+GdbServerTestCase testXMLWhole = {
+    "$qXfer:features:read:target.xml:0,100#dc+$vKill;1#6e+",
+    "+$labcdefghijklmnopqrstuvwxyz#8b+$OK#9a",
+    {}};
+
+GdbServerTestCase testXMLSplit = {
+    "$qXfer:features:read:target.xml:0,10#ac+"
+    "$qXfer:features:read:target.xml:10,10#dd+$vKill;1#6e+",
+    "+$mabcdefghijklmnop#f5+$lqrstuvwxyz#03+$OK#9a",
+    {}};
+
+GdbServerTestCase testXMLInvalidName = {
+    "$qXfer:features:read:nonexist.xml:0,100#cd+$vKill;1#6e+",
+    "+$E00#a5+$OK#9a",
+    {}};
+
+INSTANTIATE_TEST_CASE_P(RSPXmlPacketTest, GdbServerTest,
+                        ::testing::Values(testXMLWhole, testXMLSplit,
+                                          testXMLInvalidName));

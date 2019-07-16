@@ -96,6 +96,7 @@ public:
   RspPacketBuilder &operator+=(const char c);
   void addData(const char *str);
   void addData(const char *str, std::size_t _len);
+  void addData(const ByteView view) { addData(view.getData(), view.getLen()); }
 
   std::size_t getSize() const { return len; }
   std::size_t getRemaining() const {
