@@ -798,9 +798,50 @@ GdbServerTestCase testSyscallOpen = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
+GdbServerTestCase testSyscallUnknown = {
+    /*reg count*/ 32,
+    /*reg size*/ 4,
+    /* syscall id location */
+    ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 17}),
+    /* syscall argument locations */
+    {
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 10}),
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 11}),
+        ITarget::SyscallArgLoc::RegisterLoc(
+            {ITarget::SyscallArgLocType::REGISTER, 12}),
+    },
+    /* syscall return location */
+    ITarget::SyscallArgLoc::RegisterLoc(
+        {ITarget::SyscallArgLocType::REGISTER, 10}),
+    /* test case */
+    "$vCont;c#a8+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::SYSCALL,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+
+        TraceTarget::ITargetCall::ReadRegisterState(
+            {TraceTarget::ITargetFunc::READ_REGISTER, 17, /*unknown*/ 666, 4}),
+
+        // An exception is returned because the GdbServer cannot handle
+        // the unknown syscall number
+    },
+};
 
 INSTANTIATE_TEST_CASE_P(RSPSysCallTest, GdbServerTest,
-                        ::testing::Values(testSyscallClose, testSyscallOpen));
+                        ::testing::Values(testSyscallClose, testSyscallOpen,
+                                          testSyscallUnknown));
 
 // Tests of various qRcmd packets
 GdbServerTestCase testCmdResetWarm = {
