@@ -522,13 +522,13 @@ void GdbServer::rspClientRequest() {
     // Setting baud rate is deprecated
     cerr << "Warning: RSP 'b' packet is deprecated and not "
          << "supported: ignored" << endl;
-    return;
+    break;
 
   case 'B':
     // Breakpoints should be set using Z packets
     cerr << "Warning: RSP 'B' packet is deprecated (use 'Z'/'z' "
          << "packets instead): ignored" << endl;
-    return;
+    break;
 
   case 'F':
     // Handle the syscall reply then continue
@@ -553,7 +553,7 @@ void GdbServer::rspClientRequest() {
     // Disable debug using a general query
     cerr << "Warning: RSP 'd' packet is deprecated (define a 'Q' "
          << "packet instead: ignored" << endl;
-    return;
+    break;
 
   case 'D':
     // Detach GDB. Do this by closing the client. The rules say that
@@ -624,7 +624,7 @@ void GdbServer::rspClientRequest() {
   case 'k':
     // With multiprocess support, we expect vKill instead.
     cerr << "Warning: RSP 'k' packet is not supported: ignored" << endl;
-    return;
+    break;
 
   case 'm':
     // Read memory (symbolic)
@@ -660,17 +660,17 @@ void GdbServer::rspClientRequest() {
     // Reset the system. Deprecated (use 'R' instead)
     cerr << "Warning: RSP 'r' packet is deprecated (use 'R' "
          << "packet instead): ignored" << endl;
-    return;
+    break;
 
   case 'R':
     // Restart the program being debugged. TODO. Nothing for now.
-    return;
+    break;
 
   case 't':
     // Search. This is not well defined in the manual and for now we don't
     // support it. No response is defined.
     cerr << "Warning: RSP 't' packet not supported: ignored" << endl;
-    return;
+    break;
 
   case 'T':
     // Is the thread alive. We are bare metal, so don't have a thread
@@ -700,9 +700,13 @@ void GdbServer::rspClientRequest() {
 
   default:
     // Unknown commands are ignored
-    cerr << "Warning: Unknown RSP request" << pkt.getRawData() << endl;
-    return;
+    cerr << "Warning: Unknown RSP request " << pkt.getRawData() << endl;
+    break;
   }
+
+  // If this point is hit, an unsupported packet has been sent, return an empty
+  // packet for this case
+  rsp->putPkt("");
 }
 
 //! Send a packet acknowledging an exception has occurred
