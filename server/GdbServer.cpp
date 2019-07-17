@@ -537,10 +537,17 @@ void GdbServer::rspClientRequest() {
 
   case 'c':
   case 'C':
-    // We now expect vCont instead of these packets.
-    cerr << "Warning: RSP '" << pkt.getData()[0]
-         << "' packet is not supported: ignored" << endl;
+  case 's':
+  case 'S': {
+    // Treat these packets the same as if they were appended to a vCont packet.
+    // FIXME: Is there a neater way of doing this?
+    RspPacketBuilder newpkt;
+    newpkt.addData("vCont;");
+    newpkt.addData(pkt.getData());
+    pkt = newpkt;
+    rspVpkt();
     return;
+  }
 
   case 'd':
     // Disable debug using a general query
@@ -657,13 +664,6 @@ void GdbServer::rspClientRequest() {
 
   case 'R':
     // Restart the program being debugged. TODO. Nothing for now.
-    return;
-
-  case 's':
-  case 'S':
-    // We now expect vCont instead of these packets.
-    cerr << "Warning: RSP '" << pkt.getRawData()
-         << "' packet is not supported: ignored" << endl;
     return;
 
   case 't':

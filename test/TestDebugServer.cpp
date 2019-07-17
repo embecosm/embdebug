@@ -389,13 +389,9 @@ GdbServerTestCase testBasicRSPPackets[] = {
     {"$A#41+$vKill;1#6e+", "+$E01#a6+$OK#9a", {}},
     {"$b#62$vKill;1#6e+", "++$OK#9a", {}},
     {"$B#42$vKill;1#6e+", "++$OK#9a", {}},
-    {"$c#63$vKill;1#6e+", "++$OK#9a", {}},
-    {"$C#43$vKill;1#6e+", "++$OK#9a", {}},
     {"$d#64$vKill;1#6e+", "++$OK#9a", {}},
     {"$k#6b$vKill;1#6e+", "++$OK#9a", {}},
     {"$R#52$vKill;1#6e+", "++$OK#9a", {}},
-    {"$s#73$vKill;1#6e+", "++$OK#9a", {}},
-    {"$S#53$vKill;1#6e+", "++$OK#9a", {}},
     {"$t#74$vKill;1#6e+", "++$OK#9a", {}},
     {"$T#54+$vKill;1#6e+", "+$OK#9a+$OK#9a", {}},
     {"$L#4c$vKill;1#6e+", "++$OK#9a", {}},
@@ -605,11 +601,78 @@ GdbServerTestCase testVContContinue2 = {
                                              ITarget::WaitRes::EVENT_OCCURRED}),
     },
 };
+// Test continue in this block by emulating as vCont packets
+GdbServerTestCase testStep1 = {
+    "$s#73+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::STEP,
+             true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::STEPPED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
+GdbServerTestCase testStep2 = {
+    "$S#53+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::STEP,
+             true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::STEPPED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
+GdbServerTestCase testContinue1 = {
+    "$c#63+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
+GdbServerTestCase testContinue2 = {
+    "$C#43+$vKill;1#6e+",
+    "+$S05#b8+$OK#9a",
+    {
+        TraceTarget::ITargetCall::PrepareState(
+            {TraceTarget::ITargetFunc::PREPARE, ITarget::ResumeType::CONTINUE,
+             true}),
+        TraceTarget::ITargetCall::CycleCountState(
+            {TraceTarget::ITargetFunc::CYCLE_COUNT, 1234}),
+        TraceTarget::ITargetCall::ResumeState(
+            {TraceTarget::ITargetFunc::RESUME, true}),
+        TraceTarget::ITargetCall::WaitState({TraceTarget::ITargetFunc::WAIT,
+                                             ITarget::ResumeRes::INTERRUPTED,
+                                             ITarget::WaitRes::EVENT_OCCURRED}),
+    },
+};
 
 INSTANTIATE_TEST_CASE_P(RSPVContTest, GdbServerTest,
                         ::testing::Values(testVContQuery, testVContStep1,
                                           testVContStep2, testVContContinue1,
-                                          testVContContinue2));
+                                          testVContContinue2, testStep1,
+                                          testStep2, testContinue1,
+                                          testContinue2));
 
 // Tests of syscall handling and the associated RSP communication
 GdbServerTestCase testSyscallClose = {
