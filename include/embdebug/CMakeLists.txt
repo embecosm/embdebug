@@ -1,4 +1,5 @@
-set(INSTALL_HEADERS Compat.h
+set(INSTALL_HEADERS ByteView.h
+                    Compat.h
                     Init.h
                     ITarget.h
                     Timeout.h
