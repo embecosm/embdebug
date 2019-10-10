@@ -1,4 +1,4 @@
-// Dummy ITarget interface implementation
+// Empty ITarget interface implementation
 //
 // This file is part of the Embecosm GDB Server targets.
 //
@@ -16,15 +16,15 @@
 
 using namespace EmbDebug;
 
-class DummyTarget : public ITarget {
+class EmptyTarget : public ITarget {
 public:
-  DummyTarget() = delete;
-  DummyTarget(const DummyTarget &) = delete;
+  EmptyTarget() = delete;
+  EmptyTarget(const ITarget &) = delete;
 
-  explicit DummyTarget(const TraceFlags *traceFlags) : ITarget(traceFlags) {
+  explicit EmptyTarget(const TraceFlags *traceFlags) : ITarget(traceFlags) {
     PRINT_PLACEHOLDER();
   }
-  ~DummyTarget() { PRINT_PLACEHOLDER(); }
+  ~EmptyTarget() { PRINT_PLACEHOLDER(); }
 
   ITarget::ResumeRes terminate() override {
     PRINT_PLACEHOLDER();
@@ -134,7 +134,7 @@ public:
 // Entry point for the shared library
 extern "C" {
 EMBDEBUG_VISIBLE_API ITarget *create_target(TraceFlags *traceFlags) {
-  return new DummyTarget(traceFlags);
+  return new EmptyTarget(traceFlags);
 }
 EMBDEBUG_VISIBLE_API uint64_t ITargetVersion(void) {
   return ITarget::CURRENT_API_VERSION;
