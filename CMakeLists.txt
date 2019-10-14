@@ -52,9 +52,21 @@ if (EMBDEBUG_ENABLE_DOCS)
   if (NOT SPHINX_BUILD)
     message(STATUS "sphinx-build not found")
   else()
+    set (SPHINX_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/docs/html")
+    set (SPHINX_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/share/doc/embdebug/html")
     add_custom_target(docs
-                      COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/docs"
-                      COMMAND ${SPHINX_BUILD} -M html "${CMAKE_SOURCE_DIR}/docs" "${CMAKE_BINARY_DIR}/docs/_build")
+                      COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/docs/html"
+                      COMMAND ${SPHINX_BUILD}
+                              -b html
+                              "${CMAKE_CURRENT_SOURCE_DIR}/docs" # Source
+                              "${SPHINX_BUILD_DIR}"              # Output
+                      COMMENT "Generating html Sphinx documentation into \"${SPHINX_BUILD_DIR}\"")
+
+    # Install to a typically location under share/doc/
+    # The '/.' at the end means the contents will be copied without
+    # implicitly recreating the last directory of ${SPHINX_BUILD_DIR}
+    install(DIRECTORY "${SPHINX_BUILD_DIR}/."
+            DESTINATION "${SPHINX_INSTALL_DIR}")
   endif()
 endif()
 

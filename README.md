@@ -16,7 +16,7 @@ GPLv3+ license. The terms of the license can be found in `LICENSE`.
 _**NOTE**: These are basic steps to build the debug server however this
 **does not** include a target for the server. A more complete
 guide with an example target (ri5cy for a 32-bit RISC-V
-system) can be found in:_ `docs/building_ri5cy`
+system) can be found in:_ `docs/Ri5cyTutorial`
 
 The `cmake` build system is used to build the project. Running
 the follow steps from the build directory are sufficient to
@@ -44,18 +44,21 @@ Flag                            | Description
 `-DEMBDEBUG_ENABLE_DOCS`        | Enable generation of project documentation using `sphinx`
 `-DEMBDEBUG_TARGETS_TO_BUILD`   | Comma separated list of directories in `targets/` to be built alongside the debug server.
 
-For more complete build options, see `docs/build`
+For more complete build options, see `docs/Building`
 
 # Running
 
 The debug server can be started with the following command:
 
 ```
-embdebug --soname <libmytarget.so> --rsp-port <port_number>`
+embdebug --soname <libtarget.so> --rsp-port <port_number>`
 ```
 
 This will expose a debug server on the provided port which
 can be connected to from GDB or LLDB.
+
+For more detail about options to the `embdebug` command, see
+`docs/Running`
 
 ## Connecting to a local debug server
 
@@ -63,7 +66,7 @@ To connect with the debug server, first it needs to be running
 locally:
 
 ```
-embdebug --soname <libmytarget.so> --rsp-port <port_number>
+embdebug --soname <libtarget.so> --rsp-port <port_number>
 ```
 
 Now the debug server is waiting for a connection from a debugger.
