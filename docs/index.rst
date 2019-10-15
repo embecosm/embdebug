@@ -1,6 +1,11 @@
-=======
 Welcome to the Embecosm Debug Server's documentation!
 =====================================================
+
+.. Copyright (C) 2019 Embecosm Limited
+   SPDX-License-Identifier: CC-BY-SA-4.0
+
+Documentation for the Embecosm Debug Server
+===========================================
 
 .. toctree::
    :maxdepth: 2
@@ -15,7 +20,7 @@ Welcome to the Embecosm Debug Server's documentation!
    RSP
    Internals
 
-Indices and tables
+Indices and search
 ==================
 
 * :ref:`genindex`

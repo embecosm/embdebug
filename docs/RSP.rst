@@ -1,3 +1,6 @@
+.. Copyright (C) 2019 Embecosm Limited
+   SPDX-License-Identifier: CC-BY-SA-4.0
+
 .. _remote-serial-protocol:
 
 The Remote Serial Protocol (RSP)

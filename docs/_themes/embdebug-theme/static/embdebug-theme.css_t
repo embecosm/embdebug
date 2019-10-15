@@ -1,9 +1,8 @@
 /*
- * sphinxdoc.css_t
- * ~~~~~~~~~~~~~~~
+ * embdebug-theme.css_t
+ * ~~~~~~~~~~~~~~~~~~~~
  *
- * Sphinx stylesheet -- sphinxdoc theme.  Originally created by
- * Armin Ronacher for Werkzeug.
+ * Sphinx stylesheet -- based on the business style theme (bizstyle.css_t)
  *
  * :copyright: Copyright 2007-2010 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
@@ -142,6 +141,10 @@ div.footer {
 div.footer a {
     color: {{ theme_maincolor }};
     text-decoration: underline;
+}
+
+div.cclicence {
+    font-size: 0.8em;
 }
 
 /* -- body styles ----------------------------------------------------------- */
