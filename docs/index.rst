@@ -9,7 +9,6 @@ Welcome to the Embecosm Debug Server's documentation!
    Overview
    Building
    Running
-   Testing
    Porting
    Contributing
    Ri5cyTutorial

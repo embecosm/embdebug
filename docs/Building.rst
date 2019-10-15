@@ -35,3 +35,16 @@ CMake build options
                              and built alongside the debug server. This
                              defaults to building all discovered targets.
 
+Testing
+```````
+
+The debug server has a test suite using Google Test which can
+be run as part of the build. To run the tests use the following
+CMake command:
+
+.. code-block:: none
+
+   cmake --build . --target test
+
+For details on the structure of the test suite, see
+:ref:`internals-test-suite`.

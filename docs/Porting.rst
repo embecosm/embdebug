@@ -1,6 +1,11 @@
 .. _porting-debug-server:
 
-Porting
--------
+Porting to a new target
+-----------------------
 
-Work in progress
+*To be written.*
+
+License
+```````
+
+*To be written.*

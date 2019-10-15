@@ -1,4 +1,4 @@
 Ri5cy Tutorial
 --------------
 
-Work in progress
+*To be written.*

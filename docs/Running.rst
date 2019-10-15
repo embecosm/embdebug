@@ -41,9 +41,9 @@ Options for embdebug
 Interacting with the debug server from GDB
 ``````````````````````````````````````````
 
-Work in progress
+*To be written.*
 
 Interacting with the debug server from LLDB
 ```````````````````````````````````````````
 
-Work in progress
+*To be written.*
