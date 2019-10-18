@@ -21,7 +21,7 @@ Submitting Changes
 
 *To be written.*
 
-License
+Licence
 ```````
 
 *To be written.*

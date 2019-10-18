@@ -8,7 +8,7 @@ Porting to a new target
 
 *To be written.*
 
-Licence
-```````
+Licence of new targets
+``````````````````````
 
 *To be written.*
