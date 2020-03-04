@@ -1019,7 +1019,10 @@ void GdbServer::rspQuery() {
     vector<string> tokens;
     Utils::split(&(pkt.getRawData()[strlen("qSupported:")]), ";", tokens);
     const char *multiProcStr = "";
-    const char *xmlRegsStr = "";
+    const char *supportsTargetXML = "";
+
+    if (cpu->supportsTargetXML())
+      supportsTargetXML = ";qXfer:features:read+";
 
     // We can only support multiprocess and XML target descriptions if the
     // client says it supports it. Offering eitther when it is not there
@@ -1027,23 +1030,17 @@ void GdbServer::rspQuery() {
 
     mHaveMultiProc = false;
 
-    for (auto it = tokens.begin(); it != tokens.end(); it++)
+    for (auto it = tokens.begin(); it != tokens.end(); it++) {
       if (*it == "multiprocess+") {
         mHaveMultiProc = true;
         multiProcStr = ";multiprocess+";
-      } else if (0 == strncmp("xmlRegisters=", it->c_str(),
-                              strlen("xmlRegisters="))) {
-        if (0 != strncmp("xmlRegisters=riscv", it->c_str(),
-                         strlen("xmlRegisters=riscv")))
-          cerr << "Warning: Non RISCV XML registers offered: "
-               << "expect weird behavior." << endl;
-        xmlRegsStr = ";qXfer:features:read+";
       }
+    }
 
     rsp->putPkt(RspPacket::CreateFormatted(
         "PacketSize=%" PRIxPTR
         ";QNonStop+;VContSupported+;QStartNoAckMode+%s%s",
-        pkt.getMaxPacketSize(), multiProcStr, xmlRegsStr));
+        pkt.getMaxPacketSize(), supportsTargetXML, multiProcStr));
 
   } else if (pkt.getData().starts_with("qSymbol:")) {
     // Offer to look up symbols. Nothing we want (for now). TODO. This just

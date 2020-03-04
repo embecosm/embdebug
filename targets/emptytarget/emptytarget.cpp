@@ -129,6 +129,14 @@ public:
     PRINT_PLACEHOLDER();
     return 0;
   }
+  bool supportsTargetXML(void) override {
+    PRINT_PLACEHOLDER();
+    return false;
+  }
+  const char *getTargetXML(ByteView) override {
+    PRINT_PLACEHOLDER();
+    return nullptr;
+  }
 };
 
 // Entry point for the shared library

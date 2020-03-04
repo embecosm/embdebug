@@ -292,7 +292,9 @@ public:
     return call.waitState.outWaitResult;
   }
 
-  const char *getTargetXML(ByteView name) const override {
+  bool supportsTargetXML(void) override { return true; }
+
+  const char *getTargetXML(ByteView name) override {
     if (name == "target.xml")
       return "abcdefghijklmnopqrstuvwxyz";
     else

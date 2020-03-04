@@ -133,6 +133,14 @@ public:
     throw std::runtime_error("Unimplemented method called");
     return false;
   }
+  bool supportsTargetXML(void) override {
+    throw std::runtime_error("Unimplemented method called");
+    return false;
+  }
+  const char *getTargetXML(ByteView EMBDEBUG_ATTR_UNUSED name) override {
+    throw std::runtime_error("Unimplemented method called");
+    return nullptr;
+  };
 };
 
 #endif

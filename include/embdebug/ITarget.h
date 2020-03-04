@@ -291,12 +291,15 @@ public:
   //!         Failure to halt will generally be a fatal error.
   virtual bool halt(void) = 0;
 
+  //! \brief Determine whether the target supports XML descriptions
+  //!
+  //! \return True if XML target descriptions are supported.
+  virtual bool supportsTargetXML(void) = 0;
+
   //! \brief Get the Target XML file with the given name
   //!
   //! \return C string containing XML file, nullptr otherwise.
-  virtual const char *getTargetXML(ByteView name EMBDEBUG_ATTR_UNUSED) const {
-    return nullptr;
-  }
+  virtual const char *getTargetXML(ByteView name EMBDEBUG_ATTR_UNUSED) = 0;
 
 private:
   // Don't allow the default constructors
