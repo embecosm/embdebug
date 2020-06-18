@@ -1,8 +1,8 @@
 # Allow a user to specify which targets they wish to build, if no target is
 # specified, build all targets
-option (EMBDEBUG_TARGETS_TO_BUILD "Specify targets to build")
+set (EMBDEBUG_TARGETS_TO_BUILD "" CACHE STRING "Specify targets to build")
 
-if (NOT ${EMBDEBUG_TARGETS_TO_BUILD})
+if ("${EMBDEBUG_TARGETS_TO_BUILD}" STREQUAL "")
   message ("-- No targets specified, building all targets.")
   file (GLOB EMBDEBUG_TARGETS_TO_BUILD_tmp
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -16,8 +16,14 @@ if (NOT ${EMBDEBUG_TARGETS_TO_BUILD})
   unset (EMBDEBUG_TARGETS_TO_BUILD_tmp)
 endif()
 
+string(TOUPPER "${EMBDEBUG_TARGETS_TO_BUILD}" captilized_targets)
+if ("${captilized_targets}" STREQUAL "NONE")
+  message ("-- Building no targets.")
+else()
 foreach (t ${EMBDEBUG_TARGETS_TO_BUILD})
 message ("-- Building target: ${t}")
   add_subdirectory (${t})
 endforeach()
 message ("-- Target configuration complete.")
+
+endif()
