@@ -226,6 +226,9 @@ int main(int argc, char *argv[]) {
 #ifdef _WIN32
   if (soName.rfind(".dll") == std::string::npos)
     soName = "embdebug-target-" + soName + ".dll";
+#elif __APPLE__
+  if (soName.rfind(".dylib") == std::string::npos)
+    soName = "libembdebug-target-" + soName + ".dylib";
 #else
   if (soName.rfind(".so") == std::string::npos)
     soName = "libembdebug-target-" + soName + ".so";
