@@ -23,25 +23,19 @@ if (WIN32)
   list(APPEND EMBDEBUG_LIBS ws2_32)
 endif()
 
-# Create object library for building two server libraries
-add_library(gdbserverobjs OBJECT ${EMBDEBUG_SOURCES})
-set_property(TARGET gdbserverobjs PROPERTY POSITION_INDEPENDENT_CODE 1)
-add_library(embdebug-shared SHARED $<TARGET_OBJECTS:gdbserverobjs>)
-add_library(embdebug-static STATIC $<TARGET_OBJECTS:gdbserverobjs>)
+# Create embdebug server library
+add_library(embdebug ${EMBDEBUG_SOURCES})
+set_property(TARGET embdebug PROPERTY POSITION_INDEPENDENT_CODE 1)
 
 if (BUILD_SHARED_LIBS)
-  add_library(embdebug ALIAS embdebug-shared)
+  set_target_properties(embdebug PROPERTIES
+                        VERSION ${embdebug_VERSION}
+                        SOVERSION ${embdebug_VERSION_MAJOR})
 else()
-  add_library(embdebug ALIAS embdebug-static)
+  set_target_properties(embdebug PROPERTIES
+                        VERSION ${embdebug_VERSION})
 endif()
 
-set_target_properties(embdebug-shared PROPERTIES
-                      VERSION ${embdebug_VERSION}
-                      SOVERSION ${embdebug_VERSION_MAJOR})
-set_target_properties(embdebug-static PROPERTIES
-                      VERSION ${embdebug_VERSION})
-
-target_link_libraries(embdebug-shared ${EMBDEBUG_LIBS})
-target_link_libraries(embdebug-static ${EMBDEBUG_LIBS})
-install(TARGETS embdebug-shared embdebug-static
+target_link_libraries(embdebug ${EMBDEBUG_LIBS})
+install(TARGETS embdebug
         DESTINATION lib)
