@@ -42,7 +42,7 @@ macro(enable_clang_format)
     add_custom_target(clang-format
                       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                       COMMAND find include/embdebug -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
-                      COMMAND find server -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
+                      COMMAND find lib -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
                       COMMAND find tools -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
                       COMMAND find test -type f \\\( -name '*.c' -o -name '*.cpp' -o -name '*.h' \\\) -exec ${CLANG_FORMAT} -i {} \\\;
     )
