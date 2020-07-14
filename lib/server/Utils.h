@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "ByteView.h"
+#include "embdebug/ByteView.h"
 
 namespace EmbDebug {
 

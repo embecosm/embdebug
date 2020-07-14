@@ -20,9 +20,9 @@
 #pragma warning(pop)
 #endif
 
+#include "Init.h"
+#include "TraceFlags.h"
 #include "embdebug/ITarget.h"
-#include "embdebug/Init.h"
-#include "embdebug/TraceFlags.h"
 
 #ifdef _WIN32
 #include <windows.h>

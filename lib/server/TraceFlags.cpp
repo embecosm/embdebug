@@ -9,7 +9,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "embdebug/TraceFlags.h"
+#include "TraceFlags.h"
 
 using std::cerr;
 using std::endl;

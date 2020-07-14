@@ -10,7 +10,7 @@
 #define STREAM_CONNECTION_H
 
 #include "AbstractConnection.h"
-#include "embdebug/TraceFlags.h"
+#include "TraceFlags.h"
 
 namespace EmbDebug {
 

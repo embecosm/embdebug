@@ -4,7 +4,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(EMBDEBUG_SOURCES AbstractConnection.cpp
                      GdbServer.cpp
                      Init.cpp
-                     ITarget.cpp
                      Ptid.cpp
                      RspPacket.cpp
                      StreamConnection.cpp
@@ -36,6 +35,6 @@ else()
                         VERSION ${embdebug_VERSION})
 endif()
 
-target_link_libraries(embdebug ${EMBDEBUG_LIBS})
-install(TARGETS embdebug
-        DESTINATION lib)
+target_link_libraries(embdebug ${EMBDEBUG_LIBS} embdebugtarget)
+#install(TARGETS embdebug
+#        DESTINATION lib)

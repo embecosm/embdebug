@@ -12,7 +12,7 @@
 #include <chrono>
 #include <cstdint>
 
-#include "ITarget.h"
+#include "embdebug/ITarget.h"
 
 namespace EmbDebug {
 

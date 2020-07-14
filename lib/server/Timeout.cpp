@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#include "embdebug/Timeout.h"
+#include "Timeout.h"
 
 using std::chrono::duration;
 

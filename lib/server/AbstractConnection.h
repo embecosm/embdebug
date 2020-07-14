@@ -10,7 +10,7 @@
 #define ABSTRACT_CONNECTION_H
 
 #include "RspPacket.h"
-#include "embdebug/TraceFlags.h"
+#include "TraceFlags.h"
 
 namespace EmbDebug {
 

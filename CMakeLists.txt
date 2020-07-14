@@ -28,6 +28,7 @@ configure_compiler_defaults()
 enable_testing()
 
 add_subdirectory(include/embdebug)
+add_subdirectory(lib/targetsupport)
 add_subdirectory(lib/server)
 add_subdirectory(targets)
 add_subdirectory(tools)

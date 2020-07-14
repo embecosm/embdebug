@@ -17,8 +17,8 @@
 
 #include "Ptid.h"
 #include "RspPacket.h"
+#include "Timeout.h"
 #include "embdebug/ITarget.h"
-#include "embdebug/Timeout.h"
 #include "embdebug/Types.h"
 
 namespace EmbDebug {

@@ -23,9 +23,9 @@
 #include "AbstractConnection.h"
 #include "GdbServer.h"
 #include "SyscallReplyPacket.h"
+#include "TraceFlags.h"
+#include "Utils.h"
 #include "VContActions.h"
-#include "embdebug/TraceFlags.h"
-#include "embdebug/Utils.h"
 
 using std::cerr;
 using std::cout;

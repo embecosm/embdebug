@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------------
 
 #include "VContActions.h"
-#include "embdebug/Utils.h"
+#include "Utils.h"
 
 #include <cassert>
 #include <cstring>

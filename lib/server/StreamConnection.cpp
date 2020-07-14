@@ -30,7 +30,7 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 #include "StreamConnection.h"
-#include "embdebug/Utils.h"
+#include "Utils.h"
 
 using std::cerr;
 using std::cout;

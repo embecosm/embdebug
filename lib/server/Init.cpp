@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ----------------------------------------------------------------------------
 
-#include "embdebug/Init.h"
+#include "Init.h"
 #include "AbstractConnection.h"
 #include "GdbServer.h"
 #include "RspConnection.h"
