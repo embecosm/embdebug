@@ -4,7 +4,8 @@ This contains the source for the Embecosm Debug Server which can be
 used alongside GDB or LLDB to debug bare-metal targets.
 
 The Embecosm Debug Server is open source and available under the
-GPLv3+ license. The terms of the license can be found in `LICENSE`.
+GPLv3+ license, with an exception for the target interface, which is available
+under the MIT license. The terms of the license can be found in `LICENSE`.
 
 # Minimum requirements
 
