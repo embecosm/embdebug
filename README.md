@@ -24,8 +24,8 @@ the follow steps from the build directory are sufficient to
 build and install the debug server:
 
 ```
-cmake -DCMAKE_INSTALL_PREFIX=<install_dir> <source_dir>`
-cmake --build .`
+cmake -DCMAKE_INSTALL_PREFIX=<install_dir> <source_dir>
+cmake --build .
 cmake --build . --target install
 ```
 
@@ -52,7 +52,7 @@ For more complete build options, see `docs/Building`
 The debug server can be started with the following command:
 
 ```
-embdebug --soname <libtarget.so> --rsp-port <port_number>`
+embdebug --soname <libtarget.so> --rsp-port <port_number>
 ```
 
 This will expose a debug server on the provided port which
