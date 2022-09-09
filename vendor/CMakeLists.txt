@@ -1,1 +1,1 @@
-add_subdirectory(gtest-1.8.1)
+add_subdirectory(gtest-1.12.1)

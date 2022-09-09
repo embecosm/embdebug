@@ -15,7 +15,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4018 4267) // Workaround cxxopts.hpp issues #147, #148
 #endif
-#include "cxxopts-2.1.2/include/cxxopts.hpp"
+#include "cxxopts-3.0.0/include/cxxopts.hpp"
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
