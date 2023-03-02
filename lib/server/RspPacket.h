@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <cstddef>
 #include <iostream>
 
 #include "embdebug/ByteView.h"
@@ -28,23 +29,27 @@ public:
   //! The data buffer. Allow direct access to avoid unnecessary copying.
 
   // Constructor and destructor
-  RspPacket() = default;
+  RspPacket();
   RspPacket(RspPacket &&other);
-  RspPacket(const RspPacket &other) = default;
-  ~RspPacket() = default;
+  RspPacket(const RspPacket &other);
+  ~RspPacket();
   RspPacket(const RspPacketBuilder &builder);
 
   RspPacket &operator=(const RspPacket &other) = delete;
-  RspPacket &operator=(RspPacket &&other) = default;
+  RspPacket &operator=(RspPacket &&other);
 
   //! Create packet from constant string
   RspPacket(const char *X) {
+    data = new char[bufSize];
+    ::memset(data, 0, bufSize);
     len = ::strlen(X);
     ::memcpy(data, X, len);
   }
 
   //! Create packet from constant char buffer
   RspPacket(const char *X, std::size_t _len) {
+    data = new char[bufSize];
+    ::memset(data, 0, bufSize);
     len = _len;
     ::memcpy(data, X, len);
   }
@@ -59,7 +64,10 @@ public:
   static RspPacket CreateHexStr(const char *str);
 
   // Accessors
-  static constexpr std::size_t getMaxPacketSize() { return bufSize; };
+  static void setMaxPacketSize(std::size_t _bufSize) {
+    bufSize = _bufSize;
+  }
+  static std::size_t getMaxPacketSize() { return bufSize; };
   std::size_t getLen() const { return len; };
 
   //! Access data buffer
@@ -69,11 +77,11 @@ public:
   ByteView getData() const { return ByteView(data, len); }
 
 private:
-  //! The data buffer size
-  static const std::size_t bufSize = 10000;
+  //! The data buffer size (the same for all, hence static)
+  static std::size_t bufSize;
 
   //! The data pointer
-  char data[bufSize] = {0};
+  char* data;
 
   //! Number of chars in the data buffer (<= bufSize)
   std::size_t len = 0;
@@ -88,10 +96,16 @@ class RspPacketBuilder {
   // packet from the builders current state.
   friend class RspPacket;
 
-  char data[RspPacket::getMaxPacketSize()] = {0};
+  char *data;
   std::size_t len = 0;
 
 public:
+  // Constructor to allocate data array
+  RspPacketBuilder();
+  RspPacketBuilder(RspPacket &&other) = delete;
+  RspPacketBuilder(const RspPacket &other) = delete;
+  ~RspPacketBuilder();
+
   RspPacketBuilder &operator+=(const char *str);
   RspPacketBuilder &operator+=(const char c);
   void addData(const char *str);
@@ -101,6 +115,9 @@ public:
   std::size_t getSize() const { return len; }
   std::size_t getRemaining() const {
     return RspPacket::getMaxPacketSize() - len;
+  }
+  std::size_t getMaxPacketSize() const {
+    return RspPacket::getMaxPacketSize();
   }
 
   void erase() {

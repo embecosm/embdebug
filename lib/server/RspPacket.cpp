@@ -1,3 +1,4 @@
+
 // RSP packet: implementation
 //
 // This file is part of the Embecosm GDB Server.
@@ -25,14 +26,43 @@ using std::setw;
 
 using namespace EmbDebug;
 
-RspPacket::RspPacket(RspPacket &&other) {
+// Define the bufSize with its default value
+std::size_t RspPacket::bufSize = 10000;
+
+//! Default constructor
+RspPacket::RspPacket()
+  : len (0) {
+  data = new char [bufSize];
+  ::memset(data, 0, bufSize);
+}
+
+//! Copy constructor
+RspPacket::RspPacket(const RspPacket &other) {
+  data = new char [bufSize];
   ::memcpy(data, other.data, bufSize);
   len = other.len;
 }
 
+//! Move constructor
+RspPacket::RspPacket(RspPacket &&other) {
+  data = std::move (other.data);
+  len = other.len;
+  other.data = nullptr;
+  other.len = 0;
+}
+
+//! Constructor from a builder
 RspPacket::RspPacket(const RspPacketBuilder &builder) {
+  data = new char [bufSize];
   ::memcpy(data, builder.data, bufSize);
   len = builder.len;
+}
+
+//! Destructor
+RspPacket::~RspPacket() {
+  if (data != nullptr)
+    delete [] data;
+  data = nullptr;
 }
 
 //! Create a new packet from a const string as a hex encoded string for qRcmd.
@@ -114,6 +144,18 @@ RspPacket RspPacket::CreateRcmdStr(const char *str, const bool toStdoutP) {
   return response;
 }
 
+// Move operator
+RspPacket &
+RspPacket::operator=(RspPacket &&other) {
+  if (data != nullptr)
+    delete [] data;
+  data = std::move (other.data);
+  len = other.len;
+  other.data = nullptr;
+  other.len = 0;
+  return *this;
+}
+
 //! Create a packet from a printf-style call
 
 //! @return a packet with the printf-formatted string
@@ -124,6 +166,19 @@ RspPacket RspPacket::CreateFormatted(const char *format, ...) {
   response.len = vsnprintf(response.data, 10000, format, args);
   va_end(args);
   return response;
+}
+
+//! Default constructor to allocate data buffer
+RspPacketBuilder::RspPacketBuilder () {
+  data = new char [RspPacket::getMaxPacketSize()];
+  ::memset(data, 0, RspPacket::getMaxPacketSize());
+}
+
+//! Default constructor to free data buffer
+RspPacketBuilder::~RspPacketBuilder () {
+  if (data != nullptr)
+    delete [] data;
+  data = nullptr;
 }
 
 //! Add a C string to the current packet

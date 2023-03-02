@@ -9,6 +9,8 @@
 #ifndef EMBDEBUG_INIT_H
 #define EMBDEBUG_INIT_H
 
+#include <cstddef>
+
 namespace EmbDebug {
 
 class ITarget;
@@ -24,10 +26,11 @@ class TraceFlags;
 //! \param[in] useStreamConnection True if RSP traffic uses standard input and
 //!                                output instream of a socket.
 //! \param[in] rspPort    Port number to use for socket communication.
+//! \param[in] rspBufSize  Size of buffer for RSP packets.
 //! \param[in] writePort  True if the used rsp port should be written to a file.
 //! \return EXIT_SUCCESS on success, or EXIT_FAILURE otherwise.
 int init(ITarget *target, TraceFlags *traceFlags, bool useStreamConnection,
-         int rspPort, bool writePort);
+         int rspPort, std::size_t rspBufSize, bool writePort);
 
 } // namespace EmbDebug
 

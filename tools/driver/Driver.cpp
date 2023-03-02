@@ -138,6 +138,7 @@ int main(int argc, char *argv[]) {
   TraceFlags traceFlags;
   bool withLockstep;
   int rspPort = 0;
+  std::size_t rspBufSize = 10000;
 
   cxxopts::Options options("embdebug", "GDBServer");
   options.add_options()("q,silent",
@@ -152,6 +153,9 @@ int main(int argc, char *argv[]) {
   options.add_options()(
       "l,lockstep", "Enable lockstep debugging",
       cxxopts::value<bool>(withLockstep)->default_value("false"));
+  options.add_options()(
+       "bufsize", "Set RSP buffer size in bytes (default 10,000)",
+       cxxopts::value<string>(), "<size>");
   options.add_options()("soname", "Shared object containing model",
                         cxxopts::value<string>(soName), "<shared object>");
   options.add_options()("rsp-port", "Port to listen on",
@@ -179,6 +183,20 @@ int main(int argc, char *argv[]) {
     if (!result.count("soname")) {
       cerr << "No soname specified, cannot create target" << endl;
       return EXIT_FAILURE;
+    }
+
+    if (result.count("bufsize") != 0) {
+      // For very slow targets (such as simulated JTAG), having a large RSP
+      // buffer may cause timeouts on packet transmission.  RSP buffer should
+      // be large enough to hold the reply to a "g" packet (all the registers
+      // and PC hex encoded).
+      string token = result["bufsize"].as<std::string>();
+      try {
+	rspBufSize = std::stoi(token);
+      } catch (std::logic_error &) {
+        cerr << "ERROR: failed to parse RSP buffer size from: " << token << endl;
+        return EXIT_FAILURE;
+      }
     }
 
     if (result.count("rsp-port")) {
@@ -241,5 +259,5 @@ int main(int argc, char *argv[]) {
   target = load_target_so(soName, &traceFlags);
 #endif
 
-  return init(target, &traceFlags, from_stdin, rspPort, false);
+  return init(target, &traceFlags, from_stdin, rspPort, rspBufSize, false);
 }

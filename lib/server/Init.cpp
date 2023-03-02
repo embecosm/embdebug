@@ -10,16 +10,21 @@
 #include "AbstractConnection.h"
 #include "GdbServer.h"
 #include "RspConnection.h"
+#include "RspPacket.h"
 #include "StreamConnection.h"
 #include "embdebug/ITarget.h"
 
 using namespace EmbDebug;
 
 int EmbDebug::init(ITarget *target, TraceFlags *traceFlags,
-                   bool useStreamConnection, int rspPort, bool writePort) {
+                   bool useStreamConnection, int rspPort,
+                   std::size_t rspBufSize, bool writePort) {
   assert(target);
   assert(traceFlags);
 
+  // Define the size of a packet before anyone starts using it.
+
+  RspPacket::setMaxPacketSize (rspBufSize);
   AbstractConnection *conn;
   KillBehaviour killBehaviour;
   if (useStreamConnection) {
