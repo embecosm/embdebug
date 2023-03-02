@@ -492,11 +492,8 @@ GdbServerTestCase testMemoryRead = {
     "+$beef#92+$OK#9a",
     {
         TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
-                                             0x124, 1, (const uint8_t *)"\xbe",
-                                             1}),
-        TraceTarget::ITargetCall::ReadState({TraceTarget::ITargetFunc::READ,
-                                             0x125, 1, (const uint8_t *)"\xef",
-                                             1}),
+                                             0x124, 2,
+					     (const uint8_t *)"\xbe\xef", 2}),
     },
 };
 GdbServerTestCase testMemoryWrite = {

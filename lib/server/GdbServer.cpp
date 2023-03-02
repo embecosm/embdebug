@@ -785,6 +785,7 @@ void GdbServer::rspReadMem() {
   uint_reg_t addr;           // Where to read the memory
   uint_addr_t len;           // Number of bytes to read
   uint_addr_t off;           // Offset into the memory
+  uint8_t *buf;		     // Where to read the raw data
   RspPacketBuilder response; // Response to memory request
 
   if (2 !=
@@ -802,20 +803,16 @@ void GdbServer::rspReadMem() {
     len = (pkt.getMaxPacketSize() - 1) / 2;
   }
 
-  // Refill the buffer with the reply
-  for (off = 0; off < len; off++) {
-    uint8_t ch;
-    std::size_t ret;
+  buf = new uint8_t[len];
+  if (len == cpu->read(addr, buf, len))
+    for (off = 0; off < len; off++) {
+      response += Utils::hex2Char(buf[off] >> 4);
+      response += Utils::hex2Char(buf[off] & 0xf);
+    }
+  else
+    cerr << "Warning: failed to read " << len << "chars" << endl;
 
-    ret = cpu->read(addr + off, &ch, 1);
-
-    if (1 == ret) {
-      response += Utils::hex2Char(ch >> 4);
-      response += Utils::hex2Char(ch & 0xf);
-    } else
-      cerr << "Warning: failed to read char" << endl;
-  }
-
+  delete buf;
   rsp->putPkt(response);
 }
 
