@@ -812,7 +812,7 @@ void GdbServer::rspReadMem() {
   else
     cerr << "Warning: failed to read " << len << "chars" << endl;
 
-  delete buf;
+  delete[] buf;
   rsp->putPkt(response);
 }
 
