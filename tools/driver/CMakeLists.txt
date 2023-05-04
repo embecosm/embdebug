@@ -1,6 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/vendor)
 include_directories(${CMAKE_SOURCE_DIR}/lib/server)
+include_directories(${CMAKE_BINARY_DIR}/include)
 
 set(EMBDEBUG_DRIVER_SOURCES Driver.cpp)
 

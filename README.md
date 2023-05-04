@@ -12,11 +12,14 @@ under the MIT license. The terms of the license can be found in `LICENSE`.
 * `MSVC 2015`, `Clang 3.4`, or `GCC 5`
 * `cmake 3.4.3`
 
-# Building the debug server
+# Building the debug server without a target
 
-_**NOTE**: These are basic steps to build the debug server however this
-**does not** include a target for the server. A more complete
-guide with an example target (ri5cy for a 32-bit RISC-V
+_**NOTE**: These are basic steps to build the debug server however this **does
+not** include a target for the server, which in this case would need to be
+built separately.  See below for building the server and the target in a
+single step.
+
+A more complete guide with an example target (ri5cy for a 32-bit RISC-V
 system) can be found in:_ `docs/Ri5cyTutorial`
 
 The `cmake` build system is used to build the project. Running
@@ -46,6 +49,16 @@ Flag                            | Description
 `-DEMBDEBUG_TARGETS_TO_BUILD`   | Comma separated list of directories in `targets/` to be built alongside the debug server.
 
 For more complete build options, see `docs/Building`
+
+# Building the debug server with a target
+
+To build the target as well as the server, you just need to link the source
+tree of the target into the `targets` directory of Embdebug. The target should
+use Cmake for configuration, and have its own CMakeLists.txt at the top level.
+
+Build and configure is then identical to the steps for the debug server
+without a target.  The only change is that you can also add build options
+specific to the target to the initial cmake command.
 
 # Running
 
@@ -78,6 +91,12 @@ Attaching from the debugger depends on the debugger being used.
 ```
 (gdb) target remote :<port_number>
 ```
+
+or using the pipe interface
+```
+(gdb) target remote |embdebug -s <soname>
+```
+(you can add any other embdebug command line options).
 
 ### Connecting from LLDB
 

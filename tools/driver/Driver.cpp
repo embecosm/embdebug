@@ -22,6 +22,7 @@
 
 #include "Init.h"
 #include "TraceFlags.h"
+#include "embdebug/config.h"
 #include "embdebug/ITarget.h"
 
 #ifdef _WIN32
@@ -38,18 +39,12 @@ using std::string;
 
 using namespace EmbDebug;
 
-static const std::string gdbserver_name = "embdebug";
+static const std::string gdbserver_name = "Embdebug";
 
-// FIXME: Extract the version from CMake
+// Extract the version from CMake
 string get_version() {
   std::stringstream s;
-  s << gdbserver_name << " version "
-    << "PACKAGE_VERSION"
-    << " of "
-    << "PACKAGE_NAME"
-    << " ("
-    << "GIT_VERSION"
-    << ")";
+  s << gdbserver_name << " version " << VERSION;
   return s.str();
 }
 

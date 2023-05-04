@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.3)
 
-set(embdebug_VERSION_MAJOR 0)
-set(embdebug_VERSION_MINOR 0)
+set(embdebug_VERSION_MAJOR 1)
+set(embdebug_VERSION_MINOR 9)
 set(embdebug_VERSION_PATCH 0)
 set(embdebug_VERSION
   ${embdebug_VERSION_MAJOR}.${embdebug_VERSION_MINOR}.${embdebug_VERSION_PATCH})
@@ -26,6 +26,9 @@ include(cmake/compiler_utils.cmake)
 configure_compiler_defaults()
 
 enable_testing()
+
+# Generated header
+configure_file(include/embdebug/config.h.in include/embdebug/config.h @ONLY)
 
 add_subdirectory(include/embdebug)
 add_subdirectory(lib/targetsupport)
