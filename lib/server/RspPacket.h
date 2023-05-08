@@ -64,9 +64,7 @@ public:
   static RspPacket CreateHexStr(const char *str);
 
   // Accessors
-  static void setMaxPacketSize(std::size_t _bufSize) {
-    bufSize = _bufSize;
-  }
+  static void setMaxPacketSize(std::size_t _bufSize) { bufSize = _bufSize; }
   static std::size_t getMaxPacketSize() { return bufSize; };
   std::size_t getLen() const { return len; };
 
@@ -81,7 +79,7 @@ private:
   static std::size_t bufSize;
 
   //! The data pointer
-  char* data;
+  char *data;
 
   //! Number of chars in the data buffer (<= bufSize)
   std::size_t len = 0;
@@ -116,9 +114,7 @@ public:
   std::size_t getRemaining() const {
     return RspPacket::getMaxPacketSize() - len;
   }
-  std::size_t getMaxPacketSize() const {
-    return RspPacket::getMaxPacketSize();
-  }
+  std::size_t getMaxPacketSize() const { return RspPacket::getMaxPacketSize(); }
 
   void erase() {
     ::memset(data, 0, RspPacket::getMaxPacketSize());

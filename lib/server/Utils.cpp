@@ -36,11 +36,10 @@ bool Utils::isHexStr(const char *buf, const std::size_t len) {
 
 uint8_t Utils::char2Hex(int c) {
   assert(isHexStr((char *)&c, 1));
-  return ((c >= 'a') && (c <= 'f'))
-             ? c - 'a' + 10
-             : ((c >= '0') && (c <= '9'))
-                   ? c - '0'
-                   : ((c >= 'A') && (c <= 'F')) ? c - 'A' + 10 : -1;
+  return ((c >= 'a') && (c <= 'f'))   ? c - 'a' + 10
+         : ((c >= '0') && (c <= '9')) ? c - '0'
+         : ((c >= 'A') && (c <= 'F')) ? c - 'A' + 10
+                                      : -1;
 }
 
 char Utils::hex2Char(uint8_t d) {

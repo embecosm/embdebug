@@ -22,8 +22,8 @@
 
 #include "Init.h"
 #include "TraceFlags.h"
-#include "embdebug/config.h"
 #include "embdebug/ITarget.h"
+#include "embdebug/config.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -148,9 +148,9 @@ int main(int argc, char *argv[]) {
   options.add_options()(
       "l,lockstep", "Enable lockstep debugging",
       cxxopts::value<bool>(withLockstep)->default_value("false"));
-  options.add_options()(
-       "bufsize", "Set RSP buffer size in bytes (default 10,000)",
-       cxxopts::value<string>(), "<size>");
+  options.add_options()("bufsize",
+                        "Set RSP buffer size in bytes (default 10,000)",
+                        cxxopts::value<string>(), "<size>");
   options.add_options()("soname", "Shared object containing model",
                         cxxopts::value<string>(soName), "<shared object>");
   options.add_options()("rsp-port", "Port to listen on",
@@ -187,9 +187,10 @@ int main(int argc, char *argv[]) {
       // and PC hex encoded).
       string token = result["bufsize"].as<std::string>();
       try {
-	rspBufSize = std::stoi(token);
+        rspBufSize = std::stoi(token);
       } catch (std::logic_error &) {
-        cerr << "ERROR: failed to parse RSP buffer size from: " << token << endl;
+        cerr << "ERROR: failed to parse RSP buffer size from: " << token
+             << endl;
         return EXIT_FAILURE;
       }
     }

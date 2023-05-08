@@ -30,22 +30,21 @@ using namespace EmbDebug;
 std::size_t RspPacket::bufSize = 10000;
 
 //! Default constructor
-RspPacket::RspPacket()
-  : len (0) {
-  data = new char [bufSize];
+RspPacket::RspPacket() : len(0) {
+  data = new char[bufSize];
   ::memset(data, 0, bufSize);
 }
 
 //! Copy constructor
 RspPacket::RspPacket(const RspPacket &other) {
-  data = new char [bufSize];
+  data = new char[bufSize];
   ::memcpy(data, other.data, bufSize);
   len = other.len;
 }
 
 //! Move constructor
 RspPacket::RspPacket(RspPacket &&other) {
-  data = std::move (other.data);
+  data = std::move(other.data);
   len = other.len;
   other.data = nullptr;
   other.len = 0;
@@ -53,7 +52,7 @@ RspPacket::RspPacket(RspPacket &&other) {
 
 //! Constructor from a builder
 RspPacket::RspPacket(const RspPacketBuilder &builder) {
-  data = new char [bufSize];
+  data = new char[bufSize];
   ::memcpy(data, builder.data, bufSize);
   len = builder.len;
 }
@@ -61,7 +60,7 @@ RspPacket::RspPacket(const RspPacketBuilder &builder) {
 //! Destructor
 RspPacket::~RspPacket() {
   if (data != nullptr)
-    delete [] data;
+    delete[] data;
   data = nullptr;
 }
 
@@ -145,11 +144,10 @@ RspPacket RspPacket::CreateRcmdStr(const char *str, const bool toStdoutP) {
 }
 
 // Move operator
-RspPacket &
-RspPacket::operator=(RspPacket &&other) {
+RspPacket &RspPacket::operator=(RspPacket &&other) {
   if (data != nullptr)
-    delete [] data;
-  data = std::move (other.data);
+    delete[] data;
+  data = std::move(other.data);
   len = other.len;
   other.data = nullptr;
   other.len = 0;
@@ -169,15 +167,15 @@ RspPacket RspPacket::CreateFormatted(const char *format, ...) {
 }
 
 //! Default constructor to allocate data buffer
-RspPacketBuilder::RspPacketBuilder () {
-  data = new char [RspPacket::getMaxPacketSize()];
+RspPacketBuilder::RspPacketBuilder() {
+  data = new char[RspPacket::getMaxPacketSize()];
   ::memset(data, 0, RspPacket::getMaxPacketSize());
 }
 
 //! Default constructor to free data buffer
-RspPacketBuilder::~RspPacketBuilder () {
+RspPacketBuilder::~RspPacketBuilder() {
   if (data != nullptr)
-    delete [] data;
+    delete[] data;
   data = nullptr;
 }
 

@@ -24,7 +24,7 @@ int EmbDebug::init(ITarget *target, TraceFlags *traceFlags,
 
   // Define the size of a packet before anyone starts using it.
 
-  RspPacket::setMaxPacketSize (rspBufSize);
+  RspPacket::setMaxPacketSize(rspBufSize);
   AbstractConnection *conn;
   KillBehaviour killBehaviour;
   if (useStreamConnection) {
