@@ -1,0 +1,87 @@
+name: Embdebug Tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DEMBDEBUG_ENABLE_WERROR=TRUE
+        cmake --build .
+    - name: Test
+      run: |
+        cd build
+        cmake --build . --target test
+
+  check-asan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_CXX_FLAGS="-fsanitize=address" ..
+        cmake --build .
+    - name: Test
+      run: |
+        cd build
+        cmake --build . --target test
+
+  check-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DEMBDEBUG_ENABLE_WERROR=TRUE
+        cmake --build .
+    - name: Test
+      run: |
+        cd build
+        cmake --build . --target test
+
+  check-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake -DEMBDEBUG_ENABLE_WERROR=TRUE -Dgtest_force_shared_crt=TRUE ..
+        cmake --build . --target ALL_BUILD
+    - name: Test
+      run: |
+        cd build
+        cmake --build . --target RUN_TESTS
+
+  check-style:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+    - name: Test
+      run: |
+        cd build
+        cmake --build . --target clang-format
+        git diff > style-differences.diff
+        cat style-differences.diff
+        LINES=$(cat style-differences.diff | wc -l)
+        if [ ${LINES} -gt 0 ]; then echo 'Style Test failed'; exit 1; fi
