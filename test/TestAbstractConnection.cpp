@@ -108,8 +108,8 @@ TEST_P(AbstractConnectionTest, PutPkt) {
   free(outbuf);
 }*/
 
-INSTANTIATE_TEST_CASE_P(SimplePackets, AbstractConnectionTest,
-                        ::testing::Values("$Hc-1#09", "$qOffsets#4b", "$p20#d2",
-                                          "$qsThreadInfo#c8",
-                                          "$P20=7601100100000000#ff",
-                                          "$vCont;c:p1.-1#0f"));
+INSTANTIATE_TEST_SUITE_P(SimplePackets, AbstractConnectionTest,
+                         ::testing::Values("$Hc-1#09", "$qOffsets#4b",
+                                           "$p20#d2", "$qsThreadInfo#c8",
+                                           "$P20=7601100100000000#ff",
+                                           "$vCont;c:p1.-1#0f"));

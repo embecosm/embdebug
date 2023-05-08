@@ -399,8 +399,8 @@ GdbServerTestCase testBasicRSPPackets[] = {
     {"$L#4c+$vKill;1#6e+", "+$#00+$OK#9a", {}},
 };
 
-INSTANTIATE_TEST_CASE_P(BasicRSPTest, GdbServerTest,
-                        ::testing::ValuesIn(testBasicRSPPackets));
+INSTANTIATE_TEST_SUITE_P(BasicRSPTest, GdbServerTest,
+                         ::testing::ValuesIn(testBasicRSPPackets));
 
 // Test of register reads and writes
 GdbServerTestCase testRegisterRead = {
@@ -458,10 +458,10 @@ GdbServerTestCase testRegisterWriteAll = {
             {TraceTarget::ITargetFunc::WRITE_REGISTER, 5, 0x05, 1}),
     }};
 
-INSTANTIATE_TEST_CASE_P(RegisterReadWriteRSPTest, GdbServerTest,
-                        ::testing::Values(testRegisterRead, testRegisterWrite,
-                                          testRegisterReadAll,
-                                          testRegisterWriteAll));
+INSTANTIATE_TEST_SUITE_P(RegisterReadWriteRSPTest, GdbServerTest,
+                         ::testing::Values(testRegisterRead, testRegisterWrite,
+                                           testRegisterReadAll,
+                                           testRegisterWriteAll));
 
 // Tests of memory reads and writes
 GdbServerTestCase testMemoryInvalidRead1 = {
@@ -523,7 +523,7 @@ GdbServerTestCase testMemoryBinaryWrite = {
     },
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     MemoryReadWriteRSPTest, GdbServerTest,
     ::testing::Values(testMemoryInvalidRead1, testMemoryInvalidRead2,
                       testMemoryInvalidRead3, testMemoryInvalidRead4,
@@ -666,12 +666,12 @@ GdbServerTestCase testContinue2 = {
     },
 };
 
-INSTANTIATE_TEST_CASE_P(RSPVContTest, GdbServerTest,
-                        ::testing::Values(testVContQuery, testVContStep1,
-                                          testVContStep2, testVContContinue1,
-                                          testVContContinue2, testStep1,
-                                          testStep2, testContinue1,
-                                          testContinue2));
+INSTANTIATE_TEST_SUITE_P(RSPVContTest, GdbServerTest,
+                         ::testing::Values(testVContQuery, testVContStep1,
+                                           testVContStep2, testVContContinue1,
+                                           testVContContinue2, testStep1,
+                                           testStep2, testContinue1,
+                                           testContinue2));
 
 // Tests of syscall handling and the associated RSP communication
 GdbServerTestCase testSyscallClose = {
@@ -838,9 +838,9 @@ GdbServerTestCase testSyscallUnknown = {
     },
 };
 
-INSTANTIATE_TEST_CASE_P(RSPSysCallTest, GdbServerTest,
-                        ::testing::Values(testSyscallClose, testSyscallOpen,
-                                          testSyscallUnknown));
+INSTANTIATE_TEST_SUITE_P(RSPSysCallTest, GdbServerTest,
+                         ::testing::Values(testSyscallClose, testSyscallOpen,
+                                           testSyscallUnknown));
 
 // Tests of various qRcmd packets
 GdbServerTestCase testCmdResetWarm = {
@@ -969,7 +969,7 @@ GdbServerTestCase testCmdShowUnknownCommand = {
     {},
 };
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
     RSPCmdPacketTest, GdbServerTest,
     ::testing::Values(
         testCmdResetWarm, testCmdResetCold, testCmdExit, testCmdCycleCount,
@@ -996,6 +996,6 @@ GdbServerTestCase testXMLInvalidName = {
     "+$E00#a5+$OK#9a",
     {}};
 
-INSTANTIATE_TEST_CASE_P(RSPXmlPacketTest, GdbServerTest,
-                        ::testing::Values(testXMLWhole, testXMLSplit,
-                                          testXMLInvalidName));
+INSTANTIATE_TEST_SUITE_P(RSPXmlPacketTest, GdbServerTest,
+                         ::testing::Values(testXMLWhole, testXMLSplit,
+                                           testXMLInvalidName));
