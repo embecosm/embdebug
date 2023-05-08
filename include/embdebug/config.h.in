@@ -1,0 +1,12 @@
+// GDBServer input to header generation
+//
+// This file is part of the Embecosm GDB Server.
+//
+// Copyright (C) 2009-2019 Embecosm Limited
+// SPDX-License-Identifier: GPL-3.0-or-later
+// ----------------------------------------------------------------------------
+
+#define VERSION_MAJOR @embdebug_VERSION_MAJOR@
+#define VERSION_MINOR @embdebug_VERSION_MINOR@
+#define VERSION_PATCH @embdebug_VERSION_PATCH@
+#define VERSION "@embdebug_VERSION@"
