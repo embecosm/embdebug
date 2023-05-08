@@ -785,7 +785,7 @@ void GdbServer::rspReadMem() {
   uint_reg_t addr;           // Where to read the memory
   uint_addr_t len;           // Number of bytes to read
   uint_addr_t off;           // Offset into the memory
-  uint8_t *buf;		     // Where to read the raw data
+  uint8_t *buf;              // Where to read the raw data
   RspPacketBuilder response; // Response to memory request
 
   if (2 !=
